@@ -1,0 +1,97 @@
+Features to add
+==========================
+
+templates
+--------------------
+
+templates for nodes and services stored in leap_platform
+
+commands:
+
+    leap add-service   # menu of services, adding copies the template
+    leap add-node      # you pick a service, then it copies template
+
+deploy
+---------------------
+
+not yet working
+
+    leap bootstrap
+    leap dryrun
+    leap deploy
+
+key management
+-------------------------
+
+not yet working
+
+    leap add-ssh-keypair
+    leap add-x509-keypair
+
+hiera logic
+------------------------
+
+leap_platform should be able insert ruby logic in the generation of hiera .yml files. for example, so say that a webapp node should get a list of all the couchdb nodes its config.
+
+this code might look like this
+
+    node['couchdb_ips'] = @nodes[:services => :couchdb].map(&:ip_address)
+
+or
+
+    node['couchdb_ips'] = @services[:couchdb].nodes.map(&:ip_address)
+
+maybe see http://blog.bigbinary.com/2008/10/17/under-the-hood-how-named-scope-works.html
+
+
+json validation
+------------------------
+
+json validation
+http://www.kuwata-lab.com/kwalify/ruby/users-guide.html
+
+
+useful liberaries
+================================
+
+user interaction
+
+  readline
+  highline
+  terminal-tables
+  rainbow
+  http://stackoverflow.com/questions/9577718/what-ruby-libraries-should-i-use-for-building-a-console-based-application
+
+testing
+
+  aruba -- test for cli
+
+help
+
+  gem-man -- install man pages with gems
+  ronn -- write man pages in markdown
+
+push examples
+
+  https://github.com/net-ssh/net-ssh
+
+  https://github.com/seattlerb/rake-remote_task
+    http://docs.seattlerb.org/rake-remote_task/
+    https://github.com/seattlerb/rake-remote_task/blob/master/lib/rake/remote_task.rb
+
+  https://github.com/davidwinter/sooty
+    push puppet with rake/remote_task
+    https://github.com/davidwinter/sooty/blob/master/lib/sooty.rb
+
+  calling rsync from ruby
+    https://github.com/RichGuk/rrsync/blob/master/rrsync.rb
+    http://rubyforge.org/projects/six-rsync/
+
+  https://github.com/automateit/automateit
+
+  http://www.jedi.be/blog/2009/11/17/shell-scripting-dsl-in-ruby/
+
+  parallel shell
+    https://github.com/delano/rye
+    https://github.com/adamwiggins/rush
+

@@ -1,0 +1,64 @@
+#!/usr/bin/env ruby
+begin
+  require 'leap_cli'
+rescue LoadError
+  #
+  # When developing a gem with a command, you normally use `bundle exec bin/command-name`
+  # to run your app. At install-time, RubyGems will make sure lib, etc. are in the load path,
+  # so that you can run the command directly.
+  #
+  # However, I don't like using 'bundle exec'. It is slow, and limits which directory you can
+  # run in. So, instead, we fall back to some path manipulation hackery.
+  #
+  # This allows you to run the command directly while developing the gem, and also lets you
+  # run from anywhere (I like to link 'bin/leap' to /usr/local/bin/leap).
+  #
+  file = File.symlink?(__FILE__) ? File.readlink(__FILE__) : __FILE__
+  lib_dir = File.expand_path(File.dirname(file) + '/../lib')
+  $LOAD_PATH.unshift lib_dir unless $LOAD_PATH.include?(lib_dir)
+  require 'rubygems'
+  require 'leap_cli'
+end
+
+require 'gli'
+require 'highline'
+require 'forwardable'
+require 'terminal-table'
+
+#
+# Typically, GLI and Highline methods are loaded into the global namespace.
+# Instead, here we load these into the module LeapCli::Commands in order to
+# ensure that the cli logic and code is kept isolated to leap_cli/commands/*.rb
+#
+# no cheating!
+#
+module LeapCli::Commands
+  extend GLI::App
+  extend Forwardable
+  extend Terminal::Table::TableHelper
+
+  ENV['GLI_DEBUG'] = "true"
+
+  #
+  # delegate highline methods to make them available to sub-commands
+  #
+  @terminal = HighLine.new
+  def_delegator :@terminal, :ask, 'self.ask'
+  def_delegator :@terminal, :agree, 'self.agree'
+  def_delegator :@terminal, :ask, 'self.ask'
+  def_delegator :@terminal, :choose, 'self.choose'
+  def_delegator :@terminal, :say, 'self.say'
+
+  #
+  # info about leap command line suite
+  #
+  program_desc       'LEAP platform command line interface'
+  program_long_desc  'This is the long description. It is very interesting.'
+  version            LeapCli::VERSION
+
+  #
+  # load commands and run
+  #
+  commands_from('leap_cli/commands')
+  exit run(ARGV)
+end

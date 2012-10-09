@@ -1,0 +1,8 @@
+--- 
+domain_internal: rewire
+domain_public: rewire.co
+fqdn: couch1.rewire
+ip_address: 245.2.45.42
+name: couch1
+public_dns: false
+services: couchdb

@@ -1,0 +1,6 @@
+{
+  "hosts": {
+    "public":  "= nodes[:public_dns => true].fields(:fqdn, :dns_alias, :ip_address)",
+    "private": "= nodes[:public_dns => false].fields(:fqdn, :dns_alias, :ip_address)"
+  }
+}

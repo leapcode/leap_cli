@@ -1,0 +1,8 @@
+#
+# this is a comment
+#
+{
+  "services": "dns",
+  "tags": "production",
+  "ip_address": "1.1.1.1"
+}

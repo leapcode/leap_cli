@@ -1,0 +1,13 @@
+#
+# General service provider configuration.
+#
+{
+  "name": "The Rewire Company",
+  "description": "A demonstration service provider using the LEAP platform",
+  "languages": ["en"],
+  "ca": {
+    "name": "Rewire Root CA",
+    "organization": "#{name}",
+    "bit_size": 4096
+  }
+}

@@ -1,0 +1,5 @@
+= leap_cli
+
+Generate this with
+    leap_cli rdoc
+After you have described your command line interface
