@@ -50,6 +50,17 @@ module LeapCli::Commands
   def_delegator :@terminal, :say, 'self.say'
 
   #
+  # make config manager available as 'manager'
+  #
+  def self.manager
+    @manager ||= begin
+      manager = LeapCli::Config::Manager.new
+      manager.load(LeapCli::Path.provider)
+      manager
+    end
+  end
+
+  #
   # info about leap command line suite
   #
   program_desc       'LEAP platform command line interface'

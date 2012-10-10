@@ -3,6 +3,7 @@
   "ip_address": "2.2.2.2",
   "tags": "production",
   "openvpn": {
-    "gateway_address": "3.3.3.3"
+    "gateway_address": "3.3.3.3",
+    "filter_dns": true
   }
 }

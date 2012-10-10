@@ -6,7 +6,7 @@ module LeapCli
     arg_name '<node filter>'
     command :deploy do |c|
       c.action do |global_options,options,args|
-        nodes = ConfigManager.filter(args)
+        nodes = manager.filter(args)
         say "Deploying to these nodes: #{nodes.keys.join(', ')}"
         if agree "Continue? "
           say "deploy not yet implemented"

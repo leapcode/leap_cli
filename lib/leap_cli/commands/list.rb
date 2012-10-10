@@ -48,11 +48,11 @@ module LeapCli
     command :list do |c|
       c.action do |global_options,options,args|
         if args.any?
-          print_config_table(:nodes, ConfigManager.filter(args))
+          print_config_table(:nodes, manager.filter(args))
         else
-          print_config_table(:services, ConfigManager.services)
-          print_config_table(:tags,     ConfigManager.tags)
-          print_config_table(:nodes,  ConfigManager.nodes)
+          print_config_table(:services, manager.services)
+          print_config_table(:tags, manager.tags)
+          print_config_table(:nodes, manager.nodes)
         end
       end
     end

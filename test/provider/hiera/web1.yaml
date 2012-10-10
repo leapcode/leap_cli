@@ -1,0 +1,19 @@
+--- 
+definition_files: 
+  provider: <%= {:hi => 'yes'}.to_json %>
+domain: 
+  internal: rewire
+  public: rewire.co
+fqdn: web1.rewire.co
+ip_address: 6.6.7.7
+name: web1
+public_dns: true
+services: webapp
+webapp: 
+  couchdb_hosts: 
+  - couch1.rewire
+  - couch2.rewire
+  modules: 
+  - user
+  - billing
+  - help

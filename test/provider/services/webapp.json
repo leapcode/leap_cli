@@ -1,7 +1,10 @@
+#   "dns_alias": "= 'user.' + domain_public",
 {
-  "dns_alias": "= 'user.' + domain_public",
   "webapp": {
     "modules": ["user", "billing", "help"],
     "couchdb_hosts": "= nodes[:services => :couchdb].field(:fqdn)"
+  },
+  "definition_files": {
+    "provider": "= file('public-definitions/provider.json.erb')"
   }
 }

@@ -1,11 +1,11 @@
 #
 # Options put here are inherited by all nodes.
-#
+# #  "fqdn": "= name + '.' + (public_dns ? domain_public : domain_internal)"
 {
   "domain": {
      "public": "rewire.co",
      "internal": "rewire"
   },
   "public_dns": true,
-  "fqdn": "= name + '.' + (public_dns ? domain_public : domain_internal)"
+  "fqdn": "= name + '.' + (public_dns ? domain['public'] : domain['internal'])"
 }
