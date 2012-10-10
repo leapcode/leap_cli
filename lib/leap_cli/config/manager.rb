@@ -32,7 +32,9 @@ module LeapCli
           File.unlink(f)
         end
         @nodes.each do |name, node|
-          File.open("#{dir}/#{name}.#{node.domain_internal}.yaml", 'w') do |f|
+          # not sure if people will approve of this change:
+          # File.open("#{dir}/#{name}.#{node.domain_internal}.yaml", 'w') do |f|
+          File.open("#{dir}/#{name}.yaml", 'w') do |f|
             f.write node.to_yaml
           end
         end
