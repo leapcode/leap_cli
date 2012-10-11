@@ -1,10 +1,15 @@
-#   "dns_alias": "= 'user.' + domain_public",
 {
   "webapp": {
     "modules": ["user", "billing", "help"],
-    "couchdb_hosts": "= nodes[:services => :couchdb].field(:fqdn)"
+    "couchdb_hosts": "= nodes[:services => :couchdb].field('domain.name')"
   },
   "definition_files": {
-    "provider": "= file('public-definitions/provider.json.erb')"
+    "provider": "= file('service-definitions/provider.json.erb')",
+    "eip_service": "file('service-definitions/eip-service.json.erb')"
+  },
+  "service_type": "public_service",
+  "api_domain": "= 'api.' + domain.public",
+  "dns": {
+    "aliases": "= [domain.public, api_domain]"
   }
 }

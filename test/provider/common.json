@@ -1,11 +1,13 @@
 #
 # Options put here are inherited by all nodes.
-# #  "fqdn": "= name + '.' + (public_dns ? domain_public : domain_internal)"
+#
 {
   "domain": {
      "public": "rewire.co",
-     "internal": "rewire"
+     "internal": "rewire",
+     "name": "= node.name + '.' + (dns.public ? domain.public : domain.internal)"
   },
-  "public_dns": true,
-  "fqdn": "= name + '.' + (public_dns ? domain['public'] : domain['internal'])"
+  "dns": {
+    "public": "= service_type != 'internal_service'"
+  }
 }

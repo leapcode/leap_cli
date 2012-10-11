@@ -5,7 +5,8 @@
     "nat": true,
     "ca_crt": "= file 'ca/ca.crt'",
     "ca_key": "= file 'ca/ca.key'",
-    "server_crt": "= file fqdn + '.crt'",
-    "server_key": "= file fqdn + '.key'"
-  }
+    "server_crt": "= file domain.name + '.crt'",
+    "server_key": "= file domain.name + '.key'"
+  },
+  "service_type": "user_service"
 }

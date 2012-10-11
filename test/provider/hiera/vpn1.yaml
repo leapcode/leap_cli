@@ -1,8 +1,10 @@
 --- 
+dns: 
+  public: true
 domain: 
   internal: rewire
+  name: vpn1.rewire.co
   public: rewire.co
-fqdn: vpn1.rewire.co
 ip_address: 2.2.2.2
 name: vpn1
 openvpn: 
@@ -155,6 +157,6 @@ openvpn:
     -----END RSA PRIVATE KEY-----
 
 production: true
-public_dns: true
+service_type: user_service
 services: openvpn
 tags: production

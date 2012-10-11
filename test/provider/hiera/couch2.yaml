@@ -1,9 +1,11 @@
 --- 
+dns: 
+  public: false
 domain: 
   internal: rewire
+  name: couch2.rewire
   public: rewire.co
-fqdn: couch2.rewire
 ip_address: 73.45.87.11
 name: couch2
-public_dns: false
+service_type: internal_service
 services: couchdb

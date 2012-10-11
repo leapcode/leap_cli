@@ -1,26 +1,31 @@
 --- 
+dns: 
+  public: true
 domain: 
   internal: rewire
+  name: ns2.rewire.co
   public: rewire.co
-fqdn: ns2.rewire.co
 hosts: 
   private: 
-  - fqdn: couch1.rewire
+  - domain_name: couch1.rewire
     ip_address: 245.2.45.42
-  - fqdn: couch2.rewire
+  - domain_name: couch2.rewire
     ip_address: 73.45.87.11
   public: 
-  - fqdn: ns1.rewire.co
+  - domain_name: ns1.rewire.co
     ip_address: 1.1.1.1
-  - fqdn: ns2.rewire.co
+  - domain_name: ns2.rewire.co
     ip_address: 1.1.1.2
-  - fqdn: vpn1.rewire.co
+  - domain_name: vpn1.rewire.co
     ip_address: 2.2.2.2
-  - fqdn: web1.rewire.co
+  - dns_aliases: 
+    - rewire.co
+    - api.rewire.co
+    domain_name: web1.rewire.co
     ip_address: 6.6.7.7
 ip_address: 1.1.1.2
 name: ns2
 production: true
-public_dns: true
+service_type: public_service
 services: dns
 tags: production

@@ -1,0 +1,39 @@
+<%=
+  hsh = {}
+
+  # grab some fields from provider.json
+  hsh = global.provider.pick(:languages, :description, :name, :enrollment_policy)
+
+  # typically this is specified in common.json
+  hsh['domain'] = domain.public
+
+  # advertise services that are 'user services'
+  hsh['services'] = global.services[:service_type => :user_service].field(:name)
+
+  hsh['api_version'] = "1"
+  hsh['api_uri'] = "https://" + api_domain
+
+  #hsh['ca_cert_uri'] =
+  #hsh['ca_cert_fingerprint'] =
+
+  # {
+  #   "serial": 1,
+  #   "version": "0.1.0",
+  #   "domain": "springbok",
+  #   "languages": ["en"],
+  #   "display_name": {
+  #     "en": "Test Provider"
+  #   },
+  #   "description": {
+  #     "en": "This is a test provider"
+  #   },
+  #   "enrollment_policy": "open",
+  #   "services": ["eip"],
+  #   "api_version": "1.0.0",
+  #   "api_uri": "https://94.103.43.3",
+  #   "ca_cert_fingerprint": "SHA256 Fingerprint=19:F1:44:AA:57:DD:59:65:3B:07:5F:25:5D:02:D2:3F:FB:E6:A6:DA:FE:67:35:F2:7D:D7:8B:0E:BF:2B:E5:3C",
+  #   "ca_cert_uri": "https://springbok/ca.crt"
+  # }
+
+  generate_json hsh
+%>
