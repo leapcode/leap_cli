@@ -1,16 +1,16 @@
 module LeapCli
   module Commands
 
-    def self.print_config_table(type, config_list)
+    def self.print_config_table(type, object_list)
       style = {:border_x => '-', :border_y => ':', :border_i => '-', :width => 60}
 
       if type == :services
         t = table do
           self.style = style
           self.headings = ['SERVICE', 'NODES']
-          list = config_list.keys.sort
+          list = object_list.keys.sort
           list.each do |name|
-            add_row [name, config_list[name].nodes.keys.join(', ')]
+            add_row [name, object_list[name].node_list.keys.join(', ')]
             add_separator unless name == list.last
           end
         end
@@ -20,9 +20,9 @@ module LeapCli
         t = table do
           self.style = style
           self.headings = ['TAG', 'NODES']
-          list = config_list.keys.sort
+          list = object_list.keys.sort
           list.each do |name|
-            add_row [name, config_list[name].nodes.keys.join(', ')]
+            add_row [name, object_list[name].node_list.keys.join(', ')]
             add_separator unless name == list.last
           end
         end
@@ -32,9 +32,11 @@ module LeapCli
         t = table do
           self.style = style
           self.headings = ['NODE', 'SERVICES', 'TAGS']
-          list = config_list.keys.sort
+          list = object_list.keys.sort
           list.each do |name|
-            add_row [name, config_list[name].services.to_a.join(', '), config_list[name].tags.to_a.join(', ')]
+            services = object_list[name]['services'] || []
+            tags     = object_list[name]['tags'] || []
+            add_row [name, services.to_a.join(', '), tags.to_a.join(', ')]
             add_separator unless name == list.last
           end
         end

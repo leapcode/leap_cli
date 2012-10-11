@@ -44,7 +44,7 @@ class Hash
   ##
 
   #
-  # convert self into a plain hash, but only include the specified keys
+  # convert self into a hash, but only include the specified keys
   #
   def pick(*keys)
     keys.map(&:to_s).inject({}) do |hsh, key|
@@ -59,16 +59,16 @@ class Hash
   # recursive merging (aka deep merge)
   # taken from ActiveSupport::CoreExtensions::Hash::DeepMerge
   #
-  # def deep_merge(other_hash)
-  #   self.merge(other_hash) do |key, oldval, newval|
-  #     oldval = oldval.to_hash if oldval.respond_to?(:to_hash)
-  #     newval = newval.to_hash if newval.respond_to?(:to_hash)
-  #     oldval.class.to_s == 'Hash' && newval.class.to_s == 'Hash' ? oldval.deep_merge(newval) : newval
-  #   end
-  # end
+  def deep_merge(other_hash)
+    self.merge(other_hash) do |key, oldval, newval|
+      oldval = oldval.to_hash if oldval.respond_to?(:to_hash)
+      newval = newval.to_hash if newval.respond_to?(:to_hash)
+      oldval.class.to_s == 'Hash' && newval.class.to_s == 'Hash' ? oldval.deep_merge(newval) : newval
+    end
+  end
 
-  # def deep_merge!(other_hash)
-  #   replace(deep_merge(other_hash))
-  # end
+  def deep_merge!(other_hash)
+    replace(deep_merge(other_hash))
+  end
 
 end

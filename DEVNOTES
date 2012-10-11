@@ -1,3 +1,10 @@
+Schema
+======================
+
+service:
+  service_type: [user_service | public_service | internal_service]
+
+
 Features to add
 ==========================
 

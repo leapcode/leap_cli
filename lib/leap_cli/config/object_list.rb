@@ -1,10 +1,13 @@
 module LeapCli
   module Config
-    class List < Hash
+    #
+    # A list of Config::Object instances (internally stored as a hash)
+    #
+    class ObjectList < Hash
 
       def initialize(config=nil)
         if config
-          self << config
+          self.add(config['name'], config)
         end
       end
 
@@ -19,7 +22,7 @@ module LeapCli
       #
       def [](key)
         if key.is_a? Hash
-          results = List.new
+          results = Config::ObjectList.new
           field, match_value = key.to_a.first
           field = field.is_a?(Symbol) ? field.to_s : field
           match_value = match_value.is_a?(Symbol) ? match_value.to_s : match_value
@@ -43,14 +46,19 @@ module LeapCli
         end
       end
 
-      def <<(config)
-        if config.is_a? Config::List
-          self.deep_merge!(config)
-        elsif config['name']
-          self[config['name']] = config
-        else
-          raise ArgumentError.new('argument must be a Config::Base or a Config::List')
-        end
+
+      # def <<(object)
+      #   if object.is_a? Config::ObjectList
+      #     self.merge!(object)
+      #   elsif object['name']
+      #     self[object['name']] = object
+      #   else
+      #     raise ArgumentError.new('argument must be a Config::Object or a Config::ObjectList')
+      #   end
+      # end
+
+      def add(name, object)
+        self[name] = object
       end
 
       #
@@ -71,7 +79,7 @@ module LeapCli
         field = field.to_s
         result = []
         keys.sort.each do |name|
-          result << self[name][field]
+          result << self[name].get(field)
         end
         result
       end

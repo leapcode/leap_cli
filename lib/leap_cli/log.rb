@@ -42,3 +42,8 @@ def help!(message=nil)
   ENV['GLI_DEBUG'] = "false"
   help_now!(message)
 end
+
+def fail!(message=nil)
+  ENV['GLI_DEBUG'] = "false"
+  exit_now!(message)
+end

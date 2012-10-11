@@ -30,7 +30,7 @@ module LeapCli
       if Path.ok?
         true
       else
-        exit_now!("Could not find the root directory. Change current working directory or try --root")
+        fail!("Could not find the root directory. Change current working directory or try --root")
       end
     end
 

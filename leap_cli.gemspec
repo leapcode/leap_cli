@@ -40,7 +40,7 @@ spec = Gem::Specification.new do |s|
   #s.add_development_dependency('aruba')
 
   s.add_runtime_dependency('gli','~> 2.3')
-  s.add_runtime_dependency('oj')
+  s.add_runtime_dependency('json_pure')
   s.add_runtime_dependency('terminal-table')
   s.add_runtime_dependency('highline')
 end
