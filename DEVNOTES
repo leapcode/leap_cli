@@ -44,8 +44,9 @@ useful liberaries
 notes to myself
 
 user interaction
+  gli -- http://davetron5000.github.com/gli/rdoc/classes/GLI/DSL.html
   readline
-  highline
+  highline  https://github.com/JEG2/highline/tree/master/examples
   terminal-tables
   rainbow
   http://stackoverflow.com/questions/9577718/what-ruby-libraries-should-i-use-for-building-a-console-based-application
@@ -58,13 +59,11 @@ help
   ronn -- write man pages in markdown
 
 push examples
+
   https://github.com/net-ssh/net-ssh
   https://github.com/seattlerb/rake-remote_task
     http://docs.seattlerb.org/rake-remote_task/
     https://github.com/seattlerb/rake-remote_task/blob/master/lib/rake/remote_task.rb
-  https://github.com/davidwinter/sooty
-    push puppet with rake/remote_task
-    https://github.com/davidwinter/sooty/blob/master/lib/sooty.rb
   calling rsync from ruby
     https://github.com/RichGuk/rrsync/blob/master/rrsync.rb
     http://rubyforge.org/projects/six-rsync/
@@ -73,4 +72,96 @@ push examples
   parallel shell
     https://github.com/delano/rye
     https://github.com/adamwiggins/rush
+
+ssh keygen
+  https://github.com/duritong/puppet-sshd/blob/master/lib/puppet/parser/functions/ssh_keygen.rb
+
+invoke puppet
+  https://github.com/davidwinter/sooty/blob/master/lib/sooty.rb
+
+
+ssh
+================================
+
+fingerprints
+--------------------
+
+ssh-keygen -lf <keyfile> tells you the fingerprint of an encryption key
+
+  ls -1 /etc/ssh/*key*
+  /etc/ssh/ssh_host_dsa_key
+  /etc/ssh/ssh_host_dsa_key.pub
+  /etc/ssh/ssh_host_rsa_key
+  /etc/ssh/ssh_host_rsa_key.pub
+
+fetch the public host ida of a bunch of nodes:
+  ssh-keyscan -t rsa <host list>
+
+ssh certificate authority
+----------------------------------
+
+maybe wait off on this: "The certificate cert format seems to have changed between 5.5 and 6.0"
+
+search for "ssh-keygen -s"
+
+http://blog.habets.pp.se/2011/07/OpenSSH-certificates
+http://en.community.dell.com/techcenter/b/techcenter/archive/2011/09/08/setting-up-certificate-authority-keys-with-openssh-version-5-4.aspx
+http://serverfault.com/questions/264515/how-to-revoke-an-ssh-certificate-not-ssh-identity-file
+
+ruby
+---------------
+
+ruby net::ssh
+
+      def generate_key_fingerprint(key)
+        blob = Net::SSH::Buffer.from(:key, key).to_s
+        fingerprint = OpenSSL::Digest::MD5.hexdigest(blob).scan(/../).join(":")
+
+        [blob, fingerprint]
+      rescue ::Exception => e
+        [nil, "(could not generate fingerprint: #{e.message})"]
+      end
+
+      def exchange_keys
+        result = send_kexinit
+        verify_server_key(result[:server_key])
+        session_id = verify_signature(result)
+        confirm_newkeys
+
+        return { :session_id        => session_id,
+                 :server_key        => result[:server_key],
+                 :shared_secret     => result[:shared_secret],
+                 :hashing_algorithm => digester }
+      end
+
+DNS
+======================================
+
+problem: we want to be able to refer to the nodes by hostname (in a variety of programs) without requiring an external dns server.
+
+idea:
+
+   simple lightweight ruby dns server -- https://github.com/ioquatix/rubydns
+   another ruby dns server (eventmachine) -- https://github.com/nricciar/em-dns-server
+
+   modify /etc/resolveconf/resolve.conf.d/tail with
+     nameserver locahost
+   maybe like this:
+     resolveconf -a eth0.leap 'nameserver localhost'
+
+   the problem is that there is probably already a resolving nameserver living at localhost.
+   linux doesn't appear to have a way to let you specify the port number for dns lookups (unlike bsd). boo
+
+   a few other possibilies:
+   * alter /etc/hosts
+   * alter dnsmasq to use additional /etc/hosts files (simple switch for this). dnsmasq is running on my desktop, although there is no /etc/dnsmasq.
+   * write a libnss_ruby or something that would let you use a custom db for /etc/nsswitch.conf
+     see http://uw714doc.sco.com/en/SEC_admin/nssover.html
+
+ssh solution:
+
+  ssh -l root -o "HostName=10.9.8.7" -o "HostKeyAlias=server_a" server_a
+..
+
+
 

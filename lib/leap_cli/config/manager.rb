@@ -3,6 +3,7 @@ require 'yaml'
 
 module LeapCli
   module Config
+
     #
     # A class to manage all the objects in all the configuration files.
     #
@@ -32,15 +33,16 @@ module LeapCli
       # save compiled hiera .yaml files
       #
       def export(dir)
-        Dir.glob(dir + '/*.yaml').each do |f|
-          File.unlink(f)
-        end
+        existing_files = Dir.glob(dir + '/*.yaml')
+        updated_files = []
         @nodes.each do |name, node|
           # not sure if people will approve of this change:
-          # File.open("#{dir}/#{name}.#{node.domain_internal}.yaml", 'w') do |f|
-          File.open("#{dir}/#{name}.yaml", 'w') do |f|
-            f.write node.to_yaml
-          end
+          filepath = "#{dir}/#{name}.yaml"
+          updated_files << filepath
+          Util::write_file!(filepath, node.to_yaml)
+        end
+        (existing_files - updated_files).each do |filepath|
+          Util::remove_file!(filepath)
         end
       end
 
@@ -99,7 +101,7 @@ module LeapCli
       end
 
       def load_json(filename, config_type)
-        log2 { filename.sub(/^#{Regexp.escape(Path.root)}/,'') }
+        #log2 { filename.sub(/^#{Regexp.escape(Path.root)}/,'') }
 
         #
         # read file, strip out comments

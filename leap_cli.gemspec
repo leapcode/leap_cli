@@ -43,4 +43,6 @@ spec = Gem::Specification.new do |s|
   s.add_runtime_dependency('json_pure')
   s.add_runtime_dependency('terminal-table')
   s.add_runtime_dependency('highline')
+  s.add_runtime_dependency('gpgme')
+
 end

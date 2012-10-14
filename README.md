@@ -77,9 +77,35 @@ Options in the configuration files might be nested. For example:
       }
     }
 
-When compiled into hiera and made available in puppet, this becomes a Hash object with flattened keys:
+If the value string is prefixed with an '=' character, the value is evaluated as ruby. For example
 
-    {"openvpn.ip_address" => "1.1.1.1"}
+    {
+      "domain": {
+        "public": "domain.org"
+      }
+      "api_domain": "= 'api.' + domain.public"
+    }
+
+In this case, "api_domain" will be set to "api.domain.org".
+
+The following methods are available to the evaluated ruby:
+
+* nodes -- A list of all nodes. This list can be filtered.
+
+* global.services -- A list of all services.
+
+* global.tags -- A list of all tags.
+
+* file(file_path) -- Inserts the full contents of the file. If the file is an erb
+  template, it is rendered. The file is searched for by first checking platform
+  and then provider/files,
+
+* variable -- Any variable inherited by a particular node is available
+  by just referencing it using either hash notation or object notation
+  (i.e. self['domain']['public'] or domain.public). Circular
+  references are not allowed, but otherwise it is ok to nest
+  evaluated values in other evaluated values.
+
 
 Node Configuration
 =================================

@@ -7,7 +7,7 @@ module LeapCli
       c.action do |global_options,options,args|
         directory = args.first
         unless directory && directory.any?
-          help_now! "Directory name is required."
+          help! "Directory name is required."
         end
         directory = File.expand_path(directory)
         if File.exists?(directory)

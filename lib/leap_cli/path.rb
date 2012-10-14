@@ -36,16 +36,6 @@ module LeapCli
       raise "No such directory '#{@root}'" unless File.directory?(@root)
     end
 
-    def self.ensure_dir(dir)
-      unless File.directory?(dir)
-        if File.exists?(dir)
-          raise 'Unable to create directory "%s", file already exists.' % dir
-        else
-          FileUtils.mkdir_p(dir)
-        end
-      end
-    end
-
     def self.find_file(name, filename)
       path = [Path.files, filename].join('/')
       return path if File.exists?(path)

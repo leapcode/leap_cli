@@ -7,7 +7,7 @@ module LeapCli
 
     desc 'Verbosity level 0..2'
     arg_name 'level'
-    default_value '0'
+    default_value '1'
     flag [:v, :verbose]
 
     desc 'Specify the root directory'
@@ -30,7 +30,7 @@ module LeapCli
       if Path.ok?
         true
       else
-        fail!("Could not find the root directory. Change current working directory or try --root")
+        bail!("Could not find the root directory. Change current working directory or try --root")
       end
     end
 

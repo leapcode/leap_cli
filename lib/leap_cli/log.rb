@@ -1,14 +1,18 @@
 module LeapCli
+  extend self
 
-  def self.log_level
+  def log_level
     @log_level
   end
 
-  def self.log_level=(value)
+  def log_level=(value)
     @log_level = value
   end
-
 end
+
+##
+## LOGGING
+##
 
 def log0(message=nil, &block)
   if message
@@ -38,12 +42,7 @@ def log2(message=nil, &block)
   end
 end
 
-def help!(message=nil)
-  ENV['GLI_DEBUG'] = "false"
-  help_now!(message)
+def progress(message)
+  log1(" * " + message)
 end
 
-def fail!(message=nil)
-  ENV['GLI_DEBUG'] = "false"
-  exit_now!(message)
-end
