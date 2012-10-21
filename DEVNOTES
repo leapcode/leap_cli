@@ -45,6 +45,7 @@ notes to myself
 
 user interaction
   gli -- http://davetron5000.github.com/gli/rdoc/classes/GLI/DSL.html
+  sub -- https://github.com/37signals/sub
   readline
   highline  https://github.com/JEG2/highline/tree/master/examples
   terminal-tables
@@ -108,6 +109,29 @@ http://blog.habets.pp.se/2011/07/OpenSSH-certificates
 http://en.community.dell.com/techcenter/b/techcenter/archive/2011/09/08/setting-up-certificate-authority-keys-with-openssh-version-5-4.aspx
 http://serverfault.com/questions/264515/how-to-revoke-an-ssh-certificate-not-ssh-identity-file
 
+agent forwarding
+---------------------------------
+
+http://lyte.id.au/2012/03/19/ssh-agent-forwarding-is-a-bug/
+
+instead:
+
+  home$ ssh -o 'ProxyCommand ssh you@hop1 nc %h %p' ssh you@hop2
+  hop2$
+
+
+
+known_hosts
+----------------
+
+man sshd, search for known_hosts
+
+StrictHostKeyChecking="yes"
+
+@revoked -- should we put revoked keys in known_hosts, and when/how...
+
+@cert-authority -- should we use it?
+
 ruby
 ---------------
 
@@ -163,5 +187,10 @@ ssh solution:
   ssh -l root -o "HostName=10.9.8.7" -o "HostKeyAlias=server_a" server_a
 ..
 
+
+MISC
+====================
+
+http://skim.la/2012/01/16/rsa-public-key-interoperability-between-ruby-and-android/
 
 
