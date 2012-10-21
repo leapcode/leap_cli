@@ -85,6 +85,13 @@ module LeapCli
         return node_list
       end
 
+      #
+      # returns a single Config::Object that corresponds to a Node.
+      #
+      def node(name)
+        nodes[name]
+      end
+
       private
 
       def load_all_json(pattern, config_type = :class)

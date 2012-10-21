@@ -13,7 +13,7 @@ require 'gpgme'
 module LeapCli
   module Commands
 
-    desc 'adds a new trusted sysadmin'
+    desc 'Adds a new trusted sysadmin'
     arg_name '<username>', :optional => false, :multiple => false
     command :'add-user' do |c|
 
@@ -47,11 +47,12 @@ module LeapCli
         assert!(pgp_pub_key, 'Sorry, could not find OpenPGP public key.')
 
         if ssh_pub_key
-          write_file!(:user_ssh, username, ssh_pub_key)
+          write_file!([:user_ssh, username], ssh_pub_key)
         end
         if pgp_pub_key
-          write_file!(:user_pgp, username, pgp_pub_key)
+          write_file!([:user_pgp, username], pgp_pub_key)
         end
+
       end
     end
 
