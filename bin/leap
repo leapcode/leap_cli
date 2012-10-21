@@ -45,7 +45,6 @@ module LeapCli::Commands
   @terminal = HighLine.new
   def_delegator :@terminal, :ask, 'self.ask'
   def_delegator :@terminal, :agree, 'self.agree'
-  def_delegator :@terminal, :ask, 'self.ask'
   def_delegator :@terminal, :choose, 'self.choose'
   def_delegator :@terminal, :say, 'self.say'
 
