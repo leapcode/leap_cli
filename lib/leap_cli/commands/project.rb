@@ -1,9 +1,10 @@
 module LeapCli
   module Commands
-    desc 'Creates a new provider configuration directory.'
+
+    desc 'Creates a new provider directory.'
     arg_name '<directory>'
     skips_pre
-    command :init do |c|
+    command :'new-provider' do |c|
       c.action do |global_options,options,args|
         directory = args.first
         unless directory && directory.any?
