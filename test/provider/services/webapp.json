@@ -8,8 +8,8 @@
     "eip_service": "file('service-definitions/eip-service.json.erb')"
   },
   "service_type": "public_service",
-  "api_domain": "= 'api.' + domain.public",
+  "api_domain": "= 'api.' + domain.full_suffix",
   "dns": {
-    "aliases": "= [domain.public, api_domain]"
+    "aliases": "= [domain.full, api_domain]"
   }
 }

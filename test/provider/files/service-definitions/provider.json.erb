@@ -5,7 +5,7 @@
   hsh = global.provider.pick(:languages, :description, :name, :enrollment_policy)
 
   # typically this is specified in common.json
-  hsh['domain'] = domain.public
+  hsh['domain'] = domain.full_suffix
 
   # advertise services that are 'user services'
   hsh['services'] = global.services[:service_type => :user_service].field(:name)
