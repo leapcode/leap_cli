@@ -44,8 +44,12 @@ spec = Gem::Specification.new do |s|
   s.add_runtime_dependency('terminal-table')
   s.add_runtime_dependency('highline')
 
-  # other gems
-  s.add_runtime_dependency('net-ssh')   # used for setting up ssh keys (but also required by other gems we use)
+  # network gems
+  s.add_runtime_dependency('net-ssh')
+  s.add_runtime_dependency('capistrano')
+  #s.add_runtime_dependency('supply_drop')
+
+  # misc gems
   s.add_runtime_dependency('json_pure') # we use this json library for output so we can keep the keys sorted.
   s.add_runtime_dependency('gpgme')     # not essential, but used for some minor stuff in adding sysadmins
 

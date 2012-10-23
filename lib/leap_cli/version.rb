@@ -1,3 +1,5 @@
 module LeapCli
-  VERSION = '0.0.1'
+  unless defined?(LeapCli::VERSION)
+    VERSION = '0.0.1'
+  end
 end

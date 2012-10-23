@@ -1,0 +1,4 @@
+**/*/.vagrant
+*.gem
+*.swp
+**/*/puppet_output.txt

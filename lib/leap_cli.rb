@@ -1,10 +1,6 @@
 module LeapCli; end
 
-unless defined?(LeapCli::VERSION)
-  # ^^ I am not sure why this is needed.
-  require 'leap_cli/version.rb'
-end
-
+require 'leap_cli/version.rb'
 require 'core_ext/hash'
 require 'core_ext/boolean'
 require 'core_ext/nil'
