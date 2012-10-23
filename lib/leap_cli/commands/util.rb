@@ -130,7 +130,7 @@ module LeapCli; module Commands
 
   def parse_node_list(nodes)
     if nodes.is_a? Config::Object
-      Config::ObjectList.new(node_list)
+      Config::ObjectList.new(nodes)
     elsif nodes.is_a? Config::ObjectList
       nodes
     elsif nodes.is_a? String
