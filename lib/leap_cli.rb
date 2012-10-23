@@ -21,3 +21,10 @@ unless String.method_defined?(:to_a)
     def to_a; [self]; end
   end
 end
+
+unless String.method_defined?(:any?)
+  class String
+    def any?; self.chars.any?; end
+  end
+end
+
