@@ -84,19 +84,7 @@ invoke puppet
 ssh
 ================================
 
-fingerprints
---------------------
-
-ssh-keygen -lf <keyfile> tells you the fingerprint of an encryption key
-
-  ls -1 /etc/ssh/*key*
-  /etc/ssh/ssh_host_dsa_key
-  /etc/ssh/ssh_host_dsa_key.pub
-  /etc/ssh/ssh_host_rsa_key
-  /etc/ssh/ssh_host_rsa_key.pub
-
-fetch the public host ida of a bunch of nodes:
-  ssh-keyscan -t rsa <host list>
+http://mostlyobvio.us/2012/06/optimize-your-ssh-experience/
 
 ssh certificate authority
 ----------------------------------
@@ -119,17 +107,11 @@ instead:
   home$ ssh -o 'ProxyCommand ssh you@hop1 nc %h %p' ssh you@hop2
   hop2$
 
-
-
 known_hosts
 ----------------
 
 man sshd, search for known_hosts
-
-StrictHostKeyChecking="yes"
-
 @revoked -- should we put revoked keys in known_hosts, and when/how...
-
 @cert-authority -- should we use it?
 
 ruby
