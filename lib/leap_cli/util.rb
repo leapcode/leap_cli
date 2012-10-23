@@ -1,4 +1,4 @@
-require 'md5'
+require 'digest/md5'
 
 module LeapCli
 
