@@ -20,6 +20,11 @@ module LeapCli
       # set verbosity
       #
       LeapCli.log_level = global[:verbose].to_i
+      if LeapCli.log_level > 1
+        ENV['GLI_DEBUG'] = "true"
+      else
+        ENV['GLI_DEBUG'] = "false"
+      end
 
       #
       # require a root directory

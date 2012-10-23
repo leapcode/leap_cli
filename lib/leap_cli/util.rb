@@ -2,13 +2,6 @@ require 'md5'
 
 module LeapCli
 
-  class FileMissing < Exception
-    attr_reader :file_path
-    def initialize(file_path)
-      @file_path = file_path
-    end
-  end
-
   module Util
     extend self
 
@@ -29,8 +22,8 @@ module LeapCli
     # quit with a message that we are bailing out.
     #
     def bail!(message="")
-      say(message)
-      say("Bailing out.")
+      puts(message)
+      puts("Bailing out.")
       raise SystemExit.new
       #ENV['GLI_DEBUG'] = "false"
       #exit_now!(message)
@@ -40,7 +33,7 @@ module LeapCli
     # quit with no message
     #
     def quit!(message='')
-      say(message)
+      puts(message)
       raise SystemExit.new
     end
 
@@ -111,76 +104,58 @@ module LeapCli
       end
     end
 
-    NAMED_PATHS = {
-      :user_ssh => 'users/#{arg}/#{arg}_ssh.pub',
-      :user_pgp => 'users/#{arg}/#{arg}_pgp.pub',
-      :hiera => 'hiera/#{arg}.yaml',
-      :node_ssh_pub_key => 'files/nodes/#{arg}/#{arg}_ssh_key.pub',
-      :known_hosts => 'files/ssh/known_hosts',
-      :authorized_keys => 'files/ssh/authorized_keys'
-    }
+    ##
+    ## FILE READING, WRITING, DELETING, and MOVING
+    ##
 
-    def read_file!(*args)
-      begin
-        try_to_read_file!(*args)
-      rescue FileMissing => exc
+    #
+    # All file read and write methods support using named paths in the place of an actual file path.
+    #
+    # To call using a named path, use a symbol in the place of filepath, like so:
+    #
+    #   read_file(:known_hosts)
+    #
+    # In some cases, the named path will take an argument. In this case, set the filepath to be an array:
+    #
+    #   write_file!([:user_ssh, 'bob'], ssh_key_str)
+    #
+    # To resolve a named path, use the shortcut helper 'path()'
+    #
+    #   path([:user_ssh, 'bob'])  ==>   files/users/bob/bob_ssh_pub.key
+    #
+
+    def read_file!(filepath)
+      filepath = Path.named_path(filepath)
+      if !File.exists?(filepath)
         bail!("File '%s' does not exist." % exc.file_path)
-      end
-    end
-
-    def read_file(*args)
-      begin
-        try_to_read_file!(*args)
-      rescue FileMissing => exc
-        return nil
-      end
-    end
-
-    #
-    # Three ways to call:
-    #
-    # - write_file!(file_path, file_contents)
-    # - write_file!(named_path, file_contents)
-    # - write_file!(named_path, file_contents, argument)  -- deprecated
-    # - write_file!([named_path, argument], file_contents)
-    #
-    #
-    def write_file!(*args)
-      if args.first.is_a? Symbol
-        write_named_file!(*args)
-      elsif args.first.is_a? Array
-        write_named_file!(args.first[0], args.last, args.first[1])
       else
-        write_to_path!(*args)
+        File.read(filepath)
       end
     end
 
-    def remove_file!(file_path)
-      if File.exists?(file_path)
-        File.unlink(file_path)
-        progress_removed(file_path)
+    def read_file(filepath)
+      filepath = Path.named_path(filepath)
+      if !File.exists?(filepath)
+        nil
+      else
+        File.read(filepath)
       end
     end
 
-    #
-    # saves a named file.
-    #
-    def write_named_file!(name, contents, arg=nil)
-      fullpath = named_path(name, arg)
-      write_to_path!(fullpath, contents)
+    def remove_file!(filepath)
+      filepath = Path.named_path(filepath)
+      if File.exists?(filepath)
+        File.unlink(filepath)
+        progress_removed(filepath)
+      end
     end
 
-    def named_path(name, arg=nil)
-      assert!(NAMED_PATHS[name], "Error, I don't know the path for :#{name} (with argument '#{arg}')")
-      filename = eval('"' + NAMED_PATHS[name] + '"')
-      fullpath = Path.provider + '/' + filename
-    end
-
-    def write_to_path!(filepath, contents)
+    def write_file!(filepath, contents)
+      filepath = Path.named_path(filepath)
       ensure_dir File.dirname(filepath)
       existed = File.exists?(filepath)
       if existed
-        if file_content_is?(filepath, contents)
+        if file_content_equals?(filepath, contents)
           progress_nochange filepath
           return
         end
@@ -197,32 +172,25 @@ module LeapCli
       end
     end
 
-    private
+    #def rename_file(filepath)
+    #end
 
-    def file_content_is?(filepath, contents)
+    #private
+
+    ##
+    ## PRIVATE HELPER METHODS
+    ##
+
+    #
+    # compares md5 fingerprints to see if the contents of a file match the string we have in memory
+    #
+    def file_content_equals?(filepath, contents)
+      filepath = Path.named_path(filepath)
       output = `md5sum '#{filepath}'`.strip
       if $?.to_i == 0
         return output.split(" ").first == MD5.md5(contents).to_s
       else
         return false
-      end
-    end
-
-    #
-    # trys to read a file, raise exception if the file doesn't exist.
-    #
-    def try_to_read_file!(*args)
-      if args.first.is_a? Symbol
-        file_path = named_path(args.first)
-      elsif args.first.is_a? Array
-        file_path = named_path(*args.first)
-      else
-        file_path = args.first
-      end
-      if !File.exists?(file_path)
-        raise FileMissing.new(file_path)
-      else
-        File.read(file_path)
       end
     end
 

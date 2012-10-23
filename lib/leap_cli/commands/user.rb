@@ -1,13 +1,14 @@
 require 'gpgme'
 
 #
-# notes:
+# perhaps we want to verify that the key files are actually the key files we expect.
+# we could use 'file' for this:
 #
-# file ~/.gnupg/00440025.asc
-# /home/elijah/.gnupg/00440025.asc: PGP public key block
+# > file ~/.gnupg/00440025.asc
+# ~/.gnupg/00440025.asc: PGP public key block
 #
-# file ~/.ssh/id_rsa.pub
-# /home/elijah/.ssh/id_rsa.pub: OpenSSH RSA public key
+# > file ~/.ssh/id_rsa.pub
+# ~/.ssh/id_rsa.pub: OpenSSH RSA public key
 #
 
 module LeapCli
@@ -101,6 +102,14 @@ module LeapCli
 
       # export with signatures removed:
       return `gpg --armor --export-options export-minimal --export #{key_id}`.strip
+    end
+
+    def update_authorized_keys
+      buffer = StringIO.new
+      Dir.glob(path([:user_ssh, '*'])).each do |keyfile|
+        buffer << File.read(keyfile)
+      end
+      write_file!(:authorized_keys, buffer.string)
     end
 
   end

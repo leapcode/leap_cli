@@ -18,12 +18,16 @@ module LeapCli
       #
       # load .json configuration files
       #
-      def load(dir)
-        @services = load_all_json("#{dir}/services/*.json")
-        @tags     = load_all_json("#{dir}/tags/*.json")
-        @common   = load_all_json("#{dir}/common.json")['common']
-        @provider = load_all_json("#{dir}/provider.json")['provider']
-        @nodes    = load_all_json("#{dir}/nodes/*.json")
+      def load(provider_dir=Path.provider)
+        @services = load_all_json(Path.named_path( [:service_config, '*'], provider_dir ))
+        @tags     = load_all_json(Path.named_path( [:tag_config, '*'],     provider_dir ))
+        @common   = load_all_json(Path.named_path( :common_config,         provider_dir ))['common']
+        @provider = load_all_json(Path.named_path( :provider_config,       provider_dir ))['provider']
+        @nodes    = load_all_json(Path.named_path( [:node_config, '*'],    provider_dir ))
+
+        Util::assert!(@provider, "Failed to load provider.json")
+        Util::assert!(@common, "Failed to load common.json")
+
         @nodes.each do |name, node|
           @nodes[name] = apply_inheritance(node)
         end
@@ -32,11 +36,10 @@ module LeapCli
       #
       # save compiled hiera .yaml files
       #
-      def export(dir)
+      def export(dir=Path.named_path(:hiera_dir))
         existing_files = Dir.glob(dir + '/*.yaml')
         updated_files = []
         @nodes.each do |name, node|
-          # not sure if people will approve of this change:
           filepath = "#{dir}/#{name}.yaml"
           updated_files << filepath
           Util::write_file!(filepath, node.to_yaml)
@@ -82,6 +85,15 @@ module LeapCli
             node_list.merge!(nodes_for_name(filter))
           end
         end
+        return node_list
+      end
+
+      #
+      # same as filter(), but exits if there is no matching nodes
+      #
+      def filter!(filters)
+        node_list = filter(filters)
+        Util::assert! node_list.any?, "Could not match any nodes from '#{filters}'"
         return node_list
       end
 

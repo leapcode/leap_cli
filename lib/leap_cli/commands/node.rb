@@ -3,6 +3,10 @@ require 'tempfile'
 
 module LeapCli; module Commands
 
+  ##
+  ## COMMANDS
+  ##
+
   #desc 'Create a new configuration for a node'
   #command :'new-node' do |c|
   #  c.action do |global_options,options,args|
@@ -13,12 +17,14 @@ module LeapCli; module Commands
   arg_name '<node-name>', :optional => false, :multiple => false
   command :'init-node' do |c|
     c.action do |global_options,options,args|
-      node_name = args.first
-      node = manager.node(node_name)
-      assert!(node, "Node '#{node_name}' not found.")
-      progress("Pinging #{node.name}")
-      assert_run!("ping -W 1 -c 1 #{node.ip_address}", "Could not ping #{node_name} (address #{node.ip_address}). Try again, we only send a single ping.")
-      install_public_host_key(node)
+      node = get_node_from_args(args)
+      ping_node(node)
+      save_public_host_key(node)
+      update_compiled_ssh_configs
+      ssh_connect(node, :bootstrap => true) do |ssh|
+        ssh.install_authorized_keys
+        ssh.install_prerequisites
+      end
     end
   end
 
@@ -29,21 +35,65 @@ module LeapCli; module Commands
   end
 
   desc 'not yet implemented'
+  arg_name '<node-name>', :optional => false, :multiple => false
   command :'rm-node' do |c|
     c.action do |global_options,options,args|
+      remove_file!()
     end
   end
+
+  ##
+  ## PUBLIC HELPERS
+  ##
+
+  #
+  # generates the known_hosts file.
+  #
+  # we do a 'late' binding on the hostnames and ip part of the ssh pub key record in order to allow
+  # for the possibility that the hostnames or ip has changed in the node configuration.
+  #
+  def update_known_hosts
+    buffer = StringIO.new
+    manager.nodes.values.each do |node|
+      hostnames = [node.name, node.domain.internal, node.domain.full, node.ip_address].join(',')
+      pub_key = read_file([:node_ssh_pub_key,node.name])
+      if pub_key
+        buffer << [hostnames, pub_key].join(' ')
+      end
+    end
+    write_file!(:known_hosts, buffer.string)
+  end
+
+  def get_node_from_args(args)
+    node_name = args.first
+    node = manager.node(node_name)
+    assert!(node, "Node '#{node_name}' not found.")
+    node
+  end
+
+  private
+
+  ##
+  ## PRIVATE HELPERS
+  ##
 
   #
   # saves the public ssh host key for node into the provider directory.
   #
   # see `man sshd` for the format of known_hosts
   #
-  def install_public_host_key(node)
+  def save_public_host_key(node)
     progress("Fetching public SSH host key for #{node.name}")
     public_key, key_type = get_public_key_for_ip(node.ip_address)
-    if key_in_known_hosts?(public_key, [node.name, node.ip_address, node.domain.name])
-      progress("Public ssh host key for #{node.name} is already trusted (key found in known_hosts)")
+    pub_key_path = Path.named_path([:node_ssh_pub_key, node.name])
+    if Path.exists?(pub_key_path)
+      if file_content_equals?(pub_key_path, node_pub_key_contents(key_type, public_key))
+        progress("Public SSH host key for #{node.name} has not changed")
+      else
+        bail!("WARNING: The public SSH host key we just fetched for #{node.name} doesn't match what we have saved previously. Remove the file #{pub_key_path} if you really want to change it.")
+      end
+    elsif key_in_known_hosts?(public_key, [node.name, node.ip_address, node.domain.name])
+      progress("Public SSH host key for #{node.name} is trusted (key found in your ~/.ssh/known_hosts)")
     else
       fingerprint, bits = ssh_key_fingerprint(key_type, public_key)
       puts
@@ -55,12 +105,9 @@ module LeapCli; module Commands
         bail!
       else
         puts
-        # we write the file without ipaddress or hostname, because these might change later, but we want to keep the same key.
-        write_file!([:node_ssh_pub_key, node.name], [key_type, public_key].join(' '))
-        update_known_hosts
+        write_file!([:node_ssh_pub_key, node.name], node_pub_key_contents(key_type, public_key))
       end
     end
-
   end
 
   def get_public_key_for_ip(address)
@@ -93,6 +140,10 @@ module LeapCli; module Commands
   #
   # gets a fingerprint for a key string
   #
+  # i think this could better be done this way:
+  # blob = Net::SSH::Buffer.from(:key, key).to_s
+  # fingerprint = OpenSSL::Digest::MD5.hexdigest(blob).scan(/../).join(":")
+  #
   def ssh_key_fingerprint(type, key)
     assert_bin!('ssh-keygen')
     file = Tempfile.new('leap_cli_public_key_')
@@ -110,22 +161,19 @@ module LeapCli; module Commands
     end
   end
 
+  def ping_node(node)
+    progress("Pinging #{node.name}")
+    assert_run!("ping -W 1 -c 1 #{node.ip_address}", "Could not ping #{node.name} (address #{node.ip_address}). Try again, we only send a single ping.")
+  end
+
   #
-  # generates the known_hosts file.
+  # returns a string that can be used for the contents of the files/nodes/x/x_ssh_key.pub file
   #
-  # we do a 'late' binding on the hostnames and ip part of the ssh pub key record in order to allow
-  # for the possibility that the hostnames or ip has changed in the node configuration.
+  # We write the file without ipaddress or hostname, because these might change later.
+  # The ip and host is added at when compiling the combined known_hosts file.
   #
-  def update_known_hosts
-    buffer = StringIO.new
-    manager.nodes.values.each do |node|
-      hostnames = [node.name, node.domain.internal, node.domain.full, node.ip_address].join(',')
-      pub_key = read_file([:node_ssh_pub_key,node.name])
-      if pub_key
-        buffer << [hostnames, pub_key].join(' ')
-      end
-    end
-    write_file!(:known_hosts, buffer.string)
+  def node_pub_key_contents(key_type, public_key)
+    [key_type, public_key].join(' ')
   end
 
 end; end
