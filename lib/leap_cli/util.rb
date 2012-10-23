@@ -188,7 +188,7 @@ module LeapCli
       filepath = Path.named_path(filepath)
       output = `md5sum '#{filepath}'`.strip
       if $?.to_i == 0
-        return output.split(" ").first == MD5.md5(contents).to_s
+        return output.split(" ").first == Digest::MD5.hexdigest(contents).to_s
       else
         return false
       end
