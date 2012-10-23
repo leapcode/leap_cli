@@ -45,7 +45,7 @@ module LeapCli
         end
 
         assert!(ssh_pub_key, 'Sorry, could not find SSH public key.')
-        assert!(pgp_pub_key, 'Sorry, could not find OpenPGP public key.')
+        #assert!(pgp_pub_key, 'Sorry, could not find OpenPGP public key.')
 
         if ssh_pub_key
           write_file!([:user_ssh, username], ssh_pub_key)

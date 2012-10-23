@@ -127,7 +127,7 @@ module LeapCli
     def read_file!(filepath)
       filepath = Path.named_path(filepath)
       if !File.exists?(filepath)
-        bail!("File '%s' does not exist." % exc.file_path)
+        bail!("File '%s' does not exist." % filepath)
       else
         File.read(filepath)
       end
