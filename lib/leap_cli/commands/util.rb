@@ -52,15 +52,15 @@ module LeapCli; module Commands
     cap.set :ssh_options, ssh_options
     cap.set :use_sudo, false # we may want to change this in the future
 
-    # supply drop options
-    cap.set :puppet_source, [Path.platform, 'puppet'].join('/')
-    cap.set :puppet_destination, '/root/leap'
-    #cap.set :puppet_command, 'puppet apply'
-    cap.set :puppet_lib, "puppet/modules"
-    cap.set :puppet_parameters, '--confdir=puppet puppet/manifests/site.pp'
-    #cap.set :puppet_stream_output, false
-    #puppet apply --confdir=puppet puppet/manifests/site.pp  | grep -v 'warning:.*is deprecated'
-    #puppet_cmd = "cd #{puppet_destination} && #{sudo_cmd} #{puppet_command} --modulepath=#{puppet_lib} #{puppet_parameters}"
+    # # supply drop options
+    # cap.set :puppet_source, [Path.platform, 'puppet'].join('/')
+    # cap.set :puppet_destination, '/root/leap'
+    # #cap.set :puppet_command, 'puppet apply'
+    # cap.set :puppet_lib, "puppet/modules"
+    # cap.set :puppet_parameters, '--confdir=puppet puppet/manifests/site.pp'
+    # #cap.set :puppet_stream_output, false
+    # #puppet apply --confdir=puppet puppet/manifests/site.pp  | grep -v 'warning:.*is deprecated'
+    # #puppet_cmd = "cd #{puppet_destination} && #{sudo_cmd} #{puppet_command} --modulepath=#{puppet_lib} #{puppet_parameters}"
 
     #
     # allow password authentication when we are bootstraping a single node.

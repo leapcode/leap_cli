@@ -13,13 +13,34 @@ module LeapCli
             quit! "OK. Bye."
           end
         end
-        leap_root = '/root/leap'
         ssh_connect(nodes) do |ssh|
-          ssh.leap.mkdir_leap leap_root
+          # directory setup
+          ssh.leap.mkdir("/etc/leap")
+          ssh.leap.mkdir("/srv/leap")
+          ssh.leap.chown_root("/etc/leap")
+          ssh.leap.chown_root("/srv/leap")
+
+          # sync hiera conf
           ssh.leap.rsync_update do |server|
             node = manager.node(server.host)
-            {:source => Path.named_path([:hiera, node.name]), :dest => "#{leap_root}/config/#{node.name}.yaml"}
+            {:source => Path.named_path([:hiera, node.name]), :dest => "/etc/leap/hiera.yaml"}
           end
+
+          # sync puppet
+          #
+          # what we want:
+          #     puppet apply --confdir /srv/leap/puppet /srv/leap/puppet/manifests/site.pp | grep -v 'warning:.*is deprecated'
+          #
+          # what we get currently:
+          #
+          #
+          ssh.set :puppet_source, [Path.platform, 'puppet'].join('/')
+          ssh.set :puppet_destination, '/srv/leap'
+          #cap.set :puppet_command, 'puppet apply'
+          ssh.set :puppet_lib, "puppet/modules"
+          ssh.set :puppet_parameters, '--confdir puppet puppet/manifests/site.pp'
+          #cap.set :puppet_stream_output, false
+          #puppet_cmd = "cd #{puppet_destination} && #{sudo_cmd} #{puppet_command} --modulepath=#{puppet_lib} #{puppet_parameters}"
           ssh.apply_puppet
         end
       end

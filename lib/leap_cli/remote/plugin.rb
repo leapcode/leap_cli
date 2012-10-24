@@ -4,8 +4,12 @@
 
 module LeapCli; module Remote; module Plugin
 
-  def mkdir_leap(base_dir)
-    run "mkdir -p #{base_dir}/config && chown -R root #{base_dir} && chmod -R ag-rwx,u+rwX #{base_dir}"
+  def mkdir(dir)
+    run "mkdir -p #{dir}"
+  end
+
+  def chown_root(dir)
+    run "chown root -R #{dir} && chmod -R ag-rwx,u+rwX #{dir}"
   end
 
   #
