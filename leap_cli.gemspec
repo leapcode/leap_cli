@@ -19,7 +19,7 @@ spec = Gem::Specification.new do |s|
   ##
   ## GEM FILES
   ##
-  s.files = `find lib -name '*.rb'`.split("\n") << "bin/leap"
+  s.files = `find lib vendor -name '*.rb'`.split("\n") << "bin/leap"
   s.require_paths << 'lib'
 
   s.bindir = 'bin'
