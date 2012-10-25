@@ -40,12 +40,11 @@ module LeapCli
 
         if options[:self]
           username ||= `whoami`.strip
-          ssh_pub_key ||= pick_ssh_key
+          ssh_pub_key ||= pick_ssh_key.to_s
           pgp_pub_key ||= pick_pgp_key
         end
 
         assert!(ssh_pub_key, 'Sorry, could not find SSH public key.')
-        #assert!(pgp_pub_key, 'Sorry, could not find OpenPGP public key.')
 
         if ssh_pub_key
           write_file!([:user_ssh, username], ssh_pub_key)
@@ -61,19 +60,30 @@ module LeapCli
     # let the the user choose among the ssh public keys that we encounter, or just pick the key if there is only one.
     #
     def pick_ssh_key
-      assert_bin! 'ssh-add'
-      ssh_fingerprints = `ssh-add -l`.split("\n").compact
-      assert! ssh_fingerprints.any?, 'Sorry, could not find any SSH public key for you. Have you run ssh-keygen?'
+      ssh_keys = []
+      Dir.glob("#{ENV['HOME']}/.ssh/*.pub").each do |keyfile|
+        ssh_keys << SshKey.load(keyfile)
+      end
 
-      if ssh_fingerprints.length > 1
-        key_index = numbered_choice_menu('Choose your SSH public key', ssh_fingerprints) do |key, i|
-          say("#{i+1}.  #{key}")
+      if `which ssh-add && ssh-add -L`.strip.any?
+        `ssh-add -L`.split("\n").compact.each do |line|
+          key = SshKey.load(line)
+          key.comment = 'ssh-agent'
+          ssh_keys << key unless ssh_keys.include?(key)
+        end
+      end
+      ssh_keys.compact!
+
+      assert! ssh_keys.any?, 'Sorry, could not find any SSH public key for you. Have you run ssh-keygen?'
+
+      if ssh_keys.length > 1
+        key_index = numbered_choice_menu('Choose your SSH public key', ssh_keys.collect(&:summary)) do |line, i|
+          say("#{i+1}. #{line}")
         end
       else
         key_index = 0
       end
 
-      ssh_keys = `ssh-add -L`.split("\n").compact
       return ssh_keys[key_index]
     end
 
