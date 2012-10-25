@@ -16,7 +16,7 @@ module LeapCli; module Commands
     while true
       say("\n" + msg + ':')
       items.each_with_index &block
-      say("q.  quit")
+      say("q. quit")
       index = ask("number 1-#{items.length}> ")
       if index.empty?
         next

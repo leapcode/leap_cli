@@ -65,8 +65,8 @@ module LeapCli
         ssh_keys << SshKey.load(keyfile)
       end
 
-      if `which ssh-add && ssh-add -L`.strip.any?
-        `ssh-add -L`.split("\n").compact.each do |line|
+      if `which ssh-add`.strip.any?
+        `ssh-add -L 2> /dev/null`.split("\n").compact.each do |line|
           key = SshKey.load(line)
           key.comment = 'ssh-agent'
           ssh_keys << key unless ssh_keys.include?(key)
@@ -102,7 +102,7 @@ module LeapCli
       if secret_keys.length > 1
         key_index = numbered_choice_menu('Choose your OpenPGP public key', secret_keys) do |key, i|
           key_info = key.to_s.split("\n")[0..1].map{|line| line.sub(/^\s*(sec|uid)\s*/,'')}.join(' -- ')
-          say("#{i+1}.  #{key_info}")
+          say("#{i+1}. #{key_info}")
         end
       else
         key_index = 0
