@@ -92,9 +92,12 @@ module LeapCli
     #
     def pick_pgp_key
       secret_keys = GPGME::Key.find(:secret)
+      if secret_keys.empty?
+        progress("Skipping OpenPGP setup because I could not find any OpenPGP keys for you")
+        return nil
+      end
 
       assert_bin! 'gpg'
-      assert! secret_keys.any?, 'Sorry, could not find any OpenPGP keys for you.'
 
       if secret_keys.length > 1
         key_index = numbered_choice_menu('Choose your OpenPGP public key', secret_keys) do |key, i|
