@@ -10,12 +10,12 @@ spec = Gem::Specification.new do |s|
   ##
   s.name = 'leap_cli'
   s.version = LeapCli::VERSION
-  s.author = 'LEAP'
+  s.author = 'LEAP Encryption Access Project'
   s.email = 'root@leap.se'
   s.homepage = 'https://leap.se'
   s.platform = Gem::Platform::RUBY
-  s.summary = 'Command line interface to the LEAP platform.'
-  s.description = 'Provides the command "leap", used to manage a bevy of servers running the LEAP platform from the comfort of your own home.'
+  s.summary = LeapCli::SUMMARY
+  s.description = LeapCli::DESCRIPTION
 
   ##
   ## GEM FILES
@@ -23,6 +23,7 @@ spec = Gem::Specification.new do |s|
 
   s.files = `find lib vendor -name '*.rb'`.split("\n") << "bin/leap"
   s.require_paths << 'lib'
+  s.require_paths << 'vendor/supply_drop/lib'
 
   s.bindir = 'bin'
   s.executables << 'leap'
