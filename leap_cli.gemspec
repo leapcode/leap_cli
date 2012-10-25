@@ -14,11 +14,13 @@ spec = Gem::Specification.new do |s|
   s.email = 'root@leap.se'
   s.homepage = 'https://leap.se'
   s.platform = Gem::Platform::RUBY
-  s.summary = 'Command line interface to the leap platform.'
+  s.summary = 'Command line interface to the LEAP platform.'
+  s.description = 'Provides the command "leap", used to manage a bevy of servers running the LEAP platform from the comfort of your own home.'
 
   ##
   ## GEM FILES
   ##
+
   s.files = `find lib vendor -name '*.rb'`.split("\n") << "bin/leap"
   s.require_paths << 'lib'
 

@@ -80,6 +80,13 @@ ssh keygen
 invoke puppet
   https://github.com/davidwinter/sooty/blob/master/lib/sooty.rb
 
+shell
+================================
+
+http://devver.wordpress.com/2009/10/12/ruby-subprocesses-part_3/
+http://stackoverflow.com/questions/1154846/continuously-read-from-stdout-of-external-process-in-ruby
+http://stackoverflow.com/questions/3874604/how-do-i-get-the-pty-spawn-child-exit-code
+https://gist.github.com/148765
 
 ssh
 ================================

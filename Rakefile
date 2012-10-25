@@ -1,44 +1,77 @@
-require 'rake/clean'
-require 'rubygems'
-require 'rubygems/package_task'
-require 'rdoc/task'
-require 'cucumber'
-require 'cucumber/rake/task'
-Rake::RDocTask.new do |rd|
-  rd.main = "README.rdoc"
-  rd.rdoc_files.include("README.rdoc","lib/**/*.rb","bin/**/*")
-  rd.title = 'Your application title'
+require "rubygems"
+require "highline/import"
+require "pty"
+require "fileutils"
+
+##
+## HELPER
+##
+
+def run(cmd)
+  PTY.spawn(cmd) do |output, input, pid|
+    begin
+      while line = output.gets do
+        puts line
+      end
+    rescue Errno::EIO
+    end
+  end
+rescue PTY::ChildExited
 end
 
-spec = eval(File.read('leap_cli.gemspec'))
+##
+## GEM BUILDING AND INSTALLING
+##
 
-Gem::PackageTask.new(spec) do |pkg|
-end
-CUKE_RESULTS = 'results.html'
-CLEAN << CUKE_RESULTS
-desc 'Run features'
-Cucumber::Rake::Task.new(:features) do |t|
-  opts = "features --format html -o #{CUKE_RESULTS} --format progress -x"
-  opts += " --tags #{ENV['TAGS']}" if ENV['TAGS']
-  t.cucumber_opts =  opts
-  t.fork = false
-end
+$spec_path = 'leap_cli.gemspec'
+$spec      = eval(File.read($spec_path))
+$base_dir  = File.dirname(__FILE__)
+$gem_path  = File.join($base_dir, 'pkg', "#{$spec.name}-#{$spec.version}.gem")
 
-desc 'Run features tagged as work-in-progress (@wip)'
-Cucumber::Rake::Task.new('features:wip') do |t|
-  tag_opts = ' --tags ~@pending'
-  tag_opts = ' --tags @wip'
-  t.cucumber_opts = "features --format html -o #{CUKE_RESULTS} --format pretty -x -s#{tag_opts}"
-  t.fork = false
+def built_gem_path
+  Dir[File.join($base_dir, "#{$spec.name}-*.gem")].sort_by{|f| File.mtime(f)}.last
 end
 
-task :cucumber => :features
-task 'cucumber:wip' => 'features:wip'
-task :wip => 'features:wip'
-require 'rake/testtask'
-Rake::TestTask.new do |t|
-  t.libs << "test"
-  t.test_files = FileList['test/*_test.rb']
+desc "Build #{$spec.name}-#{$spec.version}.gem into the pkg directory"
+task 'build' do
+  FileUtils.mkdir_p(File.join($base_dir, 'pkg'))
+  FileUtils.rm($gem_path) if File.exists?($gem_path)
+  run "gem build -V '#{$spec_path}'"
+  file_name = File.basename(built_gem_path)
+  FileUtils.mv(built_gem_path, 'pkg')
+  say "#{$spec.name} #{$spec.version} built to pkg/#{file_name}"
 end
 
-task :default => [:test,:features]
+desc "Build and install #{$spec.name}-#{$spec.version}.gem into either system-wide or user gems"
+task 'install' do
+  if !File.exists?($gem_path)
+    say("Could not file #{$gem_path}. Try running 'rake build'")
+  else
+    if ENV["USER"] == "root"
+      run "gem install '#{$gem_path}'"
+    else
+      say("A system-wide install requires that you run 'rake install' as root, which you are not.")
+      if agree("Do you want to continue installing to #{Gem.path.grep /home/}? ")
+        run "gem install '#{$gem_path}' --user-install"
+      end
+    end
+  end
+end
+
+##
+## TESTING
+##
+
+# task :default => [:test,:features]
+
+##
+## DOCUMENTATION
+##
+
+# require 'rdoc/task'
+
+# Rake::RDocTask.new do |rd|
+#   rd.main = "README.rdoc"
+#   rd.rdoc_files.include("README.rdoc","lib/**/*.rb","bin/**/*")
+#   rd.title = 'Your application title'
+# end

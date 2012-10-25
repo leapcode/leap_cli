@@ -6,9 +6,17 @@ This gem installs an executable 'leap' that allows you to manage servers using t
 Installation
 =================================
 
-To install the gem:
+Prerequisites:
 
-    gem install leap_cli
+    sudo apt-get install ruby ruby-dev rsync openssh-client
+
+To install leap command system-wide:
+
+    sudo gem install leap_cli
+
+To install without root privileges:
+
+    gem install leap_cli --user-install
 
 To run from a clone of the git repo, see "Development", below.
 
@@ -139,29 +147,31 @@ Debian Squeeze
 
 Debian Wheezy
 
-    sudo apt-get install git ruby ruby-dev
-    sudo gem install bundler
+    sudo apt-get install git ruby ruby-dev bundler
 
-Ubuntu Quantal
+Ubuntu
 
     sudo apt-get install git ruby ruby-dev
     sudo gem install bundler
 
 Install from git
----------------------------------
+--------------------------------------
 
-Install requirements
+Download the source and install the required gems:
 
     git clone git://leap.se/leap_cli      # clone leap_cli code
     cd leap_cli
     bundle                                # install required gems
 
-Symlink bin/leap into your path:
+Running from the source directory
+--------------------------------------
+
+To run the ``leap`` command directly from the source tree, symlink bin/leap
+into your path:
 
     cd leap_cli
-    ln -s `pwd`/bin/leap /usr/local/bin   # link executable somewhere in your bin path
-    which leap                            # make sure you will run leap_cli/bin/leap,
-                                          # and not /var/lib/gems/1.x/bin/leap
+    ln -s `pwd`/bin/leap ~/bin    # link executable somewhere in your bin path
+    which leap                    # make sure you will run leap_cli/bin/leap
     leap help
 
 If you get an error, make sure to check ``which leap``. Some versions of ``bundle`` will
@@ -172,3 +182,16 @@ working directory is under leap_cli. Because the point is to be able to run ``le
 other places, it is easier to create the symlink. If you run ``leap`` directly, and not via
 the command launcher that rubygems installs, leap will run in a mode that simulates
 ``bundle exec leap`` (i.e. only gems included in Gemfile are allow to be loaded).
+
+Running as a gem
+--------------------------------------
+
+To install ``leap`` as a gem, do this:
+
+    cd leap_cli
+    rake build
+    rake install
+
+And then make sure your PATH is set to include where leap is installed.
+It should warn you if this is not the case.
+

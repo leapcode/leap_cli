@@ -17,8 +17,8 @@ rescue LoadError
   lib_dir = File.expand_path(File.dirname(file) + '/../lib')
   $LOAD_PATH.unshift lib_dir unless $LOAD_PATH.include?(lib_dir)
   require 'rubygems'
-  require 'leap_cli'
   require 'bundler/setup' # force evaluation of "Gemfile"
+  require 'leap_cli'
 end
 
 require 'gli'
