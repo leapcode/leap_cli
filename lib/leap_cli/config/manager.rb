@@ -1,5 +1,4 @@
 require 'json/pure'
-require 'yaml'
 
 module LeapCli
   module Config
@@ -42,7 +41,7 @@ module LeapCli
         @nodes.each do |name, node|
           filepath = "#{dir}/#{name}.yaml"
           updated_files << filepath
-          Util::write_file!(filepath, node.to_yaml)
+          Util::write_file!(filepath, node.dump)
         end
         (existing_files - updated_files).each do |filepath|
           Util::remove_file!(filepath)

@@ -1,6 +1,9 @@
 require 'erb'
 require 'json/pure'  # pure ruby implementation is required for our sorted trick to work.
 
+$KCODE = 'UTF8'
+require 'ya2yaml' # pure ruby yaml
+
 module LeapCli
   module Config
     #
@@ -26,6 +29,14 @@ module LeapCli
 
         # this is only used by Config::Objects that correspond to services or tags.
         @node_list = Config::ObjectList.new
+      end
+
+      # We use pure ruby yaml exporter ya2yaml instead of SYCK or PSYCH because it
+      # allows us greater compatibility regardless of installed ruby version and
+      # greater control over how the yaml is exported.
+      #
+      def dump
+        self.ya2yaml(:syck_compatible => true)
       end
 
       ##

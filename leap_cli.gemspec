@@ -53,7 +53,8 @@ spec = Gem::Specification.new do |s|
   #s.add_runtime_dependency('supply_drop')
 
   # misc gems
-  s.add_runtime_dependency('json_pure') # we use this json library for output so we can keep the keys sorted.
+  s.add_runtime_dependency('ya2yaml')   # pure ruby yaml, so we can better control output.
+  s.add_runtime_dependency('json_pure') # pure ruby json, so we can better control output.
   s.add_runtime_dependency('gpgme')     # not essential, but used for some minor stuff in adding sysadmins
 
 end

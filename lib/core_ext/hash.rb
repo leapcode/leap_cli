@@ -1,43 +1,4 @@
-#
-#
-# We modify Hash to add a few features we need:
-#
-# * sorted output of keys to in yaml.
-# * reference values either with hsh[key] or hsh.key
-# * deep merge
-# * select fields
-#
-# Because the json parsing code we use doesn't support setting a custom class, it is easier for us to just modify Hash.
-#
-
-require 'yaml'
-
 class Hash
-
-  ##
-  ## YAML
-  ##
-
-  #
-  # make the type appear to be a normal Hash in yaml, even for subclasses.
-  #
-  def to_yaml_type
-   "!map"
-  end
-
-  #
-  # just like Hash#to_yaml, but sorted
-  #
-  def to_yaml(opts = {})
-    YAML::quick_emit(self, opts) do |out|
-      out.map(taguri, to_yaml_style) do |map|
-        keys.sort.each do |k|
-          v = self[k]
-          map.add(k, v)
-        end
-      end
-    end
-  end
 
   ##
   ## CONVERTING
