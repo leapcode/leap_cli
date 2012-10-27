@@ -6,6 +6,8 @@ module LeapCli
     arg_name '<node filter>'
     command :deploy do |c|
       c.action do |global_options,options,args|
+        init_submodules
+
         nodes = manager.filter!(args)
         if nodes.size > 1
           say "Deploying to these nodes: #{nodes.keys.join(', ')}"
@@ -13,6 +15,7 @@ module LeapCli
             quit! "OK. Bye."
           end
         end
+
         ssh_connect(nodes) do |ssh|
           # directory setup
           ssh.leap.mkdir("/etc/leap")
@@ -42,6 +45,21 @@ module LeapCli
           #cap.set :puppet_stream_output, false
           #puppet_cmd = "cd #{puppet_destination} && #{sudo_cmd} #{puppet_command} --modulepath=#{puppet_lib} #{puppet_parameters}"
           ssh.apply_puppet
+        end
+      end
+    end
+
+    private
+
+    def init_submodules
+      Dir.chdir Path.platform do
+        statuses = assert_run! "git submodule status"
+        statuses.strip.split("\n").each do |status_line|
+          if status_line =~ /^-/
+            submodule = status_line.split(' ')[1]
+            progress "Updating submodule #{submodule}"
+            assert_run! "git submodule update --init #{submodule}"
+          end
         end
       end
     end

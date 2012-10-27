@@ -55,11 +55,15 @@ module LeapCli
     # assert that the command is run without an error.
     # if successful, return output.
     #
-    def assert_run!(cmd, message)
-      log2(" * run: #{cmd}")
+    def assert_run!(cmd, message=nil)
       cmd = cmd + " 2>&1"
       output = `#{cmd}`
-      assert!($?.success?, message)
+      unless $?.success?
+        log1(" * run: #{cmd}")
+        log1(" * FAILED: (exit #{$?}) #{output}")
+      else
+        log2(" * run: #{cmd}")
+      end
       return output
     end
 
