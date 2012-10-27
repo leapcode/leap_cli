@@ -13,13 +13,9 @@ task :install_authorized_keys, :max_hosts => MAX_HOSTS do
 end
 
 task :install_prerequisites, :max_hosts => MAX_HOSTS do
-  puppet.bootstrap.ubuntu
-  #
-  # runs this:
-  # run "mkdir -p #{puppet_destination}"
-  # run "#{sudo} apt-get update"
-  # run "#{sudo} apt-get install -y puppet rsync"
-  #
+  run "mkdir -p #{puppet_destination}"
+  run "#{sudo} apt-get update"
+  run "#{sudo} apt-get install -y puppet ruby-hiera-puppet rsync"
 end
 
 #task :update_platform, :max_hosts => MAX_HOSTS do
