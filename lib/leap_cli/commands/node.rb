@@ -85,7 +85,7 @@ module LeapCli; module Commands
   #
   def save_public_host_key(node)
     progress("Fetching public SSH host key for #{node.name}")
-    public_key = get_public_key_for_ip(node.ip_address)
+    public_key = get_public_key_for_ip(node.ip_address, node.ssh.port)
     pub_key_path = Path.named_path([:node_ssh_pub_key, node.name])
     if Path.exists?(pub_key_path)
       if public_key == SshKey.load_from_file(pub_key_path)
@@ -110,9 +110,9 @@ module LeapCli; module Commands
     end
   end
 
-  def get_public_key_for_ip(address)
+  def get_public_key_for_ip(address, port=22)
     assert_bin!('ssh-keyscan')
-    output = assert_run! "ssh-keyscan -t rsa #{address}", "Could not get the public host key. Maybe sshd is not running?"
+    output = assert_run! "ssh-keyscan -p #{port} -t rsa #{address}", "Could not get the public host key from #{address}:#{port}. Maybe sshd is not running?"
     line = output.split("\n").grep(/^[^#]/).first
     assert! line, "Got zero host keys back!"
     ip, key_type, public_key = line.split(' ')
