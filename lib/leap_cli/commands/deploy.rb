@@ -39,7 +39,7 @@ module LeapCli
           #
           ssh.set :puppet_source, [Path.platform, 'puppet'].join('/')
           ssh.set :puppet_destination, '/srv/leap'
-          #cap.set :puppet_command, 'puppet apply'
+          ssh.set :puppet_command, '/usr/bin/puppet apply'
           ssh.set :puppet_lib, "puppet/modules"
           ssh.set :puppet_parameters, '--confdir puppet puppet/manifests/site.pp'
           #cap.set :puppet_stream_output, false
