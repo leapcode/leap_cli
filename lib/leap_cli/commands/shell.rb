@@ -5,7 +5,7 @@ module LeapCli; module Commands
   command :shell, :ssh do |c|
     c.action do |global_options,options,args|
       node = get_node_from_args(args)
-      exec "ssh -l root -o 'HostName=#{node.ip_address}' -o 'HostKeyAlias=#{node.name}' -o 'UserKnownHostsFile=#{path(:known_hosts)}' -o 'StrictHostKeyChecking=yes' #{node.name}"
+      exec "ssh -l root -o 'HostName=#{node.ip_address}' -o 'HostKeyAlias=#{node.name}' -o 'UserKnownHostsFile=#{path(:known_hosts)}' -o 'StrictHostKeyChecking=yes' -p #{node.ssh.port} #{node.name}"
     end
   end
 
