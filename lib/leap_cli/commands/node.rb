@@ -16,12 +16,13 @@ module LeapCli; module Commands
   desc 'Bootstraps a node, setting up ssh keys and installing prerequisites'
   arg_name '<node-name>', :optional => false, :multiple => false
   command :'init-node' do |c|
+    c.switch 'echo', :desc => 'if set, passwords are visible as you type them (default is hidden)', :negatable => false
     c.action do |global_options,options,args|
       node = get_node_from_args(args)
       ping_node(node)
       save_public_host_key(node)
       update_compiled_ssh_configs
-      ssh_connect(node, :bootstrap => true) do |ssh|
+      ssh_connect(node, :bootstrap => true, :echo => options[:echo]) do |ssh|
         ssh.install_authorized_keys
         ssh.install_prerequisites
       end

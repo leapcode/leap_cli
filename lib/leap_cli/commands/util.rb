@@ -67,8 +67,13 @@ module LeapCli; module Commands
     #
     if options[:bootstrap] && node_list.size == 1
       hostname = node_list.values.first.name
-      cap.set(:password) { ask("SSH password for #{user}@#{hostname}> ") } # only called if needed
-      # this can be used instead to hide echo -- Capistrano::CLI.password_prompt
+
+      # the 'password' block is only called if key auth fails
+      if options[:echo]
+        cap.set(:password) { ask "Root SSH password for #{user}@#{hostname}> " }
+      else
+        cap.set(:password) { Capistrano::CLI.password_prompt " * Typed password will be hidden (use --echo to make it visible)\nRoot SSH password for #{user}@#{hostname}> " }
+      end
     end
 
     node_list.each do |name, node|
@@ -98,9 +103,9 @@ module LeapCli; module Commands
   # http://railsware.com/blog/2011/11/02/advanced-server-definitions-in-capistrano/
   #
   def node_options(node)
-    password_proc = Proc.new {Capistrano::CLI.password_prompt "Root SSH password for #{node.name}"}  # only called if needed
+    #password_proc = Proc.new {Capistrano::CLI.password_prompt "Root SSH password for #{node.name}"}  # only called if needed
     {
-      :password => password_proc,
+      #:password => password_proc,
       :ssh_options => {
         :host_key_alias => node.name,
         :host_name => node.ip_address,
@@ -113,7 +118,7 @@ module LeapCli; module Commands
     # load once the library files
     @capistrano_enabled ||= begin
       require 'capistrano'
-      #require 'capistrano/cli'
+      require 'capistrano/cli'
       require 'leap_cli/remote/plugin'
       Capistrano.plugin :leap, LeapCli::Remote::Plugin
       true
