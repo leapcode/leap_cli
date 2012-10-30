@@ -93,7 +93,7 @@ module LeapCli; module Commands
   def ssh_options
     {
       :config => false,
-      :user_known_hosts_file => path(:known_hosts),
+      :global_known_hosts_file => path(:known_hosts),
       :paranoid => true
     }
   end

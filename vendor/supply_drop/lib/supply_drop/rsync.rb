@@ -32,6 +32,7 @@ module SupplyDrop
           when :config then "-F #{value}"
           when :port then "-p #{value}"
           when :user_known_hosts_file then "-o 'UserKnownHostsFile=#{value}'"
+          when :global_known_hosts_file then "-o 'GlobalKnownHostsFile=#{value}'"
           when :host_key_alias then "-o 'HostKeyAlias=#{value}'"
           when :paranoid then "-o 'StrictHostKeyChecking=yes'"
           when :host_name then "-o 'HostName=#{value}'"
