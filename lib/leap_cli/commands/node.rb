@@ -60,6 +60,7 @@ module LeapCli; module Commands
       pub_key = read_file([:node_ssh_pub_key,node.name])
       if pub_key
         buffer << [hostnames, pub_key].join(' ')
+        buffer << "\n"
       end
     end
     write_file!(:known_hosts, buffer.string)
