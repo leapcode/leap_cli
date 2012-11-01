@@ -6,8 +6,8 @@
     "ca_crt": "= file 'ca/ca.crt'",
     "ca_key": "= file 'ca/ca.key'",
     "dh": "= file 'ca/dh.pem'",
-    "server_crt": "= file domain.name + '.crt'",
-    "server_key": "= file domain.name + '.key'"
+    "server_crt": "= file :node_x509_cert",
+    "server_key": "= file :node_x509_key"
   },
   "service_type": "user_service"
   #"x509": {
