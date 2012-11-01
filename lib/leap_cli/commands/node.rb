@@ -8,7 +8,7 @@ module LeapCli; module Commands
   ##
 
   desc 'not yet implemented... Create a new configuration for a node'
-  command :'new-node' do |c|
+  command :'add-node' do |c|
     c.action do |global_options,options,args|
     end
   end

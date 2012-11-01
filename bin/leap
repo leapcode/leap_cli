@@ -46,6 +46,7 @@ module LeapCli::Commands
   def_delegator :@terminal, :agree, 'self.agree'
   def_delegator :@terminal, :choose, 'self.choose'
   def_delegator :@terminal, :say, 'self.say'
+  def_delegator :@terminal, :color, 'self.color'
 
   #
   # make config manager available as 'manager'
@@ -61,8 +62,8 @@ module LeapCli::Commands
   #
   # info about leap command line suite
   #
-  program_desc       'LEAP platform command line interface'
-  program_long_desc  'This is the long description. It is very interesting.'
+  program_desc       LeapCli::SUMMARY
+  program_long_desc  LeapCli::DESCRIPTION
   version            LeapCli::VERSION
 
   #

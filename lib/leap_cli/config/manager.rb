@@ -8,7 +8,7 @@ module LeapCli
     #
     class Manager
 
-      attr_reader :services, :tags, :nodes, :provider
+      attr_reader :services, :tags, :nodes, :provider, :common
 
       ##
       ## IMPORT EXPORT
@@ -18,11 +18,11 @@ module LeapCli
       # load .json configuration files
       #
       def load(provider_dir=Path.provider)
-        @services = load_all_json(Path.named_path( [:service_config, '*'], provider_dir ))
-        @tags     = load_all_json(Path.named_path( [:tag_config, '*'],     provider_dir ))
-        @common   = load_all_json(Path.named_path( :common_config,         provider_dir ))['common']
-        @provider = load_all_json(Path.named_path( :provider_config,       provider_dir ))['provider']
-        @nodes    = load_all_json(Path.named_path( [:node_config, '*'],    provider_dir ))
+        @services = load_all_json(Path.named_path([:service_config, '*'], provider_dir))
+        @tags     = load_all_json(Path.named_path([:tag_config, '*'],     provider_dir))
+        @nodes    = load_all_json(Path.named_path([:node_config, '*'],    provider_dir))
+        @common   = load_json(Path.named_path(:common_config,   provider_dir))
+        @provider = load_json(Path.named_path(:provider_config, provider_dir))
 
         Util::assert!(@provider, "Failed to load provider.json")
         Util::assert!(@common, "Failed to load common.json")
@@ -105,10 +105,10 @@ module LeapCli
 
       private
 
-      def load_all_json(pattern, config_type = :class)
+      def load_all_json(pattern)
         results = Config::ObjectList.new
         Dir.glob(pattern).each do |filename|
-          obj = load_json(filename, config_type)
+          obj = load_json(filename)
           if obj
             name = File.basename(filename).sub(/\.json$/,'')
             obj['name'] ||= name
@@ -118,9 +118,7 @@ module LeapCli
         results
       end
 
-      def load_json(filename, config_type)
-        #log2 { filename.sub(/^#{Regexp.escape(Path.root)}/,'') }
-
+      def load_json(filename)
         #
         # read file, strip out comments
         # (File.read(filename) would be faster, but we like ability to have comments)
@@ -133,9 +131,8 @@ module LeapCli
           end
         end
 
-        # parse json, and flatten hash
+        # parse json
         begin
-          #hash = Oj.load(buffer.string) || {}
           hash = JSON.parse(buffer.string, :object_class => Hash, :array_class => Array) || {}
         rescue SyntaxError => exc
           log0 'Error in file "%s":' % filename

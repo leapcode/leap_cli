@@ -5,9 +5,12 @@
     "nat": true,
     "ca_crt": "= file 'ca/ca.crt'",
     "ca_key": "= file 'ca/ca.key'",
-    "dh_key": "= file 'ca/dh.key'",
+    "dh": "= file 'ca/dh.pem'",
     "server_crt": "= file domain.name + '.crt'",
     "server_key": "= file domain.name + '.key'"
   },
   "service_type": "user_service"
+  #"x509": {
+  #  "use": true
+  #}
 }

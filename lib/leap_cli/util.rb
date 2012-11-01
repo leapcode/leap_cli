@@ -67,6 +67,41 @@ module LeapCli
       return output
     end
 
+    def assert_files_missing!(*files)
+      options = files.last.is_a?(Hash) ? files.pop : {}
+      file_list = files.collect { |file_path|
+        file_path = Path.named_path(file_path)
+        File.exists?(file_path) ? relative_path(file_path) : nil
+      }.compact
+      if file_list.length > 1
+        bail! "Sorry, we can't continue because these files already exist: #{file_list.join(', ')}. You are not supposed to remove these files. Do so only with caution."
+      elsif file_list.length == 1
+        bail! "Sorry, we can't continue because this file already exists: #{file_list}. You are not supposed to remove this file. Do so only with caution."
+      end
+    end
+
+    def assert_config!(conf_path)
+      value = nil
+      begin
+        value = eval(conf_path, manager.send(:binding))
+      rescue NoMethodError
+      end
+      assert! value, "* Error: Nothing set for #{conf_path}"
+    end
+
+    def assert_files_exist!(*files)
+      options = files.last.is_a?(Hash) ? files.pop : {}
+      file_list = files.collect { |file_path|
+        file_path = Path.named_path(file_path)
+        !File.exists?(file_path) ? relative_path(file_path) : nil
+      }.compact
+      if file_list.length > 1
+        bail! "Sorry, you are missing these files: #{file_list.join(', ')}. #{options[:msg]}"
+      elsif file_list.length == 1
+        bail! "Sorry, you are missing this file: #{file_list.join(', ')}. #{options[:msg]}"
+      end
+    end
+
     ##
     ## FILES AND DIRECTORIES
     ##
@@ -176,14 +211,9 @@ module LeapCli
       end
     end
 
-    #def rename_file(filepath)
-    #end
-
-    #private
-
-    ##
-    ## PRIVATE HELPER METHODS
-    ##
+    def cmd_exists?(cmd)
+      `which #{cmd}`.strip.chars.any?
+    end
 
     #
     # compares md5 fingerprints to see if the contents of a file match the string we have in memory
@@ -196,6 +226,34 @@ module LeapCli
       else
         return false
       end
+    end
+
+    ##
+    ## PROCESSES
+    ##
+
+    #
+    # run a long running block of code in a separate process and display marching ants as time goes by.
+    # if the user hits ctrl-c, the program exits.
+    #
+    def long_running(&block)
+      pid = fork
+      if pid == nil
+        yield
+        exit!
+      end
+      Signal.trap("SIGINT") do
+        Process.kill("KILL", pid)
+        Process.wait(pid)
+        bail!
+      end
+      while true
+        sleep 0.2
+        STDOUT.print '.'
+        STDOUT.flush
+        break if Process.wait(pid, Process::WNOHANG)
+      end
+      STDOUT.puts
     end
 
   end

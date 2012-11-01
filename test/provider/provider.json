@@ -13,7 +13,12 @@
   "enrollment_policy": "open",
   "ca": {
     "name": "Rewire Root CA",
-    "organization": "#{name}",
-    "bit_size": 4096
+    "organization": "= global.provider.name[global.provider.default_language]",
+    "organizational_unit": "= 'https://' + global.common.domain.full_suffix",
+    "bit_size": 4096,
+    "server_certificates": {
+      "bit_size": 3248,
+      "life_span": "1y"
+    }
   }
 }

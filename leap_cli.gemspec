@@ -16,6 +16,7 @@ spec = Gem::Specification.new do |s|
   s.platform = Gem::Platform::RUBY
   s.summary = LeapCli::SUMMARY
   s.description = LeapCli::DESCRIPTION
+  s.license = "GPLv3"
 
   ##
   ## GEM FILES
@@ -48,13 +49,16 @@ spec = Gem::Specification.new do |s|
   s.add_runtime_dependency('highline')
 
   # network gems
-  s.add_runtime_dependency('net-ssh')
   s.add_runtime_dependency('capistrano')
   #s.add_runtime_dependency('supply_drop')
+
+  # crypto gems
+  s.add_runtime_dependency('certificate_authority') # this gem pulls in ActiveModel, but it just uses it for validation logic.
+  s.add_runtime_dependency('net-ssh')
+  s.add_runtime_dependency('gpgme')     # not essential, but used for some minor stuff in adding sysadmins
 
   # misc gems
   s.add_runtime_dependency('ya2yaml')   # pure ruby yaml, so we can better control output. see https://github.com/afunai/ya2yaml
   s.add_runtime_dependency('json_pure') # pure ruby json, so we can better control output.
-  s.add_runtime_dependency('gpgme')     # not essential, but used for some minor stuff in adding sysadmins
 
 end

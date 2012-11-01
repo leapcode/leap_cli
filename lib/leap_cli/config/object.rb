@@ -79,8 +79,6 @@ module LeapCli
           end
         elsif self.has_key?(key)
           evaluate_value(key)
-        elsif @node != self
-          @node.get!(key)
         else
           raise NoMethodError.new(key, "No method '#{key}' for #{self.class}")
         end
@@ -110,7 +108,7 @@ module LeapCli
       #
       def deep_merge!(object)
         object.each do |key,new_value|
-          old_value = self[key]
+          old_value = self.fetch key, nil
           if old_value.is_a?(Hash) || new_value.is_a?(Hash)
             # merge hashes
             value = Config::Object.new(@manager, @node)
@@ -152,7 +150,7 @@ module LeapCli
         else
           if value =~ /^= (.*)$/
             begin
-              value = eval($1, self.send(:binding))
+              value = eval($1, @node.send(:binding))
               self[key] = value
             rescue SystemStackError => exc
               puts "STACK OVERFLOW, BAILING OUT"

@@ -23,7 +23,12 @@ module LeapCli; module Path
     :hiera            => 'hiera/#{arg}.yaml',
     :node_ssh_pub_key => 'files/nodes/#{arg}/#{arg}_ssh_key.pub',
     :known_hosts      => 'files/ssh/known_hosts',
-    :authorized_keys  => 'files/ssh/authorized_keys'
+    :authorized_keys  => 'files/ssh/authorized_keys',
+    :ca_key           => 'files/ca/ca.key',
+    :ca_cert          => 'files/ca/ca.crt',
+    :dh_params        => 'files/ca/dh.pem',
+    :node_x509_key    => 'files/nodes/#{arg}/#{arg}.key',
+    :node_x509_cert   => 'files/nodes/#{arg}/#{arg}.crt'
   }
 
   #
@@ -132,7 +137,12 @@ module LeapCli; module Path
   #
   def self.named_path(name, provider_dir=Path.provider)
     if name.is_a? Array
-      name, arg = name
+      if name.length > 2
+        arg = name[1..-1]
+        name = name[0]
+      else
+        name, arg = name
+      end
     else
       arg = nil
     end
