@@ -2,6 +2,7 @@ require "rubygems"
 require "highline/import"
 require "pty"
 require "fileutils"
+require 'rake/testtask'
 
 ##
 ## HELPER
@@ -62,7 +63,10 @@ end
 ## TESTING
 ##
 
-# task :default => [:test,:features]
+Rake::TestTask.new do |t|
+  t.pattern = "test/unit/*_test.rb"
+end
+task :default => :test
 
 ##
 ## DOCUMENTATION
