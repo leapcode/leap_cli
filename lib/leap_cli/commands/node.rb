@@ -55,7 +55,8 @@ module LeapCli; module Commands
   #
   def update_known_hosts
     buffer = StringIO.new
-    manager.nodes.values.each do |node|
+    manager.nodes.keys.sort.each do |node_name|
+      node = manager.nodes[node_name]
       hostnames = [node.name, node.domain.internal, node.domain.full, node.ip_address].join(',')
       pub_key = read_file([:node_ssh_pub_key,node.name])
       if pub_key

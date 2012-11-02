@@ -119,7 +119,7 @@ module LeapCli
 
     def update_authorized_keys
       buffer = StringIO.new
-      Dir.glob(path([:user_ssh, '*'])).each do |keyfile|
+      Dir.glob(path([:user_ssh, '*'])).sort.each do |keyfile|
         ssh_type, ssh_key = File.read(keyfile).strip.split(" ")
         buffer << ssh_type
         buffer << " "
