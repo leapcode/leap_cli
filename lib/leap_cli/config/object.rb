@@ -43,11 +43,6 @@ module LeapCli
       ## FETCHING VALUES
       ##
 
-      #
-      # like a normal hash [], except:
-      # * lazily eval dynamic values when we encounter them.
-      # * support for nested hashes (e.g. ['a.b'] is the same as ['a']['b'])
-      #
       def [](key)
         get(key)
       end
@@ -67,13 +62,22 @@ module LeapCli
         end
       end
 
+      #
+      # Like a normal Hash#[], except:
+      #
+      # (1) lazily eval dynamic values when we encounter them. (i.e. strings that start with "= ")
+      #
+      # (2) support for nested references in a single string (e.g. ['a.b'] is the same as ['a']['b'])
+      #     the dot path is always absolute, starting at the top-most object.
+      #
       def get!(key)
         key = key.to_s
         if key =~ /\./
+          # for keys with with '.' in them, we start from the root object (@node).
           keys = key.split('.')
-          value = get!(keys.first)
+          value = @node.get!(keys.first)
           if value.is_a? Config::Object
-            value.get!(keys[1..-1])
+            value.get!(keys[1..-1].join('.'))
           else
             value
           end
@@ -136,39 +140,6 @@ module LeapCli
         self
       end
 
-      private
-
-      #
-      # fetches the value for the key, evaluating the value as ruby if it begins with '='
-      #
-      def evaluate_value(key)
-        value = fetch(key, nil)
-        if value.is_a? Array
-          value
-        elsif value.nil?
-          nil
-        else
-          if value =~ /^= (.*)$/
-            begin
-              value = eval($1, @node.send(:binding))
-              self[key] = value
-            rescue SystemStackError => exc
-              puts "STACK OVERFLOW, BAILING OUT"
-              puts "There must be an eval loop of death (variables with circular dependencies). This is the offending string:"
-              puts
-              puts "    #{$1}"
-              puts
-              raise SystemExit.new()
-            rescue StandardError => exc
-              puts "Eval error in '#{@node.name}'"
-              puts "   string: #{$1}"
-              puts "   error: #{exc.name}"
-            end
-          end
-          value
-        end
-      end
-
       ##
       ## MACROS
       ## these are methods used when eval'ing a value in the .json configuration
@@ -195,6 +166,39 @@ module LeapCli
         else
           log0('no such file, "%s"' % filename)
           ""
+        end
+      end
+
+      private
+
+      #
+      # fetches the value for the key, evaluating the value as ruby if it begins with '='
+      #
+      def evaluate_value(key)
+        value = fetch(key, nil)
+        if value.is_a? Array
+          value
+        elsif value.nil?
+          nil
+        else
+          if value =~ /^= (.*)$/
+            begin
+              value = @node.instance_eval($1) #, @node.send(:binding))
+              self[key] = value
+            rescue SystemStackError => exc
+              puts "STACK OVERFLOW, BAILING OUT"
+              puts "There must be an eval loop of death (variables with circular dependencies). This is the offending string:"
+              puts
+              puts "    #{$1}"
+              puts
+              raise SystemExit.new()
+            rescue StandardError => exc
+              puts "Eval error in '#{@node.name}'"
+              puts "   string: #{$1}"
+              puts "   error: #{exc.name}"
+            end
+          end
+          value
         end
       end
 
