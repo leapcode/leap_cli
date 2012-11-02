@@ -64,7 +64,14 @@ module LeapCli::Commands
   #
   program_desc       LeapCli::SUMMARY
   program_long_desc  LeapCli::DESCRIPTION
-  version            LeapCli::VERSION
+
+  #
+  # handle --version ourselves
+  #
+  if ARGV.grep(/--version/).any?
+    puts "leap #{LeapCli::VERSION}, ruby #{RUBY_VERSION}"
+    exit(0)
+  end
 
   #
   # load commands and run

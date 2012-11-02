@@ -15,6 +15,9 @@ module LeapCli
     default_value Path.root
     flag [:root]
 
+    desc 'Display version number and exit'
+    switch :version, :negatable => false
+
     pre do |global,command,options,args|
       #
       # set verbosity
