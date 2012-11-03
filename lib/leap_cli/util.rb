@@ -83,8 +83,9 @@ module LeapCli
     def assert_config!(conf_path)
       value = nil
       begin
-        value = eval(conf_path, manager.send(:binding))
+        value = manager.instance_eval(conf_path)
       rescue NoMethodError
+      rescue NameError
       end
       assert! value, "* Error: Nothing set for #{conf_path}"
     end
