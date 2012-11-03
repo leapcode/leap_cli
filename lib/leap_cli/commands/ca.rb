@@ -131,11 +131,11 @@ module LeapCli; module Commands
   # for keyusage, openvpn server certs can have keyEncipherment or keyAgreement. I am not sure which is preferable.
   # going with keyAgreement for now.
   #
+  # digest options: SHA512, SHA1
+  #
   def server_signing_profile(node)
     {
-      #"digest" => "SHA512",
-      "digest" => "SHA256"
-      #"digest" => "SHA1",
+      "digest" => "SHA256",
       "extensions" => {
         "keyUsage" => {
           "usage" => ["digitalSignature", "keyAgreement"]
