@@ -134,7 +134,7 @@ module LeapCli; module Commands
   def server_signing_profile(node)
     {
       #"digest" => "SHA512",
-      "digest" => "SHA256"
+      "digest" => "SHA256",
       #"digest" => "SHA1",
       "extensions" => {
         "keyUsage" => {
