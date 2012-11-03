@@ -109,7 +109,7 @@ module LeapCli; module Commands
     key = read_file!(key)
     openssl_cert = OpenSSL::X509::Certificate.new(crt)
     cert = CertificateAuthority::Certificate.from_openssl(openssl_cert)
-    cert.key_material.private_key = OpenSSL::PKey::RSA.new(key)  # second argument is password, if set
+    cert.key_material.private_key = OpenSSL::PKey::RSA.new(key, nil)  # second argument is password, if set
     return cert
   end
 
@@ -133,6 +133,9 @@ module LeapCli; module Commands
   #
   def server_signing_profile(node)
     {
+      #"digest" => "SHA512",
+      "digest" => "SHA256"
+      #"digest" => "SHA1",
       "extensions" => {
         "keyUsage" => {
           "usage" => ["digitalSignature", "keyAgreement"]
