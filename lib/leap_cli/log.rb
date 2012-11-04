@@ -43,9 +43,9 @@ def log2(message=nil, &block)
 end
 
 def progress(message)
-  log1(" * " + message)
+  log1("  = " + message)
 end
 
 def progress2(message)
-  log2(" * " + message)
+  log2("  = " + message)
 end

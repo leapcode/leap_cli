@@ -60,10 +60,11 @@ module LeapCli
       cmd = cmd + " 2>&1"
       output = `#{cmd}`
       unless $?.success?
-        log1(" * run: #{cmd}")
-        log1(" * FAILED: (exit #{$?}) #{output}")
+        progress("run: #{cmd}")
+        progress(Paint["FAILED", :red] + ": (exit #{$?.exitstatus}) #{output}")
+        bail!
       else
-        log2(" * run: #{cmd}")
+        progress2(Paint["ran",:green] + ": #{cmd}")
       end
       return output
     end
@@ -88,7 +89,7 @@ module LeapCli
       rescue NoMethodError
       rescue NameError
       end
-      assert! value, "* Error: Nothing set for #{conf_path}"
+      assert! value, "  = Error: Nothing set for #{conf_path}"
     end
 
     def assert_files_exist!(*files)
