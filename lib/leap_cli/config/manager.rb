@@ -8,7 +8,7 @@ module LeapCli
     #
     class Manager
 
-      attr_reader :services, :tags, :nodes, :provider, :common
+      attr_reader :services, :tags, :nodes, :provider, :common, :secrets
 
       ##
       ## IMPORT EXPORT
@@ -18,11 +18,13 @@ module LeapCli
       # load .json configuration files
       #
       def load(provider_dir=Path.provider)
+        @provider_dir = provider_dir
         @services = load_all_json(Path.named_path([:service_config, '*'], provider_dir))
         @tags     = load_all_json(Path.named_path([:tag_config, '*'],     provider_dir))
         @nodes    = load_all_json(Path.named_path([:node_config, '*'],    provider_dir))
         @common   = load_json(Path.named_path(:common_config,   provider_dir))
         @provider = load_json(Path.named_path(:provider_config, provider_dir))
+        @secrets  = load_json(Path.named_path(:secrets_config, provider_dir))
 
         Util::assert!(@provider, "Failed to load provider.json")
         Util::assert!(@common, "Failed to load common.json")
@@ -35,7 +37,8 @@ module LeapCli
       #
       # save compiled hiera .yaml files
       #
-      def export(dir=Path.named_path(:hiera_dir))
+      def export_nodes(destination_directory = nil)
+        dir = destination_directory || Path.named_path(:hiera_dir, @provider_dir)
         existing_files = Dir.glob(dir + '/*.yaml')
         updated_files = []
         @nodes.each do |name, node|
@@ -45,6 +48,13 @@ module LeapCli
         end
         (existing_files - updated_files).each do |filepath|
           Util::remove_file!(filepath)
+        end
+      end
+
+      def export_secrets(destination_file = nil)
+        if @secrets.any?
+          file_path = destination_file || Path.named_path(:secrets_config, @provider_dir)
+          Util.write_file!(file_path, @secrets.dump_json + "\n")
         end
       end
 
@@ -119,6 +129,10 @@ module LeapCli
       end
 
       def load_json(filename)
+        if !File.exists?(filename)
+          return Config::Object.new(self)
+        end
+
         #
         # read file, strip out comments
         # (File.read(filename) would be faster, but we like ability to have comments)

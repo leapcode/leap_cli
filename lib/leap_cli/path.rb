@@ -13,6 +13,7 @@ module LeapCli; module Path
     # input config files
     :common_config    => 'common.json',
     :provider_config  => 'provider.json',
+    :secrets_config   => 'secrets.json',
     :node_config      => 'nodes/#{arg}.json',
     :service_config   => 'services/#{arg}.json',
     :tag_config       => 'tags/#{arg}.json',

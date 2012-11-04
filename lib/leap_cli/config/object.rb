@@ -39,6 +39,10 @@ module LeapCli
         self.ya2yaml(:syck_compatible => true)
       end
 
+      def dump_json
+        generate_json(self)
+      end
+
       ##
       ## FETCHING VALUES
       ##
@@ -167,6 +171,15 @@ module LeapCli
           log0('no such file, "%s"' % filename)
           ""
         end
+      end
+
+      #
+      # inserts a named secret, generating it if needed.
+      #
+      # manager.export_secrets should be called later to capture any newly generated secrets.
+      #
+      def secret(name, length=32)
+        @manager.secrets[name.to_s] ||= Util::Secret.generate(length)
       end
 
       private
