@@ -1,6 +1,38 @@
 module LeapCli
   module Commands
 
+    desc 'List nodes and their classifications'
+    long_desc 'Prints out a listing of nodes, services, or tags.'
+    arg_name 'filter'
+    command :list do |c|
+      c.flag 'print', :desc => 'What attributes to print (optional)'
+      c.action do |global_options,options,args|
+        if options['print']
+          print_node_properties(manager.filter(args), options['print'])
+        else
+          if args.any?
+            print_config_table(:nodes, manager.filter(args))
+          else
+            print_config_table(:services, manager.services)
+            print_config_table(:tags, manager.tags)
+            print_config_table(:nodes, manager.nodes)
+          end
+        end
+      end
+    end
+
+    private
+
+    def self.print_node_properties(nodes, properties)
+      node_list = manager.nodes
+      properties = properties.split(',')
+      max_width = nodes.keys.inject(0) {|max,i| [i.size,max].max}
+      nodes.keys.sort.each do |node_name|
+        value = properties.collect{|prop| node_list[node_name][prop]}.join(', ')
+        printf("%#{max_width}s   %s\n", node_name, value)
+      end
+    end
+
     def self.print_config_table(type, object_list)
       style = {:border_x => '-', :border_y => ':', :border_i => '-', :width => 60}
 
@@ -41,21 +73,6 @@ module LeapCli
           end
         end
         puts t
-      end
-    end
-
-    desc 'List nodes and their classifications'
-    long_desc 'Prints out a listing of nodes, services, or tags.'
-    arg_name 'filter'
-    command :list do |c|
-      c.action do |global_options,options,args|
-        if args.any?
-          print_config_table(:nodes, manager.filter(args))
-        else
-          print_config_table(:services, manager.services)
-          print_config_table(:tags, manager.tags)
-          print_config_table(:nodes, manager.nodes)
-        end
       end
     end
 

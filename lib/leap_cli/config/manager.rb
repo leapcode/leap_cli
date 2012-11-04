@@ -211,6 +211,8 @@ module LeapCli
           service.node_list
         elsif tag = self.tags[name]
           tag.node_list
+        else
+          {}
         end
       end
 
