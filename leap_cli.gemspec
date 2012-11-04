@@ -23,8 +23,7 @@ spec = Gem::Specification.new do |s|
   ##
 
   s.files = `find lib vendor -name '*.rb'`.split("\n") << "bin/leap"
-  s.require_paths << 'lib'
-  s.require_paths << 'vendor/supply_drop/lib'
+  s.require_paths += LeapCli::REQUIRE_PATHS
 
   s.bindir = 'bin'
   s.executables << 'leap'
@@ -48,6 +47,7 @@ spec = Gem::Specification.new do |s|
   s.add_runtime_dependency('gli','~> 2.3')
   s.add_runtime_dependency('terminal-table')
   s.add_runtime_dependency('highline')
+  s.add_runtime_dependency('paint')
 
   # network gems
   s.add_runtime_dependency('capistrano')

@@ -13,11 +13,13 @@ rescue LoadError
   # This allows you to run the command directly while developing the gem, and also lets you
   # run from anywhere (I like to link 'bin/leap' to /usr/local/bin/leap).
   #
-  file = File.symlink?(__FILE__) ? File.readlink(__FILE__) : __FILE__
-  lib_dir = File.expand_path(File.dirname(file) + '/../lib')
-  $LOAD_PATH.unshift lib_dir unless $LOAD_PATH.include?(lib_dir)
   require 'rubygems'
-  require 'bundler/setup' # force evaluation of "Gemfile"
+  base_dir = File.expand_path('..', File.dirname(File.symlink?(__FILE__) ? File.readlink(__FILE__) : __FILE__))
+  require File.join([base_dir, 'lib','leap_cli','version.rb'])
+  LeapCli::REQUIRE_PATHS.each do |path|
+    path = File.expand_path(path, base_dir)
+    $LOAD_PATH.unshift path unless $LOAD_PATH.include?(path)
+  end
   require 'leap_cli'
 end
 
