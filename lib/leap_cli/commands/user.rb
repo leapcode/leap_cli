@@ -53,6 +53,7 @@ module LeapCli
           write_file!([:user_pgp, username], pgp_pub_key)
         end
 
+        update_authorized_keys
       end
     end
 
