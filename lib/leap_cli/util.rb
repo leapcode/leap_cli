@@ -1,4 +1,5 @@
 require 'digest/md5'
+require 'paint'
 
 module LeapCli
 
@@ -112,19 +113,19 @@ module LeapCli
     end
 
     def progress_created(path)
-      progress 'created %s' % relative_path(path)
+      progress Paint['created', :green, :bold] + ' ' + relative_path(path)
     end
 
     def progress_updated(path)
-      progress 'updated %s' % relative_path(path)
+      progress Paint['updated', :cyan, :bold] + ' ' + relative_path(path)
     end
 
     def progress_nochange(path)
-      progress2 'no change %s' % relative_path(path)
+      progress2 Paint['no change', :white, :bold] + ' ' + relative_path(path)
     end
 
     def progress_removed(path)
-      progress 'removed %s' % relative_path(path)
+      progress Paint['removed', :red, :bold] + ' ' + relative_path(path)
     end
 
     #
