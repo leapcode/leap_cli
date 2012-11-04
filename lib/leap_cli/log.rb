@@ -2,7 +2,7 @@ module LeapCli
   extend self
 
   def log_level
-    @log_level
+    @log_level ||= 1
   end
 
   def log_level=(value)
