@@ -42,7 +42,7 @@ module LeapCli
           end
           results
         else
-          super
+          super key.to_s
         end
       end
 

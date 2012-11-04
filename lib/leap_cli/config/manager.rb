@@ -133,6 +133,8 @@ module LeapCli
           return Config::Object.new(self)
         end
 
+        progress2("loading %s" % filename)
+
         #
         # read file, strip out comments
         # (File.read(filename) would be faster, but we like ability to have comments)
