@@ -14,8 +14,8 @@ end
 
 task :install_prerequisites, :max_hosts => MAX_HOSTS do
   run "mkdir -p #{puppet_destination}"
-  run "#{sudo} apt-get update"
-  run "#{sudo} apt-get install -y puppet ruby-hiera-puppet rsync"
+  run "apt-get update"
+  run "apt-get install -y puppet ruby-hiera-puppet rsync"
 end
 
 #task :update_platform, :max_hosts => MAX_HOSTS do

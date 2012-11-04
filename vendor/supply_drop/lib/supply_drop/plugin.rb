@@ -20,8 +20,8 @@ module SupplyDrop
     end
 
     def prepare
-      run "mkdir -p #{puppet_destination}"
-      run "#{sudo} chown -R $USER: #{puppet_destination}"
+      #run "mkdir -p #{puppet_destination}"
+      #run "#{sudo} chown -R $USER: #{puppet_destination}"
     end
 
     def noop
@@ -34,7 +34,7 @@ module SupplyDrop
 
     def lock
       if should_lock?
-        run <<-GETLOCK
+        cmd = <<-GETLOCK
 if [ ! -f #{puppet_lock_file} ]; then
     touch #{puppet_lock_file};
 else
@@ -42,11 +42,12 @@ else
     exit 1;
 fi
         GETLOCK
+        run cmd.gsub(/\s+/, ' ')
       end
     end
 
     def unlock
-      run "#{sudo} rm -f #{puppet_lock_file}; true" if should_lock?
+      run "rm -f #{puppet_lock_file}; true" if should_lock?
     end
 
     private
