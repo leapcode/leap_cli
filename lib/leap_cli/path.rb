@@ -22,7 +22,7 @@ module LeapCli; module Path
     :user_ssh         => 'users/#{arg}/#{arg}_ssh.pub',
     :user_pgp         => 'users/#{arg}/#{arg}_pgp.pub',
     :hiera            => 'hiera/#{arg}.yaml',
-    :node_ssh_pub_key => 'files/nodes/#{arg}/#{arg}_ssh_key.pub',
+    :node_ssh_pub_key => 'files/nodes/#{arg}/#{arg}_ssh.pub',
     :known_hosts      => 'files/ssh/known_hosts',
     :authorized_keys  => 'files/ssh/authorized_keys',
     :ca_key           => 'files/ca/ca.key',
