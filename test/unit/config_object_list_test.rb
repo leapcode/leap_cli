@@ -9,8 +9,9 @@ class TestMeme < MiniTest::Unit::TestCase
   end
 
   def test_complex_node_search
+    domain = manager.provider.domain
     nodes = manager.nodes['dns.public' => true]
-    expected = [{"domain_full"=>"ns1.rewire.co"}, {"domain_full"=>"ns2.rewire.co"}, {"domain_full"=>"vpn1.rewire.co"}, {"domain_full"=>"web1.rewire.co"}]
+    expected = [{"domain_full"=>"ns1.#{domain}"}, {"domain_full"=>"ns2.#{domain}"}, {"domain_full"=>"vpn1.#{domain}"}, {"domain_full"=>"web1.#{domain}"}]
     assert_equal expected.size, nodes.size
     assert_equal expected, nodes.fields('domain.full')
   end
