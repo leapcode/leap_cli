@@ -2,8 +2,10 @@
 # General service provider configuration.
 #
 {
+  "domain": "bitmask.net",
+  "internal_domain": "= domain.sub(/\\..*$/,'.i')",
   "name": {
-    "en": "The Rewire Company"
+    "en": "Bitmask"
   },
   "description": {
     "en": "A demonstration service provider using the LEAP platform"
@@ -12,10 +14,11 @@
   "default_language": "en",
   "enrollment_policy": "open",
   "ca": {
-    "name": "Rewire Root CA",
+    "name": "= global.provider.ca.organization + ' Root CA'",
     "organization": "= global.provider.name[global.provider.default_language]",
     "organizational_unit": "= 'https://' + global.common.domain.full_suffix",
     "bit_size": 4096,
+    "life_span": "10y",
     "server_certificates": {
       "bit_size": 3248,
       "life_span": "1y"

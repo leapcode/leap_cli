@@ -3,8 +3,8 @@
 #
 {
   "domain": {
-     "full_suffix": "rewire.co",
-     "internal_suffix": "rewire",
+     "full_suffix": "= global.provider.domain",
+     "internal_suffix": "= global.provider.internal_domain",
      "full": "= node.name + '.' + domain.full_suffix",
      "internal": "= node.name + '.' + domain.internal_suffix",
      "name": "= node.name + '.' + (dns.public ? domain.full_suffix : domain.internal_suffix)"
@@ -16,10 +16,10 @@
     "authorized_keys": "= file :authorized_keys",
     "known_hosts": "= file :known_hosts",
     "port": 22
+  },
+  "x509": {
+    "use": false,
+    "cert": "= x509.use ? file(:node_x509_cert) : nil",
+    "key": "= x509.use ? file(:node_x509_key) : nil"
   }
-  #"x509": {
-  #  "use": false,
-  #  "cert": "= x509.use ? file(:node_x509_cert) : nil",
-  #  "key": "= x509.use ? file(:node_x509_key) : nil"
-  #}
 }

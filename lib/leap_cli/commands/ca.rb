@@ -11,6 +11,7 @@ module LeapCli; module Commands
       assert_files_missing! :ca_cert, :ca_key
       assert_config! 'provider.ca.name'
       assert_config! 'provider.ca.bit_size'
+      assert_config! 'provider.ca.life_span'
 
       provider = manager.provider
       root = CertificateAuthority::Certificate.new
@@ -25,10 +26,8 @@ module LeapCli; module Commands
       end
 
       # set expiration
-      years = 2
-      today = Date.today
-      root.not_before = Time.gm today.year, today.month, today.day
-      root.not_after = root.not_before + years * 60 * 60 * 24 * 365
+      root.not_before = today
+      root.not_after = years_from_today(provider.ca.life_span.to_i)
 
       # generate private key
       root.serial_number.number = 1
@@ -65,10 +64,8 @@ module LeapCli; module Commands
         cert.subject.common_name = node.domain.full
 
         # set expiration
-        years = provider.ca.server_certificates.life_span.to_i
-        today = Date.today
-        cert.not_before = Time.gm today.year, today.month, today.day
-        cert.not_after = cert.not_before + years * 60 * 60 * 24 * 365
+        cert.not_before = today
+        cert.not_after = years_from_today(provider.ca.server_certificates.life_span.to_i)
 
         # generate key
         cert.serial_number.number = cert_serial_number(node.domain.full)
@@ -160,6 +157,16 @@ module LeapCli; module Commands
   #
   def cert_serial_number(domain_name)
     Digest::MD5.hexdigest("#{domain_name} -- #{Time.now}").to_i(16)
+  end
+
+  def today
+    t = Time.now
+    Time.utc t.year, t.month, t.day
+  end
+
+  def years_from_today(num)
+    t = Time.now
+    Time.utc t.year + num, t.month, t.day
   end
 
 end; end

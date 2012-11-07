@@ -1,7 +1,8 @@
 {
   "webapp": {
     "modules": ["user", "billing", "help"],
-    "couchdb_hosts": "= nodes[:services => :couchdb].field('domain.name')"
+    "couchdb_hosts": "= nodes[:services => :couchdb].field('domain.name')",
+    "couchdb_users": "= global.services['couchdb'].users['admin']"
   },
   "definition_files": {
     "provider": "= file('service-definitions/provider.json.erb')",
