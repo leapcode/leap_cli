@@ -43,7 +43,7 @@ task 'build' do
   say "#{$spec.name} #{$spec.version} built to pkg/#{file_name}"
 end
 
-desc "Build and install #{$spec.name}-#{$spec.version}.gem into either system-wide or user gems"
+desc "Install #{$spec.name}-#{$spec.version}.gem into either system-wide or user gems"
 task 'install' do
   if !File.exists?($gem_path)
     say("Could not file #{$gem_path}. Try running 'rake build'")
@@ -51,11 +51,23 @@ task 'install' do
     if ENV["USER"] == "root"
       run "gem install '#{$gem_path}'"
     else
-      say("A system-wide install requires that you run 'rake install' as root, which you are not.")
-      if agree("Do you want to continue installing to #{Gem.path.grep /home/}? ")
+      home_gem_path = Gem.path.grep(/home/).first
+      say("You are installing as an unprivileged user, which will result in the installation being placed in '#{home_gem_path}'.")
+      if agree("Do you want to continue installing to #{home_gem_path}? ")
         run "gem install '#{$gem_path}' --user-install"
       end
     end
+  end
+end
+
+desc "Uninstall #{$spec.name}-#{$spec.version}.gem from either system-wide or user gems"
+task 'uninstall' do
+  if ENV["USER"] == "root"
+    say("Removing #{$spec.name}-#{$spec.version}.gem from system-wide gems")
+    run "gem uninstall '#{$spec.name}' --version #{$spec.version} --verbose -x -I"
+  else
+    say("Removing #{$spec.name}-#{$spec.version}.gem from user's gems")
+    run "gem uninstall '#{$spec.name}' --version #{$spec.version} --verbose --user-install -x -I"
   end
 end
 
