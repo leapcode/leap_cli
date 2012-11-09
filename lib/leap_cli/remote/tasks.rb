@@ -15,7 +15,7 @@ end
 task :install_prerequisites, :max_hosts => MAX_HOSTS do
   run "mkdir -p #{puppet_destination}"
   run "apt-get update"
-  run "apt-get install -y puppet ruby-hiera-puppet rsync"
+  run "DEBIAN_FRONTEND=noninteractive apt-get -q -y -o DPkg::Options::=--force-confold install puppet ruby-hiera-puppet rsync"
 end
 
 #task :update_platform, :max_hosts => MAX_HOSTS do
