@@ -29,7 +29,8 @@ module LeapCli; module Path
     :ca_cert          => 'files/ca/ca.crt',
     :dh_params        => 'files/ca/dh.pem',
     :node_x509_key    => 'files/nodes/#{arg}/#{arg}.key',
-    :node_x509_cert   => 'files/nodes/#{arg}/#{arg}.crt'
+    :node_x509_cert   => 'files/nodes/#{arg}/#{arg}.crt',
+    :vagrantfile      => 'test/Vagrantfile'
   }
 
   #

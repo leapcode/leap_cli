@@ -2,4 +2,6 @@ Gemfile.lock
 pkg
 junk
 test/provider/hiera
+.vagrant
+Vagrantfile
 

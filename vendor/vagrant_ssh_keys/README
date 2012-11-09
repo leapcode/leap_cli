@@ -1,0 +1,5 @@
+# Insecure Keypair
+
+These keys are the "insecure" public/private keypair commonly used by vagrant
+base boxes so that vagrant installations can automatically SSH into the boxes.
+

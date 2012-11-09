@@ -46,6 +46,11 @@ module LeapCli
         end
       end
 
+      def each_node(&block)
+        self.keys.sort.each do |node_name|
+          yield self[node_name]
+        end
+      end
 
       # def <<(object)
       #   if object.is_a? Config::ObjectList

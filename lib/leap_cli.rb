@@ -9,6 +9,7 @@ require 'leap_cli/init'
 require 'leap_cli/path'
 require 'leap_cli/util'
 require 'leap_cli/util/secret'
+require 'leap_cli/util/remote_command'
 
 require 'leap_cli/log'
 require 'leap_cli/ssh_key'

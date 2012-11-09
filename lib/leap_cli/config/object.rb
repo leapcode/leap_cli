@@ -145,6 +145,20 @@ module LeapCli
       end
 
       ##
+      ## NODE SPECIFIC
+      ## maybe these should be moved to a Node class.
+      ##
+
+      #
+      # returns true if this node has an ip address in the range of the vagrant network
+      #
+      def vagrant?
+        vagrant_range = IPAddr.new @manager.provider.vagrant.network
+        ip_address    = IPAddr.new @node.ip_address
+        vagrant_range.include?(ip_address)
+      end
+
+      ##
       ## MACROS
       ## these are methods used when eval'ing a value in the .json configuration
       ##

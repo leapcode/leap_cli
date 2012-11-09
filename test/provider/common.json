@@ -21,5 +21,6 @@
     "use": false,
     "cert": "= x509.use ? file(:node_x509_cert) : nil",
     "key": "= x509.use ? file(:node_x509_key) : nil"
-  }
+  },
+  "local": "= self.vagrant?"
 }

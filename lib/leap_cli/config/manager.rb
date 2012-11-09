@@ -113,6 +113,13 @@ module LeapCli
         nodes[name]
       end
 
+      #
+      # yields each node, in sorted order
+      #
+      def each_node(&block)
+        nodes.each_node &block
+      end
+
       private
 
       def load_all_json(pattern)
@@ -230,6 +237,14 @@ module LeapCli
         else
           {}
         end
+      end
+
+      #
+      # TODO: apply JSON spec
+      #
+      PRIVATE_IP_RANGES = /(^127\.0\.0\.1)|(^10\.)|(^172\.1[6-9]\.)|(^172\.2[0-9]\.)|(^172\.3[0-1]\.)|(^192\.168\.)/
+      def validate_provider(provider)
+        Util::assert! provider.vagrant.network =~ PRIVATE_IP_RANGES, 'provider.json error: vagrant.network is not a local private network'
       end
 
     end
