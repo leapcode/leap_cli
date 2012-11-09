@@ -37,12 +37,13 @@ module LeapCli; module Commands
   private
 
   def vagrant_command(cmd, args)
+    assert_config! 'provider.vagrant.network'
     create_vagrant_file
     nodes = manager.filter(args)[:local => true].field(:name)
     if nodes.any?
       execute "cd #{File.dirname(Path.named_path(:vagrantfile))}; vagrant #{cmd} #{nodes.join(' ')}"
     else
-      bail! "No nodes found"
+      bail! "No nodes found. This command only works on nodes with ip_address in the network #{manager.provider.vagrant.network}"
     end
   end
 
