@@ -60,11 +60,11 @@ module LeapCli
       cmd = cmd + " 2>&1"
       output = `#{cmd}`
       unless $?.success?
-        progress("run: #{cmd}")
-        progress(Paint["FAILED", :red] + ": (exit #{$?.exitstatus}) #{output}")
+        log :run, cmd
+        log :failed, "(exit #{$?.exitstatus}) #{output}"
         bail!
       else
-        progress2(Paint["ran",:green] + ": #{cmd}")
+        log 2, :ran, cmd
       end
       return output
     end
@@ -73,7 +73,7 @@ module LeapCli
       options = files.last.is_a?(Hash) ? files.pop : {}
       file_list = files.collect { |file_path|
         file_path = Path.named_path(file_path)
-        File.exists?(file_path) ? relative_path(file_path) : nil
+        File.exists?(file_path) ? Path.relative_path(file_path) : nil
       }.compact
       if file_list.length > 1
         bail! "Sorry, we can't continue because these files already exist: #{file_list.join(', ')}. You are not supposed to remove these files. Do so only with caution."
@@ -96,7 +96,7 @@ module LeapCli
       options = files.last.is_a?(Hash) ? files.pop : {}
       file_list = files.collect { |file_path|
         file_path = Path.named_path(file_path)
-        !File.exists?(file_path) ? relative_path(file_path) : nil
+        !File.exists?(file_path) ? Path.relative_path(file_path) : nil
       }.compact
       if file_list.length > 1
         bail! "Sorry, you are missing these files: #{file_list.join(', ')}. #{options[:msg]}"
@@ -108,26 +108,6 @@ module LeapCli
     ##
     ## FILES AND DIRECTORIES
     ##
-
-    def relative_path(path)
-      path.sub(/^#{Regexp.escape(Path.provider)}\//,'')
-    end
-
-    def progress_created(path)
-      progress Paint['created', :green, :bold] + ' ' + relative_path(path)
-    end
-
-    def progress_updated(path)
-      progress Paint['updated', :cyan, :bold] + ' ' + relative_path(path)
-    end
-
-    def progress_nochange(path)
-      progress2 Paint['no change', :white, :bold] + ' ' + relative_path(path)
-    end
-
-    def progress_removed(path)
-      progress Paint['removed', :red, :bold] + ' ' + relative_path(path)
-    end
 
     #
     # creates a directory if it doesn't already exist
@@ -141,7 +121,7 @@ module LeapCli
           unless dir =~ /\/$/
             dir = dir + '/'
           end
-          progress_created dir
+          log :created, dir
         end
       end
     end
@@ -188,7 +168,7 @@ module LeapCli
       filepath = Path.named_path(filepath)
       if File.exists?(filepath)
         File.unlink(filepath)
-        progress_removed(filepath)
+        log :removed, filepath
       end
     end
 
@@ -198,7 +178,7 @@ module LeapCli
       existed = File.exists?(filepath)
       if existed
         if file_content_equals?(filepath, contents)
-          progress_nochange filepath
+          log :nochange, filepath, 2
           return
         end
       end
@@ -208,9 +188,9 @@ module LeapCli
       end
 
       if existed
-        progress_updated filepath
+        log :updated, filepath
       else
-        progress_created filepath
+        log :created, filepath
       end
     end
 

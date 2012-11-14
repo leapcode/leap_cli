@@ -140,7 +140,7 @@ module LeapCli
           return Config::Object.new(self)
         end
 
-        progress2("loading %s" % filename)
+        log :loading, filename, 2
 
         #
         # read file, strip out comments
@@ -158,8 +158,8 @@ module LeapCli
         begin
           hash = JSON.parse(buffer.string, :object_class => Hash, :array_class => Array) || {}
         rescue SyntaxError => exc
-          log0 'Error in file "%s":' % filename
-          log0 exc.to_s
+          log 0, :error, 'in file "%s":' % filename
+          log 0, exc.to_s, :indent => 1
           return nil
         end
         object = Config::Object.new(self)
@@ -198,7 +198,7 @@ module LeapCli
           node['services'].to_a.sort.each do |node_service|
             service = @services[node_service]
             if service.nil?
-              log0('Error in node "%s": the service "%s" does not exist.' % [node['name'], node_service])
+              log 0, :error, 'in node "%s": the service "%s" does not exist.' % [node['name'], node_service]
             else
               new_node.deep_merge!(service)
               service.node_list.add(name, new_node)
@@ -211,7 +211,7 @@ module LeapCli
           node['tags'].to_a.sort.each do |node_tag|
             tag = @tags[node_tag]
             if tag.nil?
-              log0('Error in node "%s": the tag "%s" does not exist.' % [node['name'], node_tag])
+              log 0, :error, 'in node "%s": the tag "%s" does not exist.' % [node['name'], node_tag]
             else
               new_node.deep_merge!(tag)
               tag.node_list.add(name, new_node)

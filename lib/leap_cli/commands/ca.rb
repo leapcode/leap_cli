@@ -87,11 +87,11 @@ module LeapCli; module Commands
     c.action do |global_options,options,args|
       long_running do
         if cmd_exists?('certtool')
-          progress('Generating DH parameters (takes a long time)...')
+          log 0, 'Generating DH parameters (takes a long time)...'
           output = assert_run!('certtool --generate-dh-params --sec-param high')
           write_file!(:dh_params, output)
         else
-          progress('Generating DH parameters (takes a REALLY long time)...')
+          log 0, 'Generating DH parameters (takes a REALLY long time)...'
           output = OpenSSL::PKey::DH.generate(3248).to_pem
           write_file!(:dh_params, output)
         end

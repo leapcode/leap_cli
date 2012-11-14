@@ -170,11 +170,16 @@ module LeapCli
         global.nodes
       end
 
+      class FileMissing < Exception; end
+
       #
       # inserts the contents of a file
       #
       def file(filename)
-        filepath = Path.find_file(@node.name, filename)
+        if filename.is_a? Symbol
+          filename = [filename, @node.name]
+        end
+        filepath = Path.find_file(filename)
         if filepath
           if filepath =~ /\.erb$/
             ERB.new(File.read(filepath), nil, '%<>').result(binding)
@@ -182,7 +187,7 @@ module LeapCli
             File.read(filepath)
           end
         else
-          log0('no such file, "%s"' % filename)
+          raise FileMissing.new(Path.named_path(filename))
           ""
         end
       end
@@ -213,16 +218,18 @@ module LeapCli
               value = @node.instance_eval($1) #, @node.send(:binding))
               self[key] = value
             rescue SystemStackError => exc
-              puts "STACK OVERFLOW, BAILING OUT"
-              puts "There must be an eval loop of death (variables with circular dependencies). This is the offending string:"
-              puts
-              puts "    #{$1}"
-              puts
+              log :error, "while evaluating node '#{@node.name}'"
+              log "offending string: #{$1}", :indent => 1
+              log "STACK OVERFLOW, BAILING OUT. There must be an eval loop of death (variables with circular dependencies)."
               raise SystemExit.new()
+           rescue FileMissing => exc
+              log :error, "while evaluating node '#{@node.name}'"
+              log "offending string: #{$1}", :indent => 1
+              log "error message: no file '#{exc}'", :indent => 1
             rescue StandardError => exc
-              puts "Eval error in '#{@node.name}'"
-              puts "   string: #{$1}"
-              puts "   error: #{exc.name}"
+              log :error, "while evaluating node '#{@node.name}'"
+              log "offending string: #{$1}", :indent => 1
+              log "error message: #{exc}", :indent => 1
             end
           end
           value

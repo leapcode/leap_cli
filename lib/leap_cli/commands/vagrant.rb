@@ -48,7 +48,7 @@ module LeapCli; module Commands
   end
 
   def execute(cmd)
-    progress2 "Running: #{cmd}"
+    log 2, :run, cmd
     exec cmd
   end
 

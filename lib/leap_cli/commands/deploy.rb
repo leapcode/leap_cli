@@ -56,7 +56,7 @@ module LeapCli
         statuses.strip.split("\n").each do |status_line|
           if status_line =~ /^-/
             submodule = status_line.split(' ')[1]
-            progress "Updating submodule #{submodule}"
+            log "Updating submodule #{submodule}"
             assert_run! "git submodule update --init #{submodule}"
           end
         end

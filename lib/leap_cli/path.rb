@@ -105,14 +105,14 @@ module LeapCli; module Path
   end
 
   #
-  # tries to find a file somewhere with 'filename', under a directory 'name' if possible.
+  # tries to find a file somewhere with 'filename' (which is probably in the form [node.name, filename])
   #
-  def self.find_file(name, filename)
+  def self.find_file(filename)
     # named path?
-    if filename.is_a? Symbol
-      path = named_path([filename, name], platform_provider)
+    if filename.is_a? Array
+      path = named_path(filename, platform_provider)
       return path if File.exists?(path)
-      path = named_path([filename, name], provider)
+      path = named_path(filename, provider)
       return path if File.exists?(path)
     end
 
@@ -160,6 +160,11 @@ module LeapCli; module Path
 
   def self.exists?(name, provider_dir=nil)
     File.exists?(named_path(name, provider_dir))
+  end
+
+  def self.relative_path(path)
+    path = named_path(path)
+    path.sub(/^#{Regexp.escape(provider)}\//,'')
   end
 
   private

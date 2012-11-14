@@ -94,7 +94,7 @@ module LeapCli
     def pick_pgp_key
       secret_keys = GPGME::Key.find(:secret)
       if secret_keys.empty?
-        progress("Skipping OpenPGP setup because I could not find any OpenPGP keys for you")
+        log "Skipping OpenPGP setup because I could not find any OpenPGP keys for you"
         return nil
       end
 
@@ -126,7 +126,7 @@ module LeapCli
         buffer << " "
         buffer << ssh_key
         buffer << " "
-        buffer << relative_path(keyfile)
+        buffer << Path.relative_path(keyfile)
         buffer << "\n"
       end
       write_file!(:authorized_keys, buffer.string)
