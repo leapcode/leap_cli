@@ -51,33 +51,14 @@ module LeapCli; module Commands
       assert_files_exist! :ca_cert, :ca_key, :msg => 'Run init-ca to create them'
       assert_config! 'provider.ca.server_certificates.bit_size'
       assert_config! 'provider.ca.server_certificates.life_span'
-
-      if args.first == 'all'
-        bail! 'not supported yet'
+      if args.first == 'all' || args.empty?
+        manager.each_node do |node|
+          if cert_needs_updating?(node)
+            generate_cert_for_node(node)
+          end
+        end
       else
-        provider = manager.provider
-        ca_root  = cert_from_files(:ca_cert, :ca_key)
-        node     = get_node_from_args(args)
-
-        # set subject
-        cert = CertificateAuthority::Certificate.new
-        cert.subject.common_name = node.domain.full
-
-        # set expiration
-        cert.not_before = today
-        cert.not_after = years_from_today(provider.ca.server_certificates.life_span.to_i)
-
-        # generate key
-        cert.serial_number.number = cert_serial_number(node.domain.full)
-        cert.key_material.generate_key(provider.ca.server_certificates.bit_size)
-
-        # sign
-        cert.parent = ca_root
-        cert.sign!(server_signing_profile(node))
-
-        # save
-        write_file!([:node_x509_key, node.name], cert.key_material.private_key.to_pem)
-        write_file!([:node_x509_cert, node.name], cert.to_pem)
+        generate_cert_for_node(get_node_from_args(args))
       end
     end
   end
@@ -101,12 +82,78 @@ module LeapCli; module Commands
 
   private
 
-  def cert_from_files(crt, key)
-    crt = read_file!(crt)
-    key = read_file!(key)
+  def cert_needs_updating?(node)
+    if !file_exists?([:node_x509_cert, node.name], [:node_x509_key, node.name])
+      return true
+    else
+      cert = load_certificate_file([:node_x509_cert, node.name])
+      if cert.not_after < months_from_today(1)
+        log :updating, "cert for node '#{node.name}' because it will expire soon"
+        return true
+      end
+      if cert.subject.common_name != node.domain.full
+        log :updating, "cert for node '#{node.name}' because domain.full has changed"
+        return true
+      end
+      cert.openssl_body.extensions.each do |ext|
+        #
+        # TODO: currently this only works with a single IP or DNS.
+        #
+        if ext.oid == "subjectAltName"
+          ext.value.match /IP Address:(.*?)(,|$)/
+          ip = $1
+          ext.value.match /DNS:(.*?)(,|$)/
+          dns = $1
+          if ip != node.ip_address
+            log :updating, "cert for node '#{node.name}' because ip_address has changed"
+            return true
+          elsif dns != node.domain.internal
+            log :updating, "cert for node '#{node.name}' because domain.internal has changed"
+            return true
+          end
+        end
+      end
+    end
+    return false
+  end
+
+  def generate_cert_for_node(node)
+    cert = CertificateAuthority::Certificate.new
+
+    # set subject
+    cert.subject.common_name = node.domain.full
+    cert.serial_number.number = cert_serial_number(node.domain.full)
+
+    # set expiration
+    cert.not_before = today
+    cert.not_after = years_from_today(manager.provider.ca.server_certificates.life_span.to_i)
+
+    # generate key
+    cert.key_material.generate_key(manager.provider.ca.server_certificates.bit_size)
+
+    # sign
+    cert.parent = ca_root
+    cert.sign!(server_signing_profile(node))
+
+    # save
+    write_file!([:node_x509_key, node.name], cert.key_material.private_key.to_pem)
+    write_file!([:node_x509_cert, node.name], cert.to_pem)
+  end
+
+  def ca_root
+    @ca_root ||= begin
+      load_certificate_file(:ca_cert, :ca_key)
+    end
+  end
+
+  def load_certificate_file(crt_file, key_file=nil, password=nil)
+    crt = read_file!(crt_file)
     openssl_cert = OpenSSL::X509::Certificate.new(crt)
     cert = CertificateAuthority::Certificate.from_openssl(openssl_cert)
-    cert.key_material.private_key = OpenSSL::PKey::RSA.new(key, nil)  # second argument is password, if set
+    if key_file
+      key = read_file!(key_file)
+      cert.key_material.private_key = OpenSSL::PKey::RSA.new(key, password)
+    end
     return cert
   end
 
@@ -141,10 +188,8 @@ module LeapCli; module Commands
           "usage" => ["serverAuth"]
         },
         "subjectAltName" => {
-          "uris" => [
-            "IP:#{node.ip_address}",
-            "DNS:#{node.domain.internal}"
-          ]
+          "ips" => [node.ip_address],
+          "dns_names" => [node.domain.internal]
         }
       }
     }
@@ -167,6 +212,11 @@ module LeapCli; module Commands
   def years_from_today(num)
     t = Time.now
     Time.utc t.year + num, t.month, t.day
+  end
+
+  def months_from_today(num)
+    date = Date.today >> num  # >> is months in the future operator
+    Time.utc date.year, date.month, date.day
   end
 
 end; end

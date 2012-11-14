@@ -105,6 +105,16 @@ module LeapCli
       end
     end
 
+    def file_exists?(*files)
+      files.each do |file_path|
+        file_path = Path.named_path(file_path)
+        if !File.exists?(file_path)
+          return false
+        end
+      end
+      return true
+    end
+
     ##
     ## FILES AND DIRECTORIES
     ##

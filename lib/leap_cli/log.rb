@@ -48,6 +48,7 @@ def log(*args)
         when :warning   then Paint['warning', :yellow, :bold]
         when :info      then Paint['info', :cyan, :bold]
         when :updated   then Paint['updated', :cyan, :bold]
+        when :updating  then Paint['updating', :cyan, :bold]
         when :created   then Paint['created', :green, :bold]
         when :removed   then Paint['removed', :red, :bold]
         when :nochange  then Paint['no change', :magenta]
