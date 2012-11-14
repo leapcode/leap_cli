@@ -40,6 +40,14 @@ module LeapCli
       else
         bail!("Could not find the root directory. Change current working directory or try --root")
       end
+
+      #
+      # check requirements
+      #
+      REQUIREMENTS.each do |key|
+        assert_config! key
+      end
+
     end
 
   end

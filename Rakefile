@@ -81,6 +81,33 @@ end
 task :default => :test
 
 ##
+## CODE GENERATION
+##
+
+desc "Updates the list of required configuration options for this version of LEAP CLI"
+task 'update-requirements' do
+  Dir.chdir($base_dir) do
+    required_configs = `find -name '*.rb' | xargs grep -R 'assert_config!'`.split("\n").collect{|line|
+      if line =~ /def/
+        nil
+      else
+        line.sub(/.*assert_config! ["'](.*?)["'].*/,'"\1"')
+      end
+    }.compact
+    File.open("#{$base_dir}/lib/leap_cli/requirements.rb", 'w') do |f|
+      f.puts "# run 'rake update-requirements' to generate this file."
+      f.puts "module LeapCli"
+      f.puts "  REQUIREMENTS = ["
+      f.puts "    " + required_configs.join(",\n    ")
+      f.puts "  ]"
+      f.puts "end"
+    end
+    puts "updated #{$base_dir}/lib/leap_cli/requirements.rb"
+    #puts `cat '#{$base_dir}/lib/leap_cli/requirements.rb'`
+  end
+end
+
+##
 ## DOCUMENTATION
 ##
 

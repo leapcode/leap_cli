@@ -1,6 +1,7 @@
 module LeapCli; end
 
 require 'leap_cli/version.rb'
+require 'leap_cli/requirements.rb'
 require 'core_ext/hash'
 require 'core_ext/boolean'
 require 'core_ext/nil'
