@@ -16,18 +16,19 @@ module LeapCli
     def help!(message=nil)
       ENV['GLI_DEBUG'] = "false"
       help_now!(message)
-      #say("ERROR: " + message)
     end
 
     #
     # quit with a message that we are bailing out.
     #
-    def bail!(message="")
-      puts(message)
+    def bail!(message=nil)
+      if block_given?
+        yield
+      elsif message
+        puts message
+      end
       puts("Bailing out.")
       raise SystemExit.new
-      #ENV['GLI_DEBUG'] = "false"
-      #exit_now!(message)
     end
 
     #
@@ -41,15 +42,19 @@ module LeapCli
     #
     # bails out with message if assertion is false.
     #
-    def assert!(boolean, message)
-      bail!(message) unless boolean
+    def assert!(boolean, message=nil, &block)
+      if !boolean
+        bail!(message, &block)
+      end
     end
 
     #
     # assert that the command is available
     #
     def assert_bin!(cmd_name)
-      assert! `which #{cmd_name}`.strip.any?, "Sorry, bailing out, the command '%s' is not installed." % cmd_name
+      assert! `which #{cmd_name}`.strip.any? do
+        log 0, :missing, "command '%s'" % cmd_name
+      end
     end
 
     #
@@ -60,9 +65,11 @@ module LeapCli
       cmd = cmd + " 2>&1"
       output = `#{cmd}`
       unless $?.success?
-        log :run, cmd
-        log :failed, "(exit #{$?.exitstatus}) #{output}"
-        bail!
+        bail! do
+          log 0, :run, cmd
+          log 0, :failed, "(exit #{$?.exitstatus}) #{output}", :indent => 1
+          log 0, message, :indent => 1 if message
+        end
       else
         log 2, :ran, cmd
       end
@@ -76,9 +83,15 @@ module LeapCli
         File.exists?(file_path) ? Path.relative_path(file_path) : nil
       }.compact
       if file_list.length > 1
-        bail! "Sorry, we can't continue because these files already exist: #{file_list.join(', ')}. You are not supposed to remove these files. Do so only with caution."
+        bail! do
+          log 0, :error, "Sorry, we can't continue because these files already exist: #{file_list.join(', ')}."
+          log 0, options[:msg] if options[:msg]
+        end
       elsif file_list.length == 1
-        bail! "Sorry, we can't continue because this file already exists: #{file_list}. You are not supposed to remove this file. Do so only with caution."
+        bail! do
+          log 0, :error, "Sorry, we can't continue because this file already exists: #{file_list.first}."
+          log 0, options[:msg] if options[:msg]
+        end
       end
     end
 
@@ -89,7 +102,9 @@ module LeapCli
       rescue NoMethodError
       rescue NameError
       end
-      assert! value, "  = Error: Nothing set for #{conf_path}"
+      assert! value do
+        log 0, :missing, "configuration value for #{conf_path}"
+      end
     end
 
     def assert_files_exist!(*files)
@@ -99,9 +114,15 @@ module LeapCli
         !File.exists?(file_path) ? Path.relative_path(file_path) : nil
       }.compact
       if file_list.length > 1
-        bail! "Sorry, you are missing these files: #{file_list.join(', ')}. #{options[:msg]}"
+        bail! do
+          log 0, :missing, "these files: #{file_list.join(', ')}"
+          log 0, options[:msg] if options[:msg]
+        end
       elsif file_list.length == 1
-        bail! "Sorry, you are missing this file: #{file_list.join(', ')}. #{options[:msg]}"
+        bail! do
+          log 0, :missing, "file #{file_list.first}"
+          log 0, options[:msg] if options[:msg]
+        end
       end
     end
 
@@ -123,16 +144,14 @@ module LeapCli
     # creates a directory if it doesn't already exist
     #
     def ensure_dir(dir)
+      dir = Path.named_path(dir)
       unless File.directory?(dir)
-        if File.exists?(dir)
-          bail! 'Unable to create directory "%s", file already exists.' % dir
-        else
-          FileUtils.mkdir_p(dir)
-          unless dir =~ /\/$/
-            dir = dir + '/'
-          end
-          log :created, dir
+        assert_files_missing!(dir, :msg => "Cannot create directory #{dir}")
+        FileUtils.mkdir_p(dir)
+        unless dir =~ /\/$/
+          dir = dir + '/'
         end
+        log :created, dir
       end
     end
 
@@ -158,18 +177,13 @@ module LeapCli
 
     def read_file!(filepath)
       filepath = Path.named_path(filepath)
-      if !File.exists?(filepath)
-        bail!("File '%s' does not exist." % filepath)
-      else
-        File.read(filepath)
-      end
+      assert_files_exist!(filepath)
+      File.read(filepath)
     end
 
     def read_file(filepath)
       filepath = Path.named_path(filepath)
-      if !File.exists?(filepath)
-        nil
-      else
+      if file_exists?(filepath)
         File.read(filepath)
       end
     end

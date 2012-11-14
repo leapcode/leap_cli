@@ -87,17 +87,20 @@ module LeapCli; module Commands
   # see `man sshd` for the format of known_hosts
   #
   def save_public_host_key(node)
-    log("Fetching public SSH host key for #{node.name}")
+    log :fetching, "public SSH host key for #{node.name}"
     public_key = get_public_key_for_ip(node.ip_address, node.ssh.port)
     pub_key_path = Path.named_path([:node_ssh_pub_key, node.name])
     if Path.exists?(pub_key_path)
       if public_key == SshKey.load_from_file(pub_key_path)
-        log("Public SSH host key for #{node.name} has not changed")
+        log :trusted, "- Public SSH host key for #{node.name} matches previously saved key", :indent => 1
       else
-        bail!("WARNING: The public SSH host key we just fetched for #{node.name} doesn't match what we have saved previously. Remove the file #{pub_key_path} if you really want to change it.")
+        bail! do
+          log 0, :error, "The public SSH host key we just fetched for #{node.name} doesn't match what we have saved previously.", :indent => 1
+          log 0, "Remove the file #{pub_key_path} if you really want to change it.", :indent => 2
+        end
       end
     elsif public_key.in_known_hosts?(node.name, node.ip_address, node.domain.name)
-      log("Public SSH host key for #{node.name} is trusted (key found in your ~/.ssh/known_hosts)")
+      log :trusted, "- Public SSH host key for #{node.name} is trusted (key found in your ~/.ssh/known_hosts)"
     else
       puts
       say("This is the SSH host key you got back from node \"#{node.name}\"")
@@ -108,7 +111,7 @@ module LeapCli; module Commands
         bail!
       else
         puts
-        write_file!([:node_ssh_pub_key, node.name], public_key.to_s)
+        write_file! [:node_ssh_pub_key, node.name], public_key.to_s
       end
     end
   end
@@ -123,7 +126,7 @@ module LeapCli; module Commands
   end
 
   def ping_node(node)
-    log("Pinging #{node.name}")
+    log :pinging, node.name
     assert_run!("ping -W 1 -c 1 #{node.ip_address}", "Could not ping #{node.name} (address #{node.ip_address}). Try again, we only send a single ping.")
   end
 
