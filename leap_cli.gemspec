@@ -22,9 +22,11 @@ spec = Gem::Specification.new do |s|
   ## GEM FILES
   ##
 
-  s.files = `find lib vendor -name '*.rb'`.split("\n") << "bin/leap"
+  s.files = `find lib -name '*.rb'`.split("\n")
+  s.files += ["bin/leap"]
+  s.files += `find vendor -name '*.rb'`.split("\n")
+  s.files += `find vendor/vagrant_ssh_keys -name '*.pub' -o -name '*.key'`.split("\n")
   s.require_paths += LeapCli::REQUIRE_PATHS
-
   s.bindir = 'bin'
   s.executables << 'leap'
 
