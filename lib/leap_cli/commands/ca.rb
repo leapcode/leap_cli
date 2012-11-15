@@ -102,15 +102,18 @@ module LeapCli; module Commands
         # TODO: currently this only works with a single IP or DNS.
         #
         if ext.oid == "subjectAltName"
-          ext.value.match /IP Address:(.*?)(,|$)/
-          ip = $1
-          ext.value.match /DNS:(.*?)(,|$)/
-          dns = $1
-          if ip != node.ip_address
-            log :updating, "cert for node '#{node.name}' because ip_address has changed"
+          ips = []
+          dns_names = []
+          ext.value.split(",").each do |value|
+            value.strip!
+            ips << $1          if value =~ /^IP Address:(.*)$/
+            dns_names << $1    if value =~ /^DNS:(.*)$/
+          end
+          if ips.first != node.ip_address
+            log :updating, "cert for node '#{node.name}' because ip_address has changed (from #{ips} to #{node.ip_address})"
             return true
-          elsif dns != node.domain.internal
-            log :updating, "cert for node '#{node.name}' because domain.internal has changed"
+          elsif dns_names != dns_names_for_node(node)
+            log :updating, "cert for node '#{node.name}' because domain name aliases have changed (from #{dns_names.inspect} to #{dns_names_for_node(node).inspect})"
             return true
           end
         end
@@ -193,10 +196,20 @@ module LeapCli; module Commands
         },
         "subjectAltName" => {
           "ips" => [node.ip_address],
-          "dns_names" => [node.domain.internal]
+          "dns_names" => dns_names_for_node(node)
         }
       }
     }
+  end
+
+  def dns_names_for_node(node)
+    names = [node.domain.internal]
+    if node['dns'] && node.dns['aliases'] && node.dns.aliases.any?
+      names += node.dns.aliases
+      names.compact!
+    end
+    names.delete(node.domain.full) # already set to common name
+    return names
   end
 
   #
