@@ -53,17 +53,23 @@ module LeapCli
       #
       # save compiled hiera .yaml files
       #
-      def export_nodes(destination_directory = nil)
-        dir = destination_directory || Path.named_path(:hiera_dir, @provider_dir)
-        existing_files = Dir.glob(dir + '/*.yaml')
+      def export_nodes
+        existing_hiera = Dir.glob(Path.named_path([:hiera, '*'], @provider_dir))
+        existing_files = Dir.glob(Path.named_path([:node_files_dir, '*'], @provider_dir))
+        updated_hiera = []
         updated_files = []
-        @nodes.each do |name, node|
-          filepath = "#{dir}/#{name}.yaml"
+        self.each_node do |node|
+          filepath = Path.named_path([:node_files_dir, node.name], @provider_dir)
           updated_files << filepath
-          Util::write_file!(filepath, node.dump)
+          hierapath = Path.named_path([:hiera, node.name], @provider_dir)
+          updated_hiera << hierapath
+          Util::write_file!(hierapath, node.dump)
+        end
+        (existing_hiera - updated_hiera).each do |filepath|
+          Util::remove_file!(filepath)
         end
         (existing_files - updated_files).each do |filepath|
-          Util::remove_file!(filepath)
+          Util::remove_directory!(filepath)
         end
       end
 

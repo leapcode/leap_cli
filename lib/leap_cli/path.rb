@@ -9,6 +9,7 @@ module LeapCli; module Path
     :nodes_dir        => 'nodes',
     :services_dir     => 'services',
     :tags_dir         => 'tags',
+    :node_files_dir   => 'files/nodes/#{arg}',
 
     # input config files
     :common_config    => 'common.json',

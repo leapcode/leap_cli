@@ -1,5 +1,6 @@
 require 'digest/md5'
 require 'paint'
+require 'fileutils'
 
 module LeapCli
 
@@ -193,6 +194,17 @@ module LeapCli
       filepath = Path.named_path(filepath)
       if File.exists?(filepath)
         File.unlink(filepath)
+        log :removed, filepath
+      end
+    end
+
+    def remove_directory!(filepath)
+      filepath = Path.named_path(filepath)
+      if filepath !~ /^#{Regexp.escape(Path.provider)}/ || filepath =~ /\.\./
+        raise "sanity check on rm -r did not pass for #{filepath}"
+      end
+      if File.directory?(filepath)
+        FileUtils.rm_r(filepath)
         log :removed, filepath
       end
     end
