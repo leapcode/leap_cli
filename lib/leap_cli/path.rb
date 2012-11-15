@@ -18,6 +18,11 @@ module LeapCli; module Path
     :service_config   => 'services/#{arg}.json',
     :tag_config       => 'tags/#{arg}.json',
 
+    # input data files
+    :commercial_cert  => 'files/cert/#{arg}.crt',
+    :commercial_key   => 'files/cert/#{arg}.key',
+    :commercial_csr   => 'files/cert/#{arg}.csr',
+
     # output files
     :user_ssh         => 'users/#{arg}/#{arg}_ssh.pub',
     :user_pgp         => 'users/#{arg}/#{arg}_pgp.pub',
@@ -64,8 +69,12 @@ module LeapCli; module Path
     @platform ||= File.expand_path("#{root}/leap_platform")
   end
 
-  def self.platform_provider
-    "#{platform}/provider"
+  def self.provider_base
+    "#{platform}/provider_base"
+  end
+
+  def self.provider_templates
+    "#{platform}/provider_templates"
   end
 
   def self.provider
@@ -92,7 +101,7 @@ module LeapCli; module Path
   def self.search_path
     @search_path ||= begin
       search_path = []
-      [Path.platform_provider, Path.provider].each do |provider|
+      [Path.provider_base, Path.provider].each do |provider|
         files_dir = named_path(:files_dir, provider)
         search_path << provider
         search_path << named_path(:files_dir, provider)
@@ -110,7 +119,7 @@ module LeapCli; module Path
   def self.find_file(filename)
     # named path?
     if filename.is_a? Array
-      path = named_path(filename, platform_provider)
+      path = named_path(filename, Path.provider_base)
       return path if File.exists?(path)
       path = named_path(filename, provider)
       return path if File.exists?(path)

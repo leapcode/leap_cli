@@ -57,6 +57,7 @@ def log(*args)
         when :run       then Paint['run', :magenta]
         when :failed    then Paint['FAILED', :red, :bold]
         when :ran       then Paint['ran', :green, :bold]
+        when :bail      then Paint['bailing out', :red, :bold]
         else Paint[title.to_s, :cyan, :bold]
       end
       print "#{prefix} "

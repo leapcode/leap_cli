@@ -23,11 +23,12 @@ module LeapCli
     #
     def bail!(message=nil)
       if block_given?
+        LeapCli.log_level = 3
         yield
       elsif message
         puts message
       end
-      puts("Bailing out.")
+      log :bail, ""
       raise SystemExit.new
     end
 

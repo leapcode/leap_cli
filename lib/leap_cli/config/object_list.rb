@@ -30,7 +30,7 @@ module LeapCli
             value = config[field]
             if !value.nil?
               if value.is_a? Array
-                if value.includes?(match_value)
+                if value.include?(match_value)
                   results[name] = config
                 end
               else
@@ -87,6 +87,19 @@ module LeapCli
           result << self[name].get(field)
         end
         result
+      end
+
+      #
+      # applies inherit_from! to all objects.
+      #
+      def inherit_from!(object_list)
+        object_list.each do |name, object|
+          if self[name]
+            self[name].inherit_from!(object)
+          else
+            self[name] = object.dup
+          end
+        end
       end
 
     end

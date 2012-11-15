@@ -17,21 +17,37 @@ module LeapCli
       #
       # load .json configuration files
       #
-      def load(provider_dir=Path.provider)
-        @provider_dir = provider_dir
-        @services = load_all_json(Path.named_path([:service_config, '*'], provider_dir))
-        @tags     = load_all_json(Path.named_path([:tag_config, '*'],     provider_dir))
-        @nodes    = load_all_json(Path.named_path([:node_config, '*'],    provider_dir))
-        @common   = load_json(Path.named_path(:common_config,   provider_dir))
-        @provider = load_json(Path.named_path(:provider_config, provider_dir))
-        @secrets  = load_json(Path.named_path(:secrets_config, provider_dir))
+      def load
+        @provider_dir = Path.provider
 
-        Util::assert!(@provider, "Failed to load provider.json")
-        Util::assert!(@common, "Failed to load common.json")
+        # load base
+        base_services = load_all_json(Path.named_path([:service_config, '*'], Path.provider_base))
+        base_tags     = load_all_json(Path.named_path([:tag_config, '*'], Path.provider_base))
+        base_common   = load_json(Path.named_path(:common_config, Path.provider_base))
+        base_provider = load_json(Path.named_path(:provider_config, Path.provider_base))
 
+        # load provider
+        provider_path = Path.named_path(:provider_config, @provider_dir)
+        common_path = Path.named_path(:common_config, @provider_dir)
+        Util::assert_files_exist!(provider_path, common_path)
+        @services = load_all_json(Path.named_path([:service_config, '*'], @provider_dir))
+        @tags     = load_all_json(Path.named_path([:tag_config, '*'],     @provider_dir))
+        @nodes    = load_all_json(Path.named_path([:node_config, '*'],    @provider_dir))
+        @common   = load_json(common_path)
+        @provider = load_json(provider_path)
+        @secrets  = load_json(Path.named_path(:secrets_config,  @provider_dir))
+
+        # inherit
+        @services.inherit_from! base_services
+        @tags.inherit_from!     base_tags
+        @common.inherit_from!   base_common
+        @provider.inherit_from! base_provider
         @nodes.each do |name, node|
           @nodes[name] = apply_inheritance(node)
         end
+
+        # validate
+        validate_provider(@provider)
       end
 
       #
@@ -244,7 +260,9 @@ module LeapCli
       #
       PRIVATE_IP_RANGES = /(^127\.0\.0\.1)|(^10\.)|(^172\.1[6-9]\.)|(^172\.2[0-9]\.)|(^172\.3[0-1]\.)|(^192\.168\.)/
       def validate_provider(provider)
-        Util::assert! provider.vagrant.network =~ PRIVATE_IP_RANGES, 'provider.json error: vagrant.network is not a local private network'
+        Util::assert! provider.vagrant.network =~ PRIVATE_IP_RANGES do
+          log 0, :error, 'in provider.json: vagrant.network is not a local private network'
+        end
       end
 
     end

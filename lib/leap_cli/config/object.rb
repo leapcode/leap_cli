@@ -114,34 +114,76 @@ module LeapCli
       #
       # a deep (recursive) merge with another Config::Object.
       #
-      def deep_merge!(object)
+      # if prefer_self is set to true, the value from self will be picked when there is a conflict
+      # that cannot be merged.
+      #
+      def deep_merge!(object, prefer_self=false)
         object.each do |key,new_value|
           old_value = self.fetch key, nil
+
+          # clean up boolean
+          new_value = true  if new_value == "true"
+          new_value = false if new_value == "false"
+          old_value = true  if old_value == "true"
+          old_value = false if old_value == "false"
+
+          # merge hashes
           if old_value.is_a?(Hash) || new_value.is_a?(Hash)
-            # merge hashes
             value = Config::Object.new(@manager, @node)
             old_value.is_a?(Hash) ? value.deep_merge!(old_value) : (value[key] = old_value if old_value.any?)
-            new_value.is_a?(Hash) ? value.deep_merge!(new_value) : (value[key] = new_value if new_value.any?)
+            new_value.is_a?(Hash) ? value.deep_merge!(new_value, prefer_self) : (value[key] = new_value if new_value.any?)
+
+          # merge arrays
           elsif old_value.is_a?(Array) || new_value.is_a?(Array)
-            # merge arrays
             value = []
             old_value.is_a?(Array) ? value += old_value : value << old_value
             new_value.is_a?(Array) ? value += new_value : value << new_value
-            value.compact!
+            value = value.compact.uniq
+
+          # merge nil
           elsif new_value.nil?
             value = old_value
           elsif old_value.nil?
             value = new_value
+
+          # merge boolean
           elsif old_value.is_a?(Boolean) && new_value.is_a?(Boolean)
-            value = new_value
+            # FalseClass and TrueClass are different classes, so we must handle them separately
+            if prefer_self
+              value = old_value
+            else
+              value = new_value
+            end
+
+          # catch errors
           elsif old_value.class != new_value.class
-            raise 'Type mismatch. Cannot merge %s with %s. Key value is %s, name is %s.' % [old_value.class, new_value.class, key, name]
+            raise 'Type mismatch. Cannot merge %s (%s) with %s (%s). Key is "%s", name is "%s".' % [
+              old_value.inspect, old_value.class,
+              new_value.inspect, new_value.class,
+              key, self.class
+            ]
+
+          # merge strings and numbers
           else
-            value = new_value
+            if prefer_self
+              value = old_value
+            else
+              value = new_value
+            end
           end
+
+          # save value
           self[key] = value
         end
         self
+      end
+
+      #
+      # like a reverse deep merge
+      # (self takes precedence)
+      #
+      def inherit_from!(object)
+        self.deep_merge!(object, true)
       end
 
       ##
@@ -170,12 +212,18 @@ module LeapCli
         global.nodes
       end
 
-      class FileMissing < Exception; end
+      class FileMissing < Exception
+        attr_accessor :path, :options
+        def initialize(path, options={})
+          @path = path
+          @options = options
+        end
+      end
 
       #
       # inserts the contents of a file
       #
-      def file(filename)
+      def file(filename, options={})
         if filename.is_a? Symbol
           filename = [filename, @node.name]
         end
@@ -187,9 +235,18 @@ module LeapCli
             File.read(filepath)
           end
         else
-          raise FileMissing.new(Path.named_path(filename))
+          raise FileMissing.new(Path.named_path(filename), options)
           ""
         end
+      end
+
+      #
+      # like #file, but allow missing files
+      #
+      def try_file(filename)
+        return file(filename)
+      rescue FileMissing
+        return nil
       end
 
       #
@@ -218,18 +275,26 @@ module LeapCli
               value = @node.instance_eval($1) #, @node.send(:binding))
               self[key] = value
             rescue SystemStackError => exc
-              log :error, "while evaluating node '#{@node.name}'"
-              log "offending string: #{$1}", :indent => 1
-              log "STACK OVERFLOW, BAILING OUT. There must be an eval loop of death (variables with circular dependencies)."
+              log 0, :error, "while evaluating node '#{@node.name}'"
+              log 0, "offending string: #{$1}", :indent => 1
+              log 0, "STACK OVERFLOW, BAILING OUT. There must be an eval loop of death (variables with circular dependencies).", :indent => 1
               raise SystemExit.new()
            rescue FileMissing => exc
-              log :error, "while evaluating node '#{@node.name}'"
-              log "offending string: #{$1}", :indent => 1
-              log "error message: no file '#{exc}'", :indent => 1
+              Util::bail! do
+                if exc.options[:missing]
+                  log :missing, exc.options[:missing].gsub('$node', @node.name)
+                else
+                  log :error, "while evaluating node '#{@node.name}'"
+                  log "offending string: #{$1}", :indent => 1
+                  log "error message: no file '#{exc}'", :indent => 1
+                end
+              end
             rescue StandardError => exc
-              log :error, "while evaluating node '#{@node.name}'"
-              log "offending string: #{$1}", :indent => 1
-              log "error message: #{exc}", :indent => 1
+              Util::bail! do
+                log :error, "while evaluating node '#{@node.name}'"
+                log "offending string: #{$1}", :indent => 1
+                log "error message: #{exc}", :indent => 1
+              end
             end
           end
           value

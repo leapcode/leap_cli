@@ -38,7 +38,9 @@ module LeapCli
       if Path.ok?
         true
       else
-        bail!("Could not find the root directory. Change current working directory or try --root")
+        bail! do
+          log :error, "- Could not find the root directory. Change current working directory or try --root"
+        end
       end
 
       #

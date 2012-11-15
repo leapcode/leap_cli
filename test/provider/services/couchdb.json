@@ -1,7 +1,0 @@
-{
-  "service_type": "internal_service",
-  "users": {
-    "admin": {"username":"admin", "password":"= secret :couch_admin_password"},
-    "webapp": {"username":"webapp", "password":"= secret :couch_webapp_password"}
-  }
-}

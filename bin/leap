@@ -57,7 +57,7 @@ module LeapCli::Commands
   def self.manager
     @manager ||= begin
       manager = LeapCli::Config::Manager.new
-      manager.load(LeapCli::Path.provider)
+      manager.load
       manager
     end
   end
