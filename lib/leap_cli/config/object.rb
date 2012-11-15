@@ -104,7 +104,7 @@ module LeapCli
       def pick(*keys)
         keys.map(&:to_s).inject(Config::Object.new(@manager,@node)) do |hsh, key|
           value = self.get(key)
-          if value
+          if !value.nil?
             hsh[key.gsub('.','_')] = value
           end
           hsh
