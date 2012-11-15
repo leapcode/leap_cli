@@ -103,7 +103,7 @@ module LeapCli
       rescue NoMethodError
       rescue NameError
       end
-      assert! value do
+      assert! !value.nil? do
         log 0, :missing, "configuration value for #{conf_path}"
       end
     end

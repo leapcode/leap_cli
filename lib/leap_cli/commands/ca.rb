@@ -51,6 +51,8 @@ module LeapCli; module Commands
       assert_files_exist! :ca_cert, :ca_key, :msg => 'Run init-ca to create them'
       assert_config! 'provider.ca.server_certificates.bit_size'
       assert_config! 'provider.ca.server_certificates.life_span'
+      assert_config! 'common.x509.use'
+
       if args.first == 'all' || args.empty?
         manager.each_node do |node|
           if cert_needs_updating?(node)
@@ -118,6 +120,8 @@ module LeapCli; module Commands
   end
 
   def generate_cert_for_node(node)
+    return if node.x509.use == false
+
     cert = CertificateAuthority::Certificate.new
 
     # set subject
