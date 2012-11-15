@@ -289,7 +289,7 @@ module LeapCli
                   log "error message: no file '#{exc}'", :indent => 1
                 end
               end
-            rescue StandardError => exc
+            rescue SyntaxError, StandardError => exc
               Util::bail! do
                 log :error, "while evaluating node '#{@node.name}'"
                 log "offending string: #{$1}", :indent => 1
