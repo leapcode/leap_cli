@@ -88,7 +88,7 @@ desc "Updates the list of required configuration options for this version of LEA
 task 'update-requirements' do
   Dir.chdir($base_dir) do
     required_configs = `find -name '*.rb' | xargs grep -R 'assert_config!'`.split("\n").collect{|line|
-      if line =~ /def/
+      if line =~ /def/ || line =~ /pre\.rb/
         nil
       else
         line.sub(/.*assert_config! ["'](.*?)["'].*/,'"\1"')
