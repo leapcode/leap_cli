@@ -11,7 +11,8 @@ gemspec
 # :vendor_path - where this gem is vendored. this path is used if it exists and we are running in 'production mode'
 #
 development_gems = {
-  'supply_drop' => {:dev_path => '../gems/supply_drop', :vendor_path => 'vendor/supply_drop'}
+  'supply_drop' => {:dev_path => '../gems/supply_drop', :vendor_path => 'vendor/supply_drop'},
+  'certificate_authority' => {:dev_path => '../gems/certificate_authority', :vendor_path => 'vendor/certificate_authority'}
 }
 
 #

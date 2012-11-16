@@ -55,7 +55,7 @@ module LeapCli
     #
     def assert_bin!(cmd_name)
       assert! `which #{cmd_name}`.strip.any? do
-        log 0, :missing, "command '%s'" % cmd_name
+        log :missing, "command '%s'" % cmd_name
       end
     end
 
@@ -68,9 +68,9 @@ module LeapCli
       output = `#{cmd}`
       unless $?.success?
         bail! do
-          log 0, :run, cmd
-          log 0, :failed, "(exit #{$?.exitstatus}) #{output}", :indent => 1
-          log 0, message, :indent => 1 if message
+          log :run, cmd
+          log :failed, "(exit #{$?.exitstatus}) #{output}", :indent => 1
+          log message, :indent => 1 if message
         end
       else
         log 2, :ran, cmd
@@ -86,13 +86,13 @@ module LeapCli
       }.compact
       if file_list.length > 1
         bail! do
-          log 0, :error, "Sorry, we can't continue because these files already exist: #{file_list.join(', ')}."
-          log 0, options[:msg] if options[:msg]
+          log :error, "Sorry, we can't continue because these files already exist: #{file_list.join(', ')}."
+          log options[:msg] if options[:msg]
         end
       elsif file_list.length == 1
         bail! do
-          log 0, :error, "Sorry, we can't continue because this file already exists: #{file_list.first}."
-          log 0, options[:msg] if options[:msg]
+          log :error, "Sorry, we can't continue because this file already exists: #{file_list.first}."
+          log options[:msg] if options[:msg]
         end
       end
     end
@@ -104,8 +104,8 @@ module LeapCli
       rescue NoMethodError
       rescue NameError
       end
-      assert! !value.nil? do
-        log 0, :missing, "configuration value for #{conf_path}"
+      assert! !value.nil? && value != "REQUIRED" do
+        log :missing, "required configuration value for #{conf_path}"
       end
     end
 
@@ -117,13 +117,13 @@ module LeapCli
       }.compact
       if file_list.length > 1
         bail! do
-          log 0, :missing, "these files: #{file_list.join(', ')}"
-          log 0, options[:msg] if options[:msg]
+          log :missing, "these files: #{file_list.join(', ')}"
+          log options[:msg] if options[:msg]
         end
       elsif file_list.length == 1
         bail! do
-          log 0, :missing, "file #{file_list.first}"
-          log 0, options[:msg] if options[:msg]
+          log :missing, "file #{file_list.first}"
+          log options[:msg] if options[:msg]
         end
       end
     end

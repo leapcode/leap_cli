@@ -50,6 +50,7 @@ module LeapCli; module Commands
     c.action do |global_options,options,args|
       assert_files_exist! :ca_cert, :ca_key, :msg => 'Run init-ca to create them'
       assert_config! 'provider.ca.server_certificates.bit_size'
+      assert_config! 'provider.ca.server_certificates.digest'
       assert_config! 'provider.ca.server_certificates.life_span'
       assert_config! 'common.x509.use'
 
@@ -77,6 +78,72 @@ module LeapCli; module Commands
           log 0, 'Generating DH parameters (takes a REALLY long time)...'
           output = OpenSSL::PKey::DH.generate(3248).to_pem
           write_file!(:dh_params, output)
+        end
+      end
+    end
+  end
+
+  #
+  # hints:
+  #
+  # inspect CSR:
+  #   openssl req -noout -text -in files/cert/x.csr
+  #
+  # generate CSR with openssl to see how it compares:
+  #   openssl req -sha256 -nodes -newkey rsa:2048 -keyout example.key -out example.csr
+  #
+  # validate a CSR:
+  #   http://certlogik.com/decoder/
+  #
+  # nice details about CSRs:
+  #   http://www.redkestrel.co.uk/Articles/CSR.html
+  #
+  desc 'Creates a Certificate Signing Request for use in purchasing a commercial x509 certificate'
+  command :'init-csr' do |c|
+    c.switch 'sign', :desc => 'additionally creates a cert that is signed by your own CA (recommended only for testing)', :negatable => false
+    c.action do |global_options,options,args|
+      assert_config! 'provider.domain'
+      assert_config! 'provider.name'
+      assert_config! 'provider.default_language'
+      assert_config! 'provider.ca.server_certificates.bit_size'
+      assert_config! 'provider.ca.server_certificates.digest'
+      assert_files_missing! [:commercial_key, manager.provider.domain], [:commercial_csr, manager.provider.domain], :msg => 'If you really want to create a new key and CSR, remove these files first.'
+      if options[:sign]
+        assert_files_exist! :ca_cert, :ca_key, :msg => 'Run init-ca to create them'
+      end
+
+      # RSA key
+      keypair = CertificateAuthority::MemoryKeyMaterial.new
+      log :generating, "%s bit RSA key" % manager.provider.ca.server_certificates.bit_size do
+        keypair.generate_key(manager.provider.ca.server_certificates.bit_size)
+        write_file! [:commercial_key, manager.provider.domain], keypair.private_key.to_pem
+      end
+
+      # CSR
+      dn  = CertificateAuthority::DistinguishedName.new
+      csr = CertificateAuthority::SigningRequest.new
+      dn.common_name = manager.provider.domain
+      dn.organization = manager.provider.name[manager.provider.default_language]
+      log :generating, "CSR with commonName => '%s', organization => '%s'" % [dn.common_name, dn.organization] do
+        csr.distinguished_name = dn
+        csr.key_material = keypair
+        csr.digest = manager.provider.ca.server_certificates.digest
+        request = csr.to_x509_csr
+        write_file! [:commercial_csr, manager.provider.domain], csr.to_pem
+      end
+
+      # Sign using our own CA, for use in testing but hopefully not production.
+      # It is not that commerical CAs are so secure, it is just that signing your own certs is
+      # a total drag for the user because they must click through dire warnings.
+      if options[:sign]
+        log :generating, "x509 server certificate for testing purposes" do
+          cert = csr.to_cert
+          cert.serial_number.number = cert_serial_number(manager.provider.domain)
+          cert.not_before = today
+          cert.not_after  = years_from_today(1)
+          cert.parent = ca_root
+          cert.sign! test_cert_signing_profile
+          write_file! [:commercial_cert, manager.provider.domain], cert.to_pem
         end
       end
     end
@@ -182,11 +249,11 @@ module LeapCli; module Commands
   # for keyusage, openvpn server certs can have keyEncipherment or keyAgreement. I am not sure which is preferable.
   # going with keyAgreement for now.
   #
-  # digest options: SHA512, SHA1
+  # digest options: SHA512, SHA256, SHA1
   #
   def server_signing_profile(node)
     {
-      "digest" => "SHA256",
+      "digest" => manager.provider.ca.server_certificates.digest,
       "extensions" => {
         "keyUsage" => {
           "usage" => ["digitalSignature", "keyAgreement"]
@@ -197,6 +264,25 @@ module LeapCli; module Commands
         "subjectAltName" => {
           "ips" => [node.ip_address],
           "dns_names" => dns_names_for_node(node)
+        }
+      }
+    }
+  end
+
+  #
+  # This is used when signing the main cert for the provider's domain
+  # with our own CA (for testing purposes). Typically, this cert would
+  # be purchased from a commercial CA, and not signed this way.
+  #
+  def test_cert_signing_profile
+    {
+      "digest" => "SHA256",
+      "extensions" => {
+        "keyUsage" => {
+          "usage" => ["digitalSignature", "keyAgreement"]
+        },
+        "extendedKeyUsage" => {
+          "usage" => ["serverAuth"]
         }
       }
     }

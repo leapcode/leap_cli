@@ -8,6 +8,12 @@ module LeapCli
   def log_level=(value)
     @log_level = value
   end
+  def indent_level
+    @indent_level ||= 0
+  end
+  def indent_level=(value)
+    @indent_level = value
+  end
 end
 
 ##
@@ -34,7 +40,8 @@ def log(*args)
   level   = args.grep(Integer).first || 1
   title   = args.grep(Symbol).first
   message = args.grep(String).first
-  options = args.grep(Hash).first || {:indent => 0}
+  options = args.grep(Hash).first || {}
+  options[:indent] ||= LeapCli.indent_level
   if message && LeapCli.log_level >= level
     print "  " * (options[:indent]+1)
     if options[:indent] > 0
@@ -66,5 +73,10 @@ def log(*args)
       end
     end
     puts "#{message}"
+    if block_given?
+      LeapCli.indent_level += 1
+      yield
+      LeapCli.indent_level -= 1
+    end
   end
 end

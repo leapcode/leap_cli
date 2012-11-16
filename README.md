@@ -157,31 +157,10 @@ Ubuntu
 Install from git
 --------------------------------------
 
-Download the source and install the required gems:
+Download the source:
 
     git clone git://leap.se/leap_cli      # clone leap_cli code
     cd leap_cli
-    bundle                                # install required gems
-
-Running from the source directory
---------------------------------------
-
-To run the ``leap`` command directly from the source tree, symlink bin/leap
-into your path:
-
-    cd leap_cli
-    ln -s `pwd`/bin/leap ~/bin    # link executable somewhere in your bin path
-    which leap                    # make sure you will run leap_cli/bin/leap
-    leap help
-
-If you get an error, make sure to check ``which leap``. Some versions of ``bundle`` will
-incorrectly install a broken ``leap`` command in the gem bin directory when you do ``bundle``.
-
-Why not use ``bundle exec leap`` to run the command? This works, so long as your current
-working directory is under leap_cli. Because the point is to be able to run ``leap`` in
-other places, it is easier to create the symlink. If you run ``leap`` directly, and not via
-the command launcher that rubygems installs, leap will run in a mode that simulates
-``bundle exec leap`` (i.e. only gems included in Gemfile are allow to be loaded).
 
 Running as a gem
 --------------------------------------
@@ -194,4 +173,25 @@ To install ``leap`` as a gem, do this:
 
 And then make sure your PATH is set to include where leap is installed.
 It should warn you if this is not the case.
+
+Running from the source directory
+--------------------------------------
+
+To run the ``leap`` command directly from the source tree, you need to install
+the required gems using ``bundle`` and symlink ``bin/leap`` into your path:
+
+    cd leap_cli
+    bundle                        # install required gems
+    ln -s `pwd`/bin/leap ~/bin    # link executable somewhere in your bin path
+    which leap                    # make sure you will run leap_cli/bin/leap
+    leap help
+
+If you get an error, make sure to check ``which leap``. Some versions of ``bundle`` will
+incorrectly install a broken ``leap`` command in the gem bin directory when you do ``bundle``.
+
+Why not use ``bundle exec leap`` to run the command? This works, so long as your current
+working directory is under leap_cli. Because the point is to be able to run ``leap`` in
+other places, it is easier to create the symlink. If you run ``leap`` directly, and not via
+the command launcher that rubygems installs, leap will run in a mode that simulates
+``bundle exec leap`` (i.e. only gems included in Gemfile are allow to be loaded).
 
