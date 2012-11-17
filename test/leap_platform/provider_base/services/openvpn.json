@@ -13,6 +13,6 @@
     "nat": true,
     "ca_crt": "= file :ca_cert",
     "ca_key": "= file :ca_key",
-    "dh": "= file :dh_params"
+    "dh": "= file :dh_params, :missing => 'Diffie-Hellman parameters. Run `leap init-dh`'"
   }
 }
