@@ -218,6 +218,9 @@ module LeapCli
           @path = path
           @options = options
         end
+        def to_s
+          @path
+        end
       end
 
       #
@@ -256,6 +259,13 @@ module LeapCli
       #
       def secret(name, length=32)
         @manager.secrets[name.to_s] ||= Util::Secret.generate(length)
+      end
+
+      #
+      # return a fingerprint for a x509 certificate
+      #
+      def fingerprint(filename)
+        "SHA256: " + X509.fingerprint("SHA256", Path.named_path(filename))
       end
 
       private
