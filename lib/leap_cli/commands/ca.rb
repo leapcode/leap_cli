@@ -100,7 +100,7 @@ module LeapCli; module Commands
   #
   desc 'Creates a Certificate Signing Request for use in purchasing a commercial x509 certificate'
   command :'init-csr' do |c|
-    c.switch 'sign', :desc => 'additionally creates a cert that is signed by your own CA (recommended only for testing)', :negatable => false
+    #c.switch 'sign', :desc => 'additionally creates a cert that is signed by your own CA (recommended only for testing)', :negatable => false
     c.action do |global_options,options,args|
       assert_config! 'provider.domain'
       assert_config! 'provider.name'
@@ -135,8 +135,8 @@ module LeapCli; module Commands
       # Sign using our own CA, for use in testing but hopefully not production.
       # It is not that commerical CAs are so secure, it is just that signing your own certs is
       # a total drag for the user because they must click through dire warnings.
-      if options[:sign]
-        log :generating, "x509 server certificate for testing purposes" do
+      #if options[:sign]
+        log :generating, "self-signed x509 server certificate for testing purposes" do
           cert = csr.to_cert
           cert.serial_number.number = cert_serial_number(manager.provider.domain)
           cert.not_before = today
@@ -144,8 +144,9 @@ module LeapCli; module Commands
           cert.parent = ca_root
           cert.sign! test_cert_signing_profile
           write_file! [:commercial_cert, manager.provider.domain], cert.to_pem
+          log "please replace this file with the real certificate you get from a CA using #{Path.relative_path([:commercial_csr, manager.provider.domain])}"
         end
-      end
+      #end
     end
   end
 
