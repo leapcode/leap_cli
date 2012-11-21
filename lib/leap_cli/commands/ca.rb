@@ -73,6 +73,8 @@ module LeapCli; module Commands
         if cmd_exists?('certtool')
           log 0, 'Generating DH parameters (takes a long time)...'
           output = assert_run!('certtool --generate-dh-params --sec-param high')
+          output.sub! /.*(-----BEGIN DH PARAMETERS-----.*-----END DH PARAMETERS-----).*/m, '\1'
+          output << "\n"
           write_file!(:dh_params, output)
         else
           log 0, 'Generating DH parameters (takes a REALLY long time)...'
