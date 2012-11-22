@@ -13,9 +13,10 @@ task :install_authorized_keys, :max_hosts => MAX_HOSTS do
 end
 
 task :install_prerequisites, :max_hosts => MAX_HOSTS do
+  packages = "puppet ruby-hiera-puppet rsync lsb-release"
   run "mkdir -p #{puppet_destination}"
   run "apt-get update"
-  run "DEBIAN_FRONTEND=noninteractive apt-get -q -y -o DPkg::Options::=--force-confold install puppet ruby-hiera-puppet rsync"
+  run "DEBIAN_FRONTEND=noninteractive apt-get -q -y -o DPkg::Options::=--force-confold install #{packages}"
 end
 
 #task :update_platform, :max_hosts => MAX_HOSTS do
