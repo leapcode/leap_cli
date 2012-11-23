@@ -1,4 +1,5 @@
 require 'ipaddr'
+require 'fileutils'
 
 module LeapCli; module Commands
 
@@ -29,9 +30,15 @@ module LeapCli; module Commands
   public
 
   def vagrant_ssh_key_file
-    file = File.expand_path('../../../vendor/vagrant_ssh_keys/vagrant.key', File.dirname(__FILE__))
-    Util.assert_files_exist! file
-    return file
+    file_path = File.expand_path('../../../vendor/vagrant_ssh_keys/vagrant.key', File.dirname(__FILE__))
+    Util.assert_files_exist! file_path
+    if File.new(file_path).stat.uid == Process.euid
+      # if the vagrant.key file is owned by ourselves, we need to make sure that it is not world readable
+      FileUtils.cp file_path, '/tmp/vagrant.key'
+      FileUtils.chmod 0600, '/tmp/vagrant.key'
+      file_path = '/tmp/vagrant.key'
+    end
+    return file_path
   end
 
   private
