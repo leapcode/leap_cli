@@ -19,6 +19,10 @@ module LeapCli; module Path
     :service_config   => 'services/#{arg}.json',
     :tag_config       => 'tags/#{arg}.json',
 
+    # input templates
+    :provider_json_template => 'files/service-definitions/provider.json.erb',
+    :eip_service_json_template => 'files/service-definitions/eip-service.json.erb',
+
     # input data files
     :commercial_cert  => 'files/cert/#{arg}.crt',
     :commercial_key   => 'files/cert/#{arg}.key',
@@ -38,9 +42,15 @@ module LeapCli; module Path
     :commercial_csr   => 'files/cert/#{arg}.csr',
     :commercial_cert  => 'files/cert/#{arg}.crt',
     :commercial_ca_cert  => 'files/cert/commercial_ca.crt',
-    :node_x509_key    => 'files/nodes/#{arg}/#{arg}.key',
-    :node_x509_cert   => 'files/nodes/#{arg}/#{arg}.crt',
-    :vagrantfile      => 'test/Vagrantfile'
+    :node_x509_key       => 'files/nodes/#{arg}/#{arg}.key',
+    :node_x509_cert      => 'files/nodes/#{arg}/#{arg}.crt',
+    :vagrantfile         => 'test/Vagrantfile',
+
+    # testing files
+    :test_client_key     => 'test/cert/client.key',
+    :test_client_cert    => 'test/cert/client.crt',
+    :test_client_openvpn_config   => 'test/openvpn/client.ovpn',
+    :test_client_openvpn_template => 'test/openvpn/client.ovpn.erb'
   }
 
   #
@@ -103,42 +113,30 @@ module LeapCli; module Path
   # all the places we search for a file when using find_file.
   # this is perhaps too many places.
   #
-  def self.search_path
-    @search_path ||= begin
-      search_path = []
-      [Path.provider_base, Path.provider].each do |provider|
-        files_dir = named_path(:files_dir, provider)
-        search_path << provider
-        search_path << named_path(:files_dir, provider)
-        search_path << named_path(:nodes_dir, files_dir)
-        search_path << named_path(:services_dir, files_dir)
-        search_path << named_path(:tags_dir, files_dir)
-      end
-      search_path
-    end
-  end
+  # def self.search_path
+  #   @search_path ||= begin
+  #     search_path = []
+  #     [Path.provider_base, Path.provider].each do |provider|
+  #       #files_dir = named_path(:files_dir, provider)
+  #       search_path << provider
+  #       #search_path << named_path(:files_dir, provider)
+  #       #search_path << named_path(:nodes_dir, files_dir)
+  #       #search_path << named_path(:services_dir, files_dir)
+  #       #search_path << named_path(:tags_dir, files_dir)
+  #     end
+  #     search_path
+  #   end
+  # end
 
   #
-  # tries to find a file somewhere with 'filename' (which is probably in the form [node.name, filename])
+  # tries to find a file somewhere
   #
-  def self.find_file(filename)
-    # named path?
-    if filename.is_a? Array
-      path = named_path(filename, Path.provider_base)
-      return path if File.exists?(path)
-      path = named_path(filename, provider)
-      return path if File.exists?(path)
-    end
+  def self.find_file(arg)
+    file_path = named_path(arg, Path.provider)
+    return file_path if File.exists?(file_path)
 
-    # otherwise, lets search
-    search_path.each do |path_root|
-      path = [path_root, name, filename].join('/')
-      return path if File.exists?(path)
-    end
-    search_path.each do |path_root|
-      path = [path_root, filename].join('/')
-      return path if File.exists?(path)
-    end
+    file_path = named_path(arg, Path.provider_base)
+    return file_path if File.exists?(file_path)
 
     # give up
     return nil

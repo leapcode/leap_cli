@@ -1,6 +1,7 @@
 require 'digest/md5'
 require 'paint'
 require 'fileutils'
+require 'erb'
 
 module LeapCli
 
@@ -274,6 +275,14 @@ module LeapCli
         break if Process.wait(pid, Process::WNOHANG)
       end
       STDOUT.puts
+    end
+
+    ##
+    ## ERB
+    ##
+
+    def erb_eval(string, binding=nil)
+      ERB.new(string, nil, '%<>-').result(binding)
     end
 
   end

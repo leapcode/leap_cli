@@ -144,7 +144,7 @@ module LeapCli; module Commands
           cert.not_before = today
           cert.not_after  = years_from_today(1)
           cert.parent = ca_root
-          cert.sign! test_cert_signing_profile
+          cert.sign! domain_test_signing_profile
           write_file! [:commercial_cert, manager.provider.domain], cert.to_pem
           log "please replace this file with the real certificate you get from a CA using #{Path.relative_path([:commercial_csr, manager.provider.domain])}"
         end
@@ -217,6 +217,19 @@ module LeapCli; module Commands
     write_file!([:node_x509_cert, node.name], cert.to_pem)
   end
 
+  def generate_test_client_cert
+    cert = CertificateAuthority::Certificate.new
+    cert.serial_number.number = cert_serial_number(manager.provider.domain)
+    cert.subject.common_name = random_common_name(manager.provider.domain)
+    cert.not_before = today
+    cert.not_after  = years_from_today(1)
+    cert.key_material.generate_key(1024) # just for testing, remember!
+    cert.parent = ca_root
+    cert.sign! client_test_signing_profile
+    write_file! :test_client_key, cert.key_material.private_key.to_pem
+    write_file! :test_client_cert, cert.to_pem
+  end
+
   def ca_root
     @ca_root ||= begin
       load_certificate_file(:ca_cert, :ca_key)
@@ -277,7 +290,7 @@ module LeapCli; module Commands
   # with our own CA (for testing purposes). Typically, this cert would
   # be purchased from a commercial CA, and not signed this way.
   #
-  def test_cert_signing_profile
+  def domain_test_signing_profile
     {
       "digest" => "SHA256",
       "extensions" => {
@@ -286,6 +299,24 @@ module LeapCli; module Commands
         },
         "extendedKeyUsage" => {
           "usage" => ["serverAuth"]
+        }
+      }
+    }
+  end
+
+  #
+  # This is used when signing a dummy client certificate that is only to be
+  # used for testing.
+  #
+  def client_test_signing_profile
+    {
+      "digest" => "SHA256",
+      "extensions" => {
+        "keyUsage" => {
+          "usage" => ["digitalSignature", "keyAgreement"]
+        },
+        "extendedKeyUsage" => {
+          "usage" => ["clientAuth"]
         }
       }
     }
@@ -308,6 +339,14 @@ module LeapCli; module Commands
   #
   def cert_serial_number(domain_name)
     Digest::MD5.hexdigest("#{domain_name} -- #{Time.now}").to_i(16)
+  end
+
+  #
+  # for the random common name, we need a text string that will be unique across all certs.
+  # ruby 1.8 doesn't have a built-in uuid generator, or we would use SecureRandom.uuid
+  #
+  def random_common_name(domain_name)
+    cert_serial_number(domain_name).to_s(36)
   end
 
   def today
