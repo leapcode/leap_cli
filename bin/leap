@@ -26,7 +26,6 @@ end
 require 'gli'
 require 'highline'
 require 'forwardable'
-require 'terminal-table'
 
 #
 # Typically, GLI and Highline methods are loaded into the global namespace.
@@ -38,7 +37,6 @@ require 'terminal-table'
 module LeapCli::Commands
   extend GLI::App
   extend Forwardable
-  extend Terminal::Table::TableHelper
 
   #
   # delegate highline methods to make them available to sub-commands

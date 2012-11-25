@@ -229,6 +229,9 @@ module LeapCli
         end
 
         # inherit from tags
+        if node.vagrant?
+          node['tags'] = (node['tags'] || []).to_a + ['local']
+        end
         if node['tags']
           node['tags'].to_a.sort.each do |node_tag|
             tag = @tags[node_tag]
