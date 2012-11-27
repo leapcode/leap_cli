@@ -13,8 +13,6 @@ require 'leap_cli/util'
 require 'leap_cli/util/secret'
 require 'leap_cli/util/remote_command'
 require 'leap_cli/util/x509'
-
-require 'leap_cli/remote/log_streamer'
 require 'leap_cli/logger'
 
 require 'leap_cli/ssh_key'
