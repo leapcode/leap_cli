@@ -24,9 +24,11 @@ module LeapCli
           ssh.leap.chown_root("/srv/leap")
 
           # sync hiera conf
-          ssh.leap.rsync_update do |server|
-            node = manager.node(server.host)
-            {:source => Path.named_path([:hiera, node.name]), :dest => "/etc/leap/hiera.yaml"}
+          ssh.leap.log :updating, "hiera.yaml" do
+            ssh.leap.rsync_update do |server|
+              node = manager.node(server.host)
+              {:source => Path.named_path([:hiera, node.name]), :dest => "/etc/leap/hiera.yaml"}
+            end
           end
 
           # sync puppet

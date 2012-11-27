@@ -4,6 +4,10 @@
 
 module LeapCli; module Remote; module Plugin
 
+  def log(*args, &block)
+    LeapCli::Util::log(*args, &block)
+  end
+
   def mkdir(dir)
     run "mkdir -p #{dir}"
   end
@@ -20,8 +24,8 @@ module LeapCli; module Remote; module Plugin
     servers = SupplyDrop::Util.optionally_async(find_servers, puppet_parallel_rsync)
 
     # rsync to each server
-    failed_servers = servers.map do |server|
-
+    failed_servers = []
+    servers.each do |server|
       # build rsync command
       paths       = yield server
       remote_user = server.user || fetch(:user, ENV['USER'])
@@ -33,11 +37,32 @@ module LeapCli; module Remote; module Plugin
 
       # run command
       logger.debug rsync_cmd
-      server.host unless system rsync_cmd
-
-    end.compact
+      ok = system(rsync_cmd)
+      if ok
+        logger.log 1, "rsync #{paths[:source]} #{paths[:dest]}", server.host, :color => :green
+      else
+        failed_servers << server.host
+      end
+    end
 
     raise "rsync failed on #{failed_servers.join(',')}" if failed_servers.any?
   end
+
+  #def logrun(cmd)
+  #  @streamer ||= LeapCli::Remote::LogStreamer.new
+  #  run cmd do |channel, stream, data|
+  #    @streamer.collect_output(channel[:host], data)
+  #  end
+  #end
+
+#    return_code = nil
+#    run "something; echo return code: $?" do |channel, stream, data|
+#      if data =~ /return code: (\d+)/
+#        return_code = $1.to_i
+#      else
+#        Capistrano::Configuration.default_io_proc.call(channel, stream, data)
+#      end
+#    end
+#    puts "finished with return code: #{return_code}"
 
 end; end; end

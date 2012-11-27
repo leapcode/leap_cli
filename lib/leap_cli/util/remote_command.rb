@@ -12,7 +12,7 @@ module LeapCli; module Util; module RemoteCommand
     node_list = parse_node_list(nodes)
 
     cap = new_capistrano
-    cap.logger.level = LeapCli.log_level
+    cap.logger = LeapCli::Logger.new(:level => LeapCli.log_level)
     user = options[:user] || 'root'
     cap.set :user, user
     cap.set :ssh_options, ssh_options # ssh options common to all nodes

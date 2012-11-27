@@ -4,7 +4,6 @@ require 'fileutils'
 require 'erb'
 
 module LeapCli
-
   module Util
     extend self
 
@@ -54,9 +53,13 @@ module LeapCli
     #
     # assert that the command is available
     #
-    def assert_bin!(cmd_name)
+    def assert_bin!(cmd_name, msg=nil)
       assert! `which #{cmd_name}`.strip.any? do
-        log :missing, "command '%s'" % cmd_name
+        log :missing, "command '%s'" % cmd_name do
+          if msg
+            log msg
+          end
+        end
       end
     end
 
