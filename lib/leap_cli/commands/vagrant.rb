@@ -29,7 +29,7 @@ module LeapCli; module Commands
     c.command :reset do |c|
       c.action do |global_options,options,args|
         vagrant_setup
-        vagrant_command("sandbox rollback")
+        vagrant_command("sandbox rollback", args)
       end
     end
 
