@@ -26,7 +26,7 @@ module LeapCli; module Commands
         ssh.install_authorized_keys
         ssh.install_prerequisites
       end
-      log("Completed: init-node #{node.name}")
+      log :completed, "init-node #{node.name}"
     end
   end
 
