@@ -40,34 +40,30 @@ module LeapCli
     def initialize(options={})
       @options = options
       @level = options[:level] || 0
+      @message_buffer = nil
     end
 
     def log(level, message, line_prefix=nil, options={})
-      # formatting modifies message & line_prefix, so create dups
-      message = message.dup
-      options = options.dup
-      if !line_prefix.nil?
-        if !line_prefix.is_a?(String)
-          line_prefix = line_prefix.to_s.dup
-        else
-          line_prefix = line_prefix.dup
-        end
+      # in some cases, when the message doesn't end with a return, we buffer it and
+      # wait until we encounter the return before we log the message out.
+      if message !~ /\n$/ && level <= 2 && line_prefix.is_a?(String)
+        @message_buffer ||= ""
+        @message_buffer += message
+        return
+      elsif @message_buffer
+        message = @message_buffer + message
+        @message_buffer = nil
       end
+
       options[:level] ||= level
-
-      # apply formatting
-      apply_formatting(message, line_prefix, options)
-
-      # print message
-      if options[:level] <= self.level
-        message.lines.each do |line|
-          line = line.strip
-          line_prefix = line_prefix.strip if line_prefix
-          if line.chars.any?
-            if line_prefix
-              LeapCli::log "[#{line_prefix}] #{line}"
+      message.lines.each do |line|
+        formatted_line, formatted_prefix, line_options = apply_formatting(line, line_prefix, options)
+        if formatted_line && line_options[:level] <= self.level
+          if formatted_line.chars.any?
+            if formatted_prefix
+              LeapCli::log "[#{formatted_prefix}] #{formatted_line}"
             else
-              LeapCli::log line
+              LeapCli::log formatted_line
             end
           end
         end
@@ -99,16 +95,18 @@ module LeapCli
       { :match => /^err ::/,                   :color => :red,     :match_level => 0, :priority => -10 },
       { :match => /.*/,                        :color => :blue,    :match_level => 0, :priority => -20 },
 
-      # PREFIX CLEANUP
-      { :match => /(err|out) :: /,             :replace => '', :priority => 0},
+      # CLEANUP
+      { :match => /\s+$/,                      :replace => '', :priority => 0},
 
       # DEBIAN PACKAGES
       { :match => /^(Hit|Ign) /,                :color => :green,   :priority => -20},
       { :match => /^Err /,                      :color => :red,     :priority => -20},
-      { :match => /^W: /,                       :color => :yellow,  :priority => -20},
+      { :match => /^W(ARNING)?: /,              :color => :yellow,  :priority => -20},
+      { :match => /^E: /,                       :color => :red,     :priority => -20},
       { :match => /already the newest version/, :color => :green,   :priority => -20},
+      { :match => /WARNING: The following packages cannot be authenticated!/, :color => :red, :level => 0, :priority => -10},
 
-      # PUPPPET
+      # PUPPET
       { :match => /^warning: .*is deprecated.*$/,  :level => 2, :color => :yellow, :priority => -10},
       { :match => /^notice:/,                      :level => 1, :color => :cyan,   :priority => -20},
       { :match => /^err:/,                         :level => 0, :color => :red,    :priority => -20},
@@ -116,40 +114,64 @@ module LeapCli
       { :match => /Finished catalog run/,          :level => 0, :color => :green,  :priority => -10},
     ]
 
+    @prefix_formatters = [
+      { :match => /(err|out) :: /,             :replace => '', :priority => 0},
+      { :match => /\s+$/,                      :replace => '', :priority => 0}
+    ]
+    def self.prefix_formatters; @prefix_formatters; end
+
     def apply_formatting(message, line_prefix = nil, options={})
+      message = message.dup
+      options = options.dup
+      if !line_prefix.nil?
+        if !line_prefix.is_a?(String)
+          line_prefix = line_prefix.to_s.dup
+        else
+          line_prefix = line_prefix.dup
+        end
+      end
       color = options[:color] || :none
       style = options[:style]
-      continue = true
-      self.class.sorted_formatters.each do |formatter|
-        break unless continue
-        if (formatter[:match_level] == level || formatter[:match_level].nil?)
-          [message, line_prefix].compact.each do |str|
-            if str =~ formatter[:match]
-              options[:level] = formatter[:level] if formatter[:level]
-              color = formatter[:color] if formatter[:color]
-              style = formatter[:style] || formatter[:attribute] # (support original cap colors)
 
-              str.gsub!(formatter[:match], formatter[:replace]) if formatter[:replace]
-              str.replace(formatter[:prepend] + str) unless formatter[:prepend].nil?
-              str.replace(str + formatter[:append])  unless formatter[:append].nil?
-              str.replace(Time.now.strftime('%Y-%m-%d %T') + ' ' + str) if formatter[:timestamp]
-
-              # stop formatting, unless formatter was just for string replacement
-              continue = false unless formatter[:replace]
-            end
+      if line_prefix
+        self.class.prefix_formatters.each do |formatter|
+          if line_prefix =~ formatter[:match] && formatter[:replace]
+            line_prefix.gsub!(formatter[:match], formatter[:replace])
           end
         end
       end
 
-      return if color == :hide
-      return if color == :none && style.nil?
+      self.class.sorted_formatters.each do |formatter|
+        if (formatter[:match_level] == level || formatter[:match_level].nil?)
+          if message =~ formatter[:match]
+            options[:level] = formatter[:level] if formatter[:level]
+            color = formatter[:color] if formatter[:color]
+            style = formatter[:style] || formatter[:attribute] # (support original cap colors)
 
-      term_color = COLORS[color]
-      term_style = STYLES[style]
-      if line_prefix.nil?
-        message.replace format(message, term_color, term_style)
+            message.gsub!(formatter[:match], formatter[:replace]) if formatter[:replace]
+            message.replace(formatter[:prepend] + message) unless formatter[:prepend].nil?
+            message.replace(message + formatter[:append])  unless formatter[:append].nil?
+            message.replace(Time.now.strftime('%Y-%m-%d %T') + ' ' + message) if formatter[:timestamp]
+
+            # stop formatting, unless formatter was just for string replacement
+            break unless formatter[:replace]
+          end
+        end
+      end
+
+      if color == :hide
+        return nil
+      elsif color == :none && style.nil?
+        return [message, line_prefix, options]
       else
-        line_prefix.replace format(line_prefix, term_color, term_style)
+        term_color = COLORS[color]
+        term_style = STYLES[style]
+        if line_prefix.nil?
+          message.replace format(message, term_color, term_style)
+        else
+          line_prefix.replace format(line_prefix, term_color, term_style).strip # format() appends a \n
+        end
+        return [message, line_prefix, options]
       end
     end
 
