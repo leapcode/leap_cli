@@ -59,27 +59,33 @@ module LeapCli
         end
         if title
           prefix = case title
-            when :error     then Paint['error', :red, :bold]
-            when :warning   then Paint['warning', :yellow, :bold]
-            when :info      then Paint['info', :cyan, :bold]
-            when :updated   then Paint['updated', :cyan, :bold]
-            when :updating  then Paint['updating', :cyan, :bold]
-            when :created   then Paint['created', :green, :bold]
-            when :removed   then Paint['removed', :red, :bold]
-            when :nochange  then Paint['no change', :magenta]
-            when :loading   then Paint['loading', :magenta]
-            when :missing   then Paint['missing', :yellow, :bold]
-            when :run       then Paint['run', :magenta]
-            when :failed    then Paint['FAILED', :red, :bold]
-            when :completed then Paint['completed', :green, :bold]
-            when :ran       then Paint['ran', :green, :bold]
-            when :bail      then Paint['bailing out', :red, :bold]
-            else Paint[title.to_s, :cyan, :bold]
+            when :error     then ['error', :red, :bold]
+            when :warning   then ['warning', :yellow, :bold]
+            when :info      then ['info', :cyan, :bold]
+            when :updated   then ['updated', :cyan, :bold]
+            when :updating  then ['updating', :cyan, :bold]
+            when :created   then ['created', :green, :bold]
+            when :removed   then ['removed', :red, :bold]
+            when :nochange  then ['no change', :magenta]
+            when :loading   then ['loading', :magenta]
+            when :missing   then ['missing', :yellow, :bold]
+            when :run       then ['run', :magenta]
+            when :failed    then ['FAILED', :red, :bold]
+            when :completed then ['completed', :green, :bold]
+            when :ran       then ['ran', :green, :bold]
+            when :bail      then ['bailing out', :red, :bold]
+            else [title.to_s, :cyan, :bold]
           end
-          print "#{prefix} "
+          if options[:host]
+            print "[%s] %s " % [Paint[options[:host], prefix[1], prefix[2]], prefix[0]]
+          else
+            print "%s " % Paint[prefix[0], prefix[1], prefix[2]]
+          end
           if FILE_TITLES.include?(title) && message =~ /^\//
             message = LeapCli::Path.relative_path(message)
           end
+        elsif options[:host]
+          print "[%s] " % options[:host]
         end
         puts "#{message}"
         if block_given?

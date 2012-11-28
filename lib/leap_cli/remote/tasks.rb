@@ -9,29 +9,22 @@ MAX_HOSTS = 10
 
 task :install_authorized_keys, :max_hosts => MAX_HOSTS do
   leap.log :updating, "authorized_keys" do
-    run 'mkdir -p /root/.ssh && chmod 700 /root/.ssh'
+    leap.mkdirs '/root/.ssh'
     upload LeapCli::Path.named_path(:authorized_keys), '/root/.ssh/authorized_keys', :mode => '600'
   end
 end
 
 task :install_prerequisites, :max_hosts => MAX_HOSTS do
-  packages = "puppet ruby-hiera-puppet rsync lsb-release"
-  run "mkdir -p #{puppet_destination}"
+  leap.mkdirs puppet_destination
   leap.log :updating, "package list" do
     run "apt-get update"
   end
   leap.log :installing, "required packages" do
-    run "DEBIAN_FRONTEND=noninteractive apt-get -q -y -o DPkg::Options::=--force-confold install #{packages}"
+    run "DEBIAN_FRONTEND=noninteractive apt-get -q -y -o DPkg::Options::=--force-confold install #{leap.required_packages}"
   end
+  leap.mkdirs("/etc/leap", "/srv/leap")
+  leap.mark_initialized
 end
-
-#task :update_platform, :max_hosts => MAX_HOSTS do
-#  puppet.update_code
-#end
-
-#task :mk_leap_dir, :max_hosts => MAX_HOSTS do
-#  run 'mkdir -p /root/leap/config && chown -R root /root/leap && chmod -R ag-rwx,u+rwX /root/leap'
-#end
 
 task :apply_puppet, :max_hosts => MAX_HOSTS do
   raise "now such directory #{puppet_source}" unless File.directory?(puppet_source)

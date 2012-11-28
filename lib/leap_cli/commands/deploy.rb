@@ -2,8 +2,8 @@ module LeapCli
   module Commands
 
     desc 'Apply recipes to a node or set of nodes'
-    long_desc 'The node filter can be the name of a node, service, or tag.'
-    arg_name '<node filter>'
+    long_desc 'The node-filter can be the name of a node, service, or tag.'
+    arg_name 'node-filter'
     command :deploy do |c|
       c.action do |global_options,options,args|
         init_submodules
@@ -17,11 +17,7 @@ module LeapCli
         end
 
         ssh_connect(nodes) do |ssh|
-          # directory setup
-          ssh.leap.mkdir("/etc/leap")
-          ssh.leap.mkdir("/srv/leap")
-          ssh.leap.chown_root("/etc/leap")
-          ssh.leap.chown_root("/srv/leap")
+          ssh.leap.assert_initialized
 
           # sync hiera conf
           ssh.leap.log :updating, "hiera.yaml" do
@@ -31,14 +27,7 @@ module LeapCli
             end
           end
 
-          # sync puppet
-          #
-          # what we want:
-          #     puppet apply --confdir /srv/leap/puppet /srv/leap/puppet/manifests/site.pp | grep -v 'warning:.*is deprecated'
-          #
-          # what we get currently:
-          #
-          #
+          # sync puppet manifests and apply them
           ssh.set :puppet_source, [Path.platform, 'puppet'].join('/')
           ssh.set :puppet_destination, '/srv/leap'
           ssh.set :puppet_command, '/usr/bin/puppet apply --color=false'

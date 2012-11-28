@@ -4,17 +4,48 @@
 
 module LeapCli; module Remote; module Plugin
 
+  def required_packages
+    "puppet ruby-hiera-puppet rsync lsb-release"
+  end
+
   def log(*args, &block)
     LeapCli::Util::log(*args, &block)
   end
 
-  def mkdir(dir)
-    run "mkdir -p #{dir}"
+  #
+  # creates directories that are owned by root and 700 permissions
+  #
+  def mkdirs(*dirs)
+    raise ArgumentError.new('illegal dir name') if dirs.grep(/[\' ]/).any?
+    run dirs.collect{|dir| "mkdir -m 700 -p #{dir}; "}.join
   end
 
-  def chown_root(dir)
-    run "chown root -R #{dir} && chmod -R ag-rwx,u+rwX #{dir}"
+  def assert_initialized
+
+    begin
+      test_initialized_file = "test -f /srv/leap/initialized"
+      check_required_packages = "! dpkg-query -W --showformat='${Status}\n' #{required_packages} 2>&1 | grep -q -E '(deinstall|no packages)'"
+      run "#{test_initialized_file} && #{check_required_packages}"
+    rescue Capistrano::CommandError => exc
+      LeapCli::Util.bail! do
+        exc.hosts.each do |host|
+          LeapCli::Util.log :error, "running deploy: node not initialized. Run 'leap init-node #{host}'", :host => host
+        end
+      end
+    end
   end
+
+  def mark_initialized
+    run "touch /srv/leap/initialized"
+  end
+
+  #def mkdir(dir)
+  #  run "mkdir -p #{dir}"
+  #end
+
+  #def chown_root(dir)
+  #  run "chown root -R #{dir} && chmod -R ag-rwx,u+rwX #{dir}"
+  #end
 
   #
   # takes a block, yielded a server, that should return {:source => '', :dest => ''}
