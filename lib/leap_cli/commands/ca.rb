@@ -5,150 +5,155 @@ require 'digest/md5'
 
 module LeapCli; module Commands
 
-  desc 'Creates the public and private key for your Certificate Authority.'
-  command :'init-ca' do |c|
-    c.action do |global_options,options,args|
-      assert_files_missing! :ca_cert, :ca_key
-      assert_config! 'provider.ca.name'
-      assert_config! 'provider.ca.bit_size'
-      assert_config! 'provider.ca.life_span'
+  desc "Manage X.509 certificates"
+  #long_desc ""
+  command :cert do |c|
 
-      provider = manager.provider
-      root = CertificateAuthority::Certificate.new
+    c.desc 'Creates a Certificate Authority (private key and CA certificate)'
+    c.command :ca do |c|
+      c.action do |global_options,options,args|
+        assert_files_missing! :ca_cert, :ca_key
+        assert_config! 'provider.ca.name'
+        assert_config! 'provider.ca.bit_size'
+        assert_config! 'provider.ca.life_span'
 
-      # set subject
-      root.subject.common_name = provider.ca.name
-      possible = ['country', 'state', 'locality', 'organization', 'organizational_unit', 'email_address']
-      provider.ca.keys.each do |key|
-        if possible.include?(key)
-          root.subject.send(key + '=', provider.ca[key])
-        end
-      end
+        provider = manager.provider
+        root = CertificateAuthority::Certificate.new
 
-      # set expiration
-      root.not_before = today
-      root.not_after = years_from_today(provider.ca.life_span.to_i)
-
-      # generate private key
-      root.serial_number.number = 1
-      root.key_material.generate_key(provider.ca.bit_size)
-
-      # sign self
-      root.signing_entity = true
-      root.parent = root
-      root.sign!(ca_root_signing_profile)
-
-      # save
-      write_file!(:ca_key, root.key_material.private_key.to_pem)
-      write_file!(:ca_cert, root.to_pem)
-    end
-  end
-
-  desc 'Creates or renews a X.509 certificate/key pair for a single node or all nodes'
-  arg_name '<node-name | "all">', :optional => false, :multiple => false
-  command :'update-cert' do |c|
-    c.action do |global_options,options,args|
-      assert_files_exist! :ca_cert, :ca_key, :msg => 'Run init-ca to create them'
-      assert_config! 'provider.ca.server_certificates.bit_size'
-      assert_config! 'provider.ca.server_certificates.digest'
-      assert_config! 'provider.ca.server_certificates.life_span'
-      assert_config! 'common.x509.use'
-
-      if args.first == 'all' || args.empty?
-        manager.each_node do |node|
-          if cert_needs_updating?(node)
-            generate_cert_for_node(node)
+        # set subject
+        root.subject.common_name = provider.ca.name
+        possible = ['country', 'state', 'locality', 'organization', 'organizational_unit', 'email_address']
+        provider.ca.keys.each do |key|
+          if possible.include?(key)
+            root.subject.send(key + '=', provider.ca[key])
           end
         end
-      else
-        generate_cert_for_node(get_node_from_args(args))
+
+        # set expiration
+        root.not_before = today
+        root.not_after = years_from_today(provider.ca.life_span.to_i)
+
+        # generate private key
+        root.serial_number.number = 1
+        root.key_material.generate_key(provider.ca.bit_size)
+
+        # sign self
+        root.signing_entity = true
+        root.parent = root
+        root.sign!(ca_root_signing_profile)
+
+        # save
+        write_file!(:ca_key, root.key_material.private_key.to_pem)
+        write_file!(:ca_cert, root.to_pem)
       end
     end
-  end
 
-  desc 'Generates Diffie-Hellman parameter file (needed for server-side of TLS connections)'
-  command :'init-dh' do |c|
-    c.action do |global_options,options,args|
-      long_running do
-        if cmd_exists?('certtool')
-          log 0, 'Generating DH parameters (takes a long time)...'
-          output = assert_run!('certtool --generate-dh-params --sec-param high')
-          output.sub! /.*(-----BEGIN DH PARAMETERS-----.*-----END DH PARAMETERS-----).*/m, '\1'
-          output << "\n"
-          write_file!(:dh_params, output)
+    c.desc 'Creates or renews a X.509 certificate/key pair for a single node or all nodes'
+    c.arg_name 'node-name', :optional => false
+    c.command :update do |c|
+      c.action do |global_options,options,args|
+        assert_files_exist! :ca_cert, :ca_key, :msg => 'Run `leap cert ca` to create them'
+        assert_config! 'provider.ca.server_certificates.bit_size'
+        assert_config! 'provider.ca.server_certificates.digest'
+        assert_config! 'provider.ca.server_certificates.life_span'
+        assert_config! 'common.x509.use'
+
+        if args.first == 'all' || args.empty?
+          manager.each_node do |node|
+            if cert_needs_updating?(node)
+              generate_cert_for_node(node)
+            end
+          end
         else
-          log 0, 'Generating DH parameters (takes a REALLY long time)...'
-          output = OpenSSL::PKey::DH.generate(3248).to_pem
-          write_file!(:dh_params, output)
+          generate_cert_for_node(get_node_from_args(args))
         end
       end
     end
-  end
 
-  #
-  # hints:
-  #
-  # inspect CSR:
-  #   openssl req -noout -text -in files/cert/x.csr
-  #
-  # generate CSR with openssl to see how it compares:
-  #   openssl req -sha256 -nodes -newkey rsa:2048 -keyout example.key -out example.csr
-  #
-  # validate a CSR:
-  #   http://certlogik.com/decoder/
-  #
-  # nice details about CSRs:
-  #   http://www.redkestrel.co.uk/Articles/CSR.html
-  #
-  desc 'Creates a Certificate Signing Request for use in purchasing a commercial x509 certificate'
-  command :'init-csr' do |c|
-    #c.switch 'sign', :desc => 'additionally creates a cert that is signed by your own CA (recommended only for testing)', :negatable => false
-    c.action do |global_options,options,args|
-      assert_config! 'provider.domain'
-      assert_config! 'provider.name'
-      assert_config! 'provider.default_language'
-      assert_config! 'provider.ca.server_certificates.bit_size'
-      assert_config! 'provider.ca.server_certificates.digest'
-      assert_files_missing! [:commercial_key, manager.provider.domain], [:commercial_csr, manager.provider.domain], :msg => 'If you really want to create a new key and CSR, remove these files first.'
-      if options[:sign]
-        assert_files_exist! :ca_cert, :ca_key, :msg => 'Run init-ca to create them'
-      end
-
-      # RSA key
-      keypair = CertificateAuthority::MemoryKeyMaterial.new
-      log :generating, "%s bit RSA key" % manager.provider.ca.server_certificates.bit_size do
-        keypair.generate_key(manager.provider.ca.server_certificates.bit_size)
-        write_file! [:commercial_key, manager.provider.domain], keypair.private_key.to_pem
-      end
-
-      # CSR
-      dn  = CertificateAuthority::DistinguishedName.new
-      csr = CertificateAuthority::SigningRequest.new
-      dn.common_name = manager.provider.domain
-      dn.organization = manager.provider.name[manager.provider.default_language]
-      log :generating, "CSR with commonName => '%s', organization => '%s'" % [dn.common_name, dn.organization] do
-        csr.distinguished_name = dn
-        csr.key_material = keypair
-        csr.digest = manager.provider.ca.server_certificates.digest
-        request = csr.to_x509_csr
-        write_file! [:commercial_csr, manager.provider.domain], csr.to_pem
-      end
-
-      # Sign using our own CA, for use in testing but hopefully not production.
-      # It is not that commerical CAs are so secure, it is just that signing your own certs is
-      # a total drag for the user because they must click through dire warnings.
-      #if options[:sign]
-        log :generating, "self-signed x509 server certificate for testing purposes" do
-          cert = csr.to_cert
-          cert.serial_number.number = cert_serial_number(manager.provider.domain)
-          cert.not_before = today
-          cert.not_after  = years_from_today(1)
-          cert.parent = ca_root
-          cert.sign! domain_test_signing_profile
-          write_file! [:commercial_cert, manager.provider.domain], cert.to_pem
-          log "please replace this file with the real certificate you get from a CA using #{Path.relative_path([:commercial_csr, manager.provider.domain])}"
+    c.desc 'Creates a Diffie-Hellman parameter file' # (needed for server-side of some TLS connections)
+    c.command :dh do |c|
+      c.action do |global_options,options,args|
+        long_running do
+          if cmd_exists?('certtool')
+            log 0, 'Generating DH parameters (takes a long time)...'
+            output = assert_run!('certtool --generate-dh-params --sec-param high')
+            output.sub! /.*(-----BEGIN DH PARAMETERS-----.*-----END DH PARAMETERS-----).*/m, '\1'
+            output << "\n"
+            write_file!(:dh_params, output)
+          else
+            log 0, 'Generating DH parameters (takes a REALLY long time)...'
+            output = OpenSSL::PKey::DH.generate(3248).to_pem
+            write_file!(:dh_params, output)
+          end
         end
-      #end
+      end
+    end
+
+    #
+    # hints:
+    #
+    # inspect CSR:
+    #   openssl req -noout -text -in files/cert/x.csr
+    #
+    # generate CSR with openssl to see how it compares:
+    #   openssl req -sha256 -nodes -newkey rsa:2048 -keyout example.key -out example.csr
+    #
+    # validate a CSR:
+    #   http://certlogik.com/decoder/
+    #
+    # nice details about CSRs:
+    #   http://www.redkestrel.co.uk/Articles/CSR.html
+    #
+    c.desc 'Creates a CSR for use in buying a commercial X.509 certificate'
+    c.command :csr do |c|
+      #c.switch 'sign', :desc => 'additionally creates a cert that is signed by your own CA (recommended only for testing)', :negatable => false
+      c.action do |global_options,options,args|
+        assert_config! 'provider.domain'
+        assert_config! 'provider.name'
+        assert_config! 'provider.default_language'
+        assert_config! 'provider.ca.server_certificates.bit_size'
+        assert_config! 'provider.ca.server_certificates.digest'
+        assert_files_missing! [:commercial_key, manager.provider.domain], [:commercial_csr, manager.provider.domain], :msg => 'If you really want to create a new key and CSR, remove these files first.'
+        if options[:sign]
+          assert_files_exist! :ca_cert, :ca_key, :msg => 'Run `leap cert ca` to create them'
+        end
+
+        # RSA key
+        keypair = CertificateAuthority::MemoryKeyMaterial.new
+        log :generating, "%s bit RSA key" % manager.provider.ca.server_certificates.bit_size do
+          keypair.generate_key(manager.provider.ca.server_certificates.bit_size)
+          write_file! [:commercial_key, manager.provider.domain], keypair.private_key.to_pem
+        end
+
+        # CSR
+        dn  = CertificateAuthority::DistinguishedName.new
+        csr = CertificateAuthority::SigningRequest.new
+        dn.common_name = manager.provider.domain
+        dn.organization = manager.provider.name[manager.provider.default_language]
+        log :generating, "CSR with commonName => '%s', organization => '%s'" % [dn.common_name, dn.organization] do
+          csr.distinguished_name = dn
+          csr.key_material = keypair
+          csr.digest = manager.provider.ca.server_certificates.digest
+          request = csr.to_x509_csr
+          write_file! [:commercial_csr, manager.provider.domain], csr.to_pem
+        end
+
+        # Sign using our own CA, for use in testing but hopefully not production.
+        # It is not that commerical CAs are so secure, it is just that signing your own certs is
+        # a total drag for the user because they must click through dire warnings.
+        #if options[:sign]
+          log :generating, "self-signed x509 server certificate for testing purposes" do
+            cert = csr.to_cert
+            cert.serial_number.number = cert_serial_number(manager.provider.domain)
+            cert.not_before = today
+            cert.not_after  = years_from_today(1)
+            cert.parent = ca_root
+            cert.sign! domain_test_signing_profile
+            write_file! [:commercial_cert, manager.provider.domain], cert.to_pem
+            log "please replace this file with the real certificate you get from a CA using #{Path.relative_path([:commercial_csr, manager.provider.domain])}"
+          end
+        #end
+      end
     end
   end
 

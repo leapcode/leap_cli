@@ -6,41 +6,43 @@ module LeapCli; module Commands
   ##
   ## COMMANDS
   ##
-
-  desc 'not yet implemented... Create a new configuration for a node'
-  command :'add-node' do |c|
-    c.action do |global_options,options,args|
-    end
-  end
-
-  desc 'Bootstraps a node, setting up ssh keys and installing prerequisites'
-  arg_name '<node-name>', :optional => false, :multiple => false
-  command :'init-node' do |c|
-    c.switch 'echo', :desc => 'if set, passwords are visible as you type them (default is hidden)', :negatable => false
-    c.action do |global_options,options,args|
-      node = get_node_from_args(args)
-      ping_node(node)
-      save_public_host_key(node)
-      update_compiled_ssh_configs
-      ssh_connect(node, :bootstrap => true, :echo => options[:echo]) do |ssh|
-        ssh.install_authorized_keys
-        ssh.install_prerequisites
+  desc 'Node management'
+  command :node do |c|
+    c.desc 'Create a new configuration file for a node'
+    c.command :add do |c|
+      c.action do |global_options,options,args|
       end
-      log :completed, "init-node #{node.name}"
     end
-  end
 
-  desc 'not yet implemented'
-  command :'rename-node' do |c|
-    c.action do |global_options,options,args|
+    c.desc 'Bootstraps a node, setting up ssh keys and installing prerequisites'
+    c.arg_name 'node-name', :optional => false, :multiple => false
+    c.command :init do |c|
+      c.switch 'echo', :desc => 'if set, passwords are visible as you type them (default is hidden)', :negatable => false
+      c.action do |global_options,options,args|
+        node = get_node_from_args(args)
+        ping_node(node)
+        save_public_host_key(node)
+        update_compiled_ssh_configs
+        ssh_connect(node, :bootstrap => true, :echo => options[:echo]) do |ssh|
+          ssh.install_authorized_keys
+          ssh.install_prerequisites
+        end
+        log :completed, "node init #{node.name}"
+      end
     end
-  end
 
-  desc 'not yet implemented'
-  arg_name '<node-name>', :optional => false, :multiple => false
-  command :'rm-node' do |c|
-    c.action do |global_options,options,args|
-      remove_file!()
+    c.desc 'Renames a node file, and all its related files'
+    c.command :mv do |c|
+      c.action do |global_options,options,args|
+      end
+    end
+
+    c.desc 'Removes a node file, and all its related files'
+    c.arg_name '<node-name>', :optional => false, :multiple => false
+    c.command :rm do |c|
+      c.action do |global_options,options,args|
+        remove_file!()
+      end
     end
   end
 

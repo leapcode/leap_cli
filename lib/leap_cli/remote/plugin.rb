@@ -29,7 +29,7 @@ module LeapCli; module Remote; module Plugin
     rescue Capistrano::CommandError => exc
       LeapCli::Util.bail! do
         exc.hosts.each do |host|
-          LeapCli::Util.log :error, "running deploy: node not initialized. Run 'leap init-node #{host}'", :host => host
+          LeapCli::Util.log :error, "running deploy: node not initialized. Run 'leap node init #{host}'", :host => host
         end
       end
     end

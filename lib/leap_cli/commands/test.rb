@@ -1,18 +1,23 @@
 module LeapCli; module Commands
 
-  desc 'Creates files needed to run tests'
-  command :'init-test' do |c|
-    c.action do |global_options,options,args|
-      generate_test_client_cert
-      generate_test_client_openvpn_config
-    end
-  end
-
   desc 'Run tests'
   command :test do |c|
-    c.action do |global_options,options,args|
-      log 'not yet implemented'
+    c.desc 'Creates files needed to run tests'
+    c.command :init do |c|
+      c.action do |global_options,options,args|
+        generate_test_client_cert
+        generate_test_client_openvpn_config
+      end
     end
+
+    c.desc 'Run tests'
+    c.command :run do |c|
+      c.action do |global_options,options,args|
+        log 'not yet implemented'
+      end
+    end
+
+    c.default_command :run
   end
 
   private

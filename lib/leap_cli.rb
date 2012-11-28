@@ -5,6 +5,7 @@ require 'leap_cli/requirements.rb'
 require 'core_ext/hash'
 require 'core_ext/boolean'
 require 'core_ext/nil'
+require 'core_ext/string'
 
 require 'leap_cli/log'
 require 'leap_cli/init'
@@ -22,25 +23,12 @@ require 'leap_cli/config/manager'
 
 module LeapCli::Commands; end
 
+#
+# allow everyone easy access to log() command.
+#
 module LeapCli
   Util.send(:extend, LeapCli::Log)
   Commands.send(:extend, LeapCli::Log)
   Config::Manager.send(:include, LeapCli::Log)
   extend LeapCli::Log
 end
-
-#
-# make ruby 1.9 act more like ruby 1.8
-#
-unless String.method_defined?(:to_a)
-  class String
-    def to_a; [self]; end
-  end
-end
-
-unless String.method_defined?(:any?)
-  class String
-    def any?; self.chars.any?; end
-  end
-end
-

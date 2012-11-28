@@ -26,6 +26,7 @@ end
 require 'gli'
 require 'highline'
 require 'forwardable'
+require 'lib_ext/gli' # our custom extensions to gli
 
 #
 # Typically, GLI and Highline methods are loaded into the global namespace.
