@@ -114,6 +114,11 @@ module LeapCli
       { :match => /Finished catalog run/,          :level => 0, :color => :green,  :priority => -10},
     ]
 
+    def self.sorted_formatters
+      # Sort matchers in reverse order so we can break if we found a match.
+      @sorted_formatters ||= @formatters.sort_by { |i| -(i[:priority] || i[:prio] || 0) }
+    end
+
     @prefix_formatters = [
       { :match => /(err|out) :: /,             :replace => '', :priority => 0},
       { :match => /\s+$/,                      :replace => '', :priority => 0}
