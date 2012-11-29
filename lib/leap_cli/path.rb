@@ -53,35 +53,8 @@ module LeapCli; module Path
     :test_client_openvpn_template => 'test/openvpn/client.ovpn.erb'
   }
 
-  #
-  # required file structure
-  #
-  # Option 1 -- A project directory with platform and provider directories
-  #
-  #  -: $root
-  #   :-- leap_platform
-  #   '-: provider
-  #     '-- provider.json
-  #
-  #  $root can be any name
-  #
-  # Option 2 -- A stand alone provider directory
-  #
-  #  -: $provider
-  #   '-- provider.json
-  #
-  #  $provider can be any name. Some commands are not available.
-  #
-  # In either case, the 'leap' command must be run from inside the provider directory or
-  # you must specify root directory with --root=dir.
-  #
-
-  def self.root
-    @root ||= File.expand_path("#{provider}/..")
-  end
-
   def self.platform
-    @platform ||= File.expand_path("#{root}/leap_platform")
+    @platform
   end
 
   def self.provider_base
@@ -93,40 +66,15 @@ module LeapCli; module Path
   end
 
   def self.provider
-    @provider ||= if @root
-      File.expand_path("#{root}/provider")
-    else
-      find_in_directory_tree('provider.json')
-    end
+    @provider
   end
 
-  def self.ok?
-    provider != '/'
+  def self.set_provider_path(provider)
+    @provider = provider
   end
-
-  def self.set_root(root_path)
-    @root = File.expand_path(root_path)
-    raise "No such directory '#{@root}'" unless File.directory?(@root)
+  def self.set_platform_path(platform)
+    @platform = platform
   end
-
-  #
-  # all the places we search for a file when using find_file.
-  # this is perhaps too many places.
-  #
-  # def self.search_path
-  #   @search_path ||= begin
-  #     search_path = []
-  #     [Path.provider_base, Path.provider].each do |provider|
-  #       #files_dir = named_path(:files_dir, provider)
-  #       search_path << provider
-  #       #search_path << named_path(:files_dir, provider)
-  #       #search_path << named_path(:nodes_dir, files_dir)
-  #       #search_path << named_path(:services_dir, files_dir)
-  #       #search_path << named_path(:tags_dir, files_dir)
-  #     end
-  #     search_path
-  #   end
-  # end
 
   #
   # tries to find a file somewhere
@@ -174,22 +122,9 @@ module LeapCli; module Path
     File.exists?(named_path(name, provider_dir))
   end
 
-  def self.relative_path(path)
-    path = named_path(path)
-    path.sub(/^#{Regexp.escape(provider)}\//,'')
-  end
-
-  private
-
-  def self.find_in_directory_tree(filename)
-    search_dir = Dir.pwd
-    while search_dir != "/"
-      Dir.foreach(search_dir) do |f|
-        return search_dir if f == filename
-      end
-      search_dir = File.dirname(search_dir)
-    end
-    return search_dir
+  def self.relative_path(path, provider_dir=Path.provider)
+    path = named_path(path, provider_dir)
+    path.sub(/^#{Regexp.escape(provider_dir)}\//,'')
   end
 
 end; end

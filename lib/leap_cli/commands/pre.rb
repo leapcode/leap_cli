@@ -10,11 +10,6 @@ module LeapCli
     default_value '1'
     flag [:v, :verbose]
 
-    desc 'Specify the root directory'
-    arg_name 'path'
-    default_value Path.root
-    flag [:root]
-
     desc 'Display version number and exit'
     switch :version, :negatable => false
 
@@ -30,17 +25,18 @@ module LeapCli
       end
 
       #
-      # require a root directory
+      # load Leapfile
       #
-      if global[:root]
-        Path.set_root(global[:root])
+      unless LeapCli.leapfile.load
+        bail! { log :missing, 'Leapfile in directory tree' }
       end
-      if Path.ok?
-        true
-      else
-        bail! do
-          log :error, "- Could not find the root directory. Change current working directory or try --root"
-        end
+      Path.set_platform_path(LeapCli.leapfile.platform_directory_path)
+      Path.set_provider_path(LeapCli.leapfile.provider_directory_path)
+      if !Path.provider || !File.directory?(Path.provider)
+        bail! { log :missing, "provider directory '#{Path.provider}'" }
+      end
+      if !Path.platform || !File.directory?(Path.platform)
+        bail! { log :missing, "platform directory '#{Path.platform}'" }
       end
 
       #

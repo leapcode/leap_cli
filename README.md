@@ -27,31 +27,32 @@ Run `leap help` for a usage instructions.
 
 Here is an example usage:
 
-    leap new-provider provider
+    mkdir provider
     cd provider
-    edit configuration files (see below)
+    leap init --domain example.org .
+    leap node add vpn1 --service openvpn
     leap compile
 
 Directories and Files
 =================================
 
-The general structure of leap project looks like this:
+A leap project consistents of two directories:
 
-    my_leap_project/                 # your project directory
-      leap_platform/                 # a clone of the leap_platform puppet recipes
-      provider/                      # your provider-specific configurations
+* provider directory: this is the directory where all your configurations live. By definition, a provider directory contains a file named Leapfile.
+* platform directory: this is the directory where the puppet recipes live. The path to this directory is specified in the Leapfile. Typically, the platform directory will be a clone or branch of git://leap.se/leap_platform.
 
-The "leap" command should be run from within the "provider" directory.
+The "leap" command must always be run under provider directory (or one of its children).
 
-Within the "provider" directory:
+Within the provider directory:
 
-    nodes/               # one configuration file per node (i.e. server)
-    services/            # nodes inherit from these files if specified in node config.
-    tags/                # nodes inherit from these files if specified in node config.
-    files/               # text and binary files needed for services and nodes, including keypairs
-    users/               # crypto key material for sysadmins
-    common.yaml          # all nodes inherit these options
-    provider.yaml        # global service provider definition
+    nodes/             # one configuration file per node (i.e. server)
+    services/          # nodes inherit from these files if specified in node config.
+    tags/              # nodes inherit from these files if specified in node config.
+    files/             # text and binary files needed for services and nodes, including keypairs
+    users/             # crypto key material for sysadmins
+    hiera/             # compile yaml files that contain everything needed to deploy a particular node.
+    common.yaml        # all nodes inherit these options
+    provider.yaml      # global service provider definition
 
 Configuration Files
 =================================
@@ -101,8 +102,7 @@ The following methods are available to the evaluated ruby:
 * global.tags -- A list of all tags.
 
 * file(file_path) -- Inserts the full contents of the file. If the file is an erb
-  template, it is rendered. The file is searched for by first checking platform
-  and then provider/files,
+  template, it is rendered.
 
 * variable -- Any variable inherited by a particular node is available
   by just referencing it using either hash notation or object notation

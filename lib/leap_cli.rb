@@ -2,13 +2,13 @@ module LeapCli; end
 
 require 'leap_cli/version.rb'
 require 'leap_cli/requirements.rb'
+require 'leap_cli/leapfile.rb'
 require 'core_ext/hash'
 require 'core_ext/boolean'
 require 'core_ext/nil'
 require 'core_ext/string'
 
 require 'leap_cli/log'
-require 'leap_cli/init'
 require 'leap_cli/path'
 require 'leap_cli/util'
 require 'leap_cli/util/secret'

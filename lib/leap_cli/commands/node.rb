@@ -6,11 +6,13 @@ module LeapCli; module Commands
   ##
   ## COMMANDS
   ##
+
   desc 'Node management'
   command :node do |c|
     c.desc 'Create a new configuration file for a node'
     c.command :add do |c|
       c.action do |global_options,options,args|
+        log 'not yet implemented'
       end
     end
 
@@ -34,6 +36,7 @@ module LeapCli; module Commands
     c.desc 'Renames a node file, and all its related files'
     c.command :mv do |c|
       c.action do |global_options,options,args|
+        log 'not yet implemented'
       end
     end
 
@@ -41,7 +44,7 @@ module LeapCli; module Commands
     c.arg_name '<node-name>', :optional => false, :multiple => false
     c.command :rm do |c|
       c.action do |global_options,options,args|
-        remove_file!()
+        log 'not yet implemented'
       end
     end
   end

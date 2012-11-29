@@ -2,6 +2,7 @@ require 'digest/md5'
 require 'paint'
 require 'fileutils'
 require 'erb'
+require 'pty'
 
 module LeapCli
   module Util
@@ -84,9 +85,10 @@ module LeapCli
 
     def assert_files_missing!(*files)
       options = files.last.is_a?(Hash) ? files.pop : {}
+      base = options[:base] || Path.provider
       file_list = files.collect { |file_path|
-        file_path = Path.named_path(file_path)
-        File.exists?(file_path) ? Path.relative_path(file_path) : nil
+        file_path = Path.named_path(file_path, base)
+        File.exists?(file_path) ? Path.relative_path(file_path, base) : nil
       }.compact
       if file_list.length > 1
         bail! do
@@ -278,6 +280,21 @@ module LeapCli
         break if Process.wait(pid, Process::WNOHANG)
       end
       STDOUT.puts
+    end
+
+    #
+    # runs a command in a pseudo terminal
+    #
+    def pty_run(cmd)
+      PTY.spawn(cmd) do |output, input, pid|
+        begin
+          while line = output.gets do
+            puts line
+          end
+        rescue Errno::EIO
+        end
+      end
+    rescue PTY::ChildExited
     end
 
     ##
