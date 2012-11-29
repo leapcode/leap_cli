@@ -33,11 +33,7 @@ module GLI
             command_info_list << [name, command.description]
             if command.commands.any?
               @sorter.call(command.commands_declaration_order).each do |cmd|
-                if command.get_default_command == cmd.name
-                  command_info_list << [SUB_CMD_INDENT + cmd.names,cmd.description + " (default)"]
-                else
-                  command_info_list << [SUB_CMD_INDENT + cmd.names,cmd.description]
-                end
+                command_info_list << [SUB_CMD_INDENT + command.name.to_s + " " + cmd.names,cmd.description + (command.get_default_command == cmd.name ? " (default)" : "")]
               end
             end
           end
