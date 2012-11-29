@@ -52,7 +52,7 @@ spec = Gem::Specification.new do |s|
   s.add_runtime_dependency('paint')
 
   # network gems
-  s.add_runtime_dependency('capistrano', '=> 2.13.5')
+  s.add_runtime_dependency('capistrano', '>= 2.13.5')
   #s.add_runtime_dependency('supply_drop')
 
   # crypto gems
