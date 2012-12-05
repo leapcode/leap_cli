@@ -5,47 +5,47 @@ module LeapCli; module Commands
 
   desc "Manage local virtual machines"
   long_desc "This command provides a convient way to manage Vagrant-based virtual machines. If node-filter argument is missing, the command runs on all local virtual machines. The Vagrantfile is automatically generated in 'test/Vagrantfile'. If you want to run vagrant commands manually, cd to 'test'."
-  command :local do |c|
-    c.desc 'Starts up the virtual machine(s)'
-    c.arg_name 'node-filter', :optional => true #, :multiple => false
-    c.command :start do |c|
-      c.action do |global_options,options,args|
+  command :local do |local|
+    local.desc 'Starts up the virtual machine(s)'
+    local.arg_name 'node-filter', :optional => true #, :multiple => false
+    local.command :start do |start|
+      start.action do |global_options,options,args|
         vagrant_setup
         vagrant_command(["up", "sandbox on"], args)
       end
     end
 
-    c.desc 'Shuts down the virtual machine(s)'
-    c.arg_name 'node-filter', :optional => true #, :multiple => false
-    c.command :stop do |c|
-      c.action do |global_options,options,args|
+    local.desc 'Shuts down the virtual machine(s)'
+    local.arg_name 'node-filter', :optional => true #, :multiple => false
+    local.command :stop do |stop|
+      stop.action do |global_options,options,args|
         vagrant_setup
         vagrant_command("halt", args)
       end
     end
 
-    c.desc 'Resets virtual machine(s) to a pristine state'
-    c.arg_name 'node-filter', :optional => true #, :multiple => false
-    c.command :reset do |c|
-      c.action do |global_options,options,args|
+    local.desc 'Resets virtual machine(s) to a pristine state'
+    local.arg_name 'node-filter', :optional => true #, :multiple => false
+    local.command :reset do |reset|
+      reset.action do |global_options,options,args|
         vagrant_setup
         vagrant_command("sandbox rollback", args)
       end
     end
 
-    c.desc 'Destroys the virtual machine(s), reclaiming the disk space'
-    c.arg_name 'node-filter', :optional => true #, :multiple => false
-    c.command :destroy do |c|
-      c.action do |global_options,options,args|
+    local.desc 'Destroys the virtual machine(s), reclaiming the disk space'
+    local.arg_name 'node-filter', :optional => true #, :multiple => false
+    local.command :destroy do |destroy|
+      destroy.action do |global_options,options,args|
         vagrant_setup
         vagrant_command("destroy", args)
       end
     end
 
-    c.desc 'Print the status of local virtual machine(s)'
-    c.arg_name 'node-filter', :optional => true #, :multiple => false
-    c.command :status do |c|
-      c.action do |global_options,options,args|
+    local.desc 'Print the status of local virtual machine(s)'
+    local.arg_name 'node-filter', :optional => true #, :multiple => false
+    local.command :status do |status|
+      status.action do |global_options,options,args|
         vagrant_setup
         vagrant_command("status", args)
       end

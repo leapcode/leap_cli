@@ -19,10 +19,10 @@ module GLI
 
           # build a list of commands, sort them so the commands with subcommands are at the bottom
           commands = @sorter.call(@app.commands_declaration_order.reject(&:nodoc)).sort do |a,b|
-            if a.commands.any? && b.commands.any?;  a.name <=> b.name
+            if a.commands.any? && b.commands.any?;  a.name.to_s <=> b.name.to_s
             elsif a.commands.any?;                  1
             elsif b.commands.any?;                 -1
-            else;                                   a.name <=> b.name
+            else;                                   a.name.to_s <=> b.name.to_s
             end
           end
 
@@ -33,7 +33,7 @@ module GLI
             command_info_list << [name, command.description]
             if command.commands.any?
               @sorter.call(command.commands_declaration_order).each do |cmd|
-                command_info_list << [SUB_CMD_INDENT + command.name.to_s + " " + cmd.names,cmd.description + (command.get_default_command == cmd.name ? " (default)" : "")]
+                command_info_list << [SUB_CMD_INDENT + command.name.to_s + " " + cmd.names, cmd.description + (command.get_default_command == cmd.name ? " (default)" : "")]
               end
             end
           end
@@ -43,7 +43,7 @@ module GLI
           stringio = StringIO.new
           command_formatter.output(stringio)
           commands = stringio.string
-          global_option_descriptions = OptionsFormatter.new(global_flags_and_switches,@wrapper_class).format
+          global_option_descriptions = OptionsFormatter.new(global_flags_and_switches, @sorter, @wrapper_class).format
           GLOBAL_HELP.result(binding)
         end
       end

@@ -1,6 +1,6 @@
 require File.dirname(__FILE__) + '/test_helper'
 
-class TestMeme < MiniTest::Unit::TestCase
+class ConfigObjectListTest < MiniTest::Unit::TestCase
 
   def test_node_search
     nodes = manager.nodes['name' => 'vpn1']

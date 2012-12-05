@@ -46,7 +46,7 @@ spec = Gem::Specification.new do |s|
   #s.add_development_dependency('aruba')
 
   # console gems
-  s.add_runtime_dependency('gli','~> 2.3')
+  s.add_runtime_dependency('gli','~> 2.5.0')
   s.add_runtime_dependency('command_line_reporter')
   s.add_runtime_dependency('highline')
   s.add_runtime_dependency('paint')

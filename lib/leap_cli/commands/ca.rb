@@ -7,11 +7,11 @@ module LeapCli; module Commands
 
   desc "Manage X.509 certificates"
   #long_desc ""
-  command :cert do |c|
+  command :cert do |cert|
 
-    c.desc 'Creates a Certificate Authority (private key and CA certificate)'
-    c.command :ca do |c|
-      c.action do |global_options,options,args|
+    cert.desc 'Creates a Certificate Authority (private key and CA certificate)'
+    cert.command :ca do |ca|
+      ca.action do |global_options,options,args|
         assert_files_missing! :ca_cert, :ca_key
         assert_config! 'provider.ca.name'
         assert_config! 'provider.ca.bit_size'
@@ -48,10 +48,10 @@ module LeapCli; module Commands
       end
     end
 
-    c.desc 'Creates or renews a X.509 certificate/key pair for a single node or all nodes'
-    c.arg_name 'node-name', :optional => false
-    c.command :update do |c|
-      c.action do |global_options,options,args|
+    cert.desc 'Creates or renews a X.509 certificate/key pair for a single node or all nodes'
+    cert.arg_name 'node-name', :optional => false
+    cert.command :update do |update|
+      update.action do |global_options,options,args|
         assert_files_exist! :ca_cert, :ca_key, :msg => 'Run `leap cert ca` to create them'
         assert_config! 'provider.ca.server_certificates.bit_size'
         assert_config! 'provider.ca.server_certificates.digest'
@@ -70,9 +70,9 @@ module LeapCli; module Commands
       end
     end
 
-    c.desc 'Creates a Diffie-Hellman parameter file' # (needed for server-side of some TLS connections)
-    c.command :dh do |c|
-      c.action do |global_options,options,args|
+    cert.desc 'Creates a Diffie-Hellman parameter file' # (needed for server-side of some TLS connections)
+    cert.command :dh do |dh|
+      dh.action do |global_options,options,args|
         long_running do
           if cmd_exists?('certtool')
             log 0, 'Generating DH parameters (takes a long time)...'
@@ -104,10 +104,10 @@ module LeapCli; module Commands
     # nice details about CSRs:
     #   http://www.redkestrel.co.uk/Articles/CSR.html
     #
-    c.desc 'Creates a CSR for use in buying a commercial X.509 certificate'
-    c.command :csr do |c|
+    cert.desc 'Creates a CSR for use in buying a commercial X.509 certificate'
+    cert.command :csr do |csr|
       #c.switch 'sign', :desc => 'additionally creates a cert that is signed by your own CA (recommended only for testing)', :negatable => false
-      c.action do |global_options,options,args|
+      csr.action do |global_options,options,args|
         assert_config! 'provider.domain'
         assert_config! 'provider.name'
         assert_config! 'provider.default_language'

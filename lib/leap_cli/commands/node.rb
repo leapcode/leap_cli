@@ -8,19 +8,19 @@ module LeapCli; module Commands
   ##
 
   desc 'Node management'
-  command :node do |c|
-    c.desc 'Create a new configuration file for a node'
-    c.command :add do |c|
-      c.action do |global_options,options,args|
+  command :node do |node|
+    node.desc 'Create a new configuration file for a node'
+    node.command :add do |add|
+      add.action do |global_options,options,args|
         log 'not yet implemented'
       end
     end
 
-    c.desc 'Bootstraps a node, setting up ssh keys and installing prerequisites'
-    c.arg_name 'node-name', :optional => false, :multiple => false
-    c.command :init do |c|
-      c.switch 'echo', :desc => 'if set, passwords are visible as you type them (default is hidden)', :negatable => false
-      c.action do |global_options,options,args|
+    node.desc 'Bootstraps a node, setting up ssh keys and installing prerequisites'
+    node.arg_name 'node-name', :optional => false, :multiple => false
+    node.command :init do |init|
+      init.switch 'echo', :desc => 'if set, passwords are visible as you type them (default is hidden)', :negatable => false
+      init.action do |global_options,options,args|
         node = get_node_from_args(args)
         ping_node(node)
         save_public_host_key(node)
@@ -33,17 +33,17 @@ module LeapCli; module Commands
       end
     end
 
-    c.desc 'Renames a node file, and all its related files'
-    c.command :mv do |c|
-      c.action do |global_options,options,args|
+    node.desc 'Renames a node file, and all its related files'
+    node.command :mv do |mv|
+      mv.action do |global_options,options,args|
         log 'not yet implemented'
       end
     end
 
-    c.desc 'Removes a node file, and all its related files'
-    c.arg_name '<node-name>', :optional => false, :multiple => false
-    c.command :rm do |c|
-      c.action do |global_options,options,args|
+    node.desc 'Removes a node file, and all its related files'
+    node.arg_name '<node-name>', :optional => false, :multiple => false
+    node.command :rm do |rm|
+      rm.action do |global_options,options,args|
         log 'not yet implemented'
       end
     end
