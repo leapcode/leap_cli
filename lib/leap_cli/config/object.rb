@@ -32,11 +32,14 @@ module LeapCli
         @node_list = Config::ObjectList.new
       end
 
+      #
       # We use pure ruby yaml exporter ya2yaml instead of SYCK or PSYCH because it
       # allows us greater compatibility regardless of installed ruby version and
-      # greater control over how the yaml is exported.
+      # greater control over how the yaml is exported (sorted keys, in particular).
       #
       def dump
+        self.evaluate_everything
+        self.late_evaluate_everything
         self.ya2yaml(:syck_compatible => true)
       end
 
@@ -87,7 +90,7 @@ module LeapCli
             value
           end
         elsif self.has_key?(key)
-          evaluate_value(key)
+          evaluate_key(key)
         else
           raise NoMethodError.new(key, "No method '#{key}' for #{self.class}")
         end
@@ -269,46 +272,127 @@ module LeapCli
         "SHA256: " + X509.fingerprint("SHA256", Path.named_path(filename))
       end
 
+      #
+      # records the list of hosts that are encountered for this node
+      #
+      def hostnames(nodes)
+        @referenced_nodes ||= ObjectList.new
+        if nodes.is_a? Config::Object
+          nodes = ObjectList.new nodes
+        end
+        nodes.each_node do |node|
+          @referenced_nodes[node.name] = node
+        end
+        nodes.values.collect do |node|
+          node.domain.name
+        end
+      end
+
+      #
+      # generates entries needed for updating /etc/hosts on a node, but only including the IPs of the
+      # other nodes we have encountered.
+      #
+      def hosts_file
+        return nil unless @referenced_nodes
+        entries = []
+        @referenced_nodes.each_node do |node|
+          entries << "#{node.ip_address}    #{node.name} #{node.domain.internal} #{node.domain.full}"
+        end
+        {'leap_hosts' => entries}
+      end
+
+      def known_hosts_file
+        return nil unless @referenced_nodes
+        entries = []
+        @referenced_nodes.each_node do |node|
+          hostnames = [node.name, node.domain.internal, node.domain.full, node.ip_address].join(',')
+          pub_key   = Util::read_file([:node_ssh_pub_key,node.name])
+          if pub_key
+            entries << [hostnames, pub_key].join(' ')
+          end
+        end
+        entries.join("\n")
+      end
+
+      protected
+
+      #
+      # walks the object tree, eval'ing all the attributes that are dynamic ruby (e.g. value starts with '= ')
+      #
+      def evaluate_everything
+        keys.each do |key|
+          obj = evaluate_key(key)
+          if obj.is_a? Config::Object
+            obj.evaluate_everything
+          end
+        end
+      end
+
+      #
+      # some keys need to be evaluated 'late', after all the other keys have been evaluated.
+      #
+      def late_evaluate_everything
+        if @late_eval_list
+          @late_eval_list.each do |key, value|
+            self[key] = evaluate_now(key, value)
+          end
+        end
+        values.each do |obj|
+          if obj.is_a? Config::Object
+            obj.late_evaluate_everything
+          end
+        end
+      end
+
       private
 
       #
       # fetches the value for the key, evaluating the value as ruby if it begins with '='
       #
-      def evaluate_value(key)
+      def evaluate_key(key)
         value = fetch(key, nil)
-        if value.is_a? Array
+        if !value.is_a?(String)
           value
-        elsif value.nil?
-          nil
         else
-          if value =~ /^= (.*)$/
-            begin
-              value = @node.instance_eval($1) #, @node.send(:binding))
-              self[key] = value
-            rescue SystemStackError => exc
-              log 0, :error, "while evaluating node '#{@node.name}'"
-              log 0, "offending string: #{$1}", :indent => 1
-              log 0, "STACK OVERFLOW, BAILING OUT. There must be an eval loop of death (variables with circular dependencies).", :indent => 1
-              raise SystemExit.new()
-           rescue FileMissing => exc
-              Util::bail! do
-                if exc.options[:missing]
-                  log :missing, exc.options[:missing].gsub('$node', @node.name)
-                else
-                  log :error, "while evaluating node '#{@node.name}'"
-                  log "offending string: #{$1}", :indent => 1
-                  log "error message: no file '#{exc}'", :indent => 1
-                end
-              end
-            rescue SyntaxError, StandardError => exc
-              Util::bail! do
-                log :error, "while evaluating node '#{@node.name}'"
-                log "offending string: #{$1}", :indent => 1
-                log "error message: #{exc}", :indent => 1
-              end
-            end
+          if value =~ /^=> (.*)$/
+            value = evaluate_later(key, $1)
+          elsif value =~ /^= (.*)$/
+            value = evaluate_now(key, $1)
           end
+          self[key] = value
           value
+        end
+      end
+
+      def evaluate_later(key, value)
+        @late_eval_list ||= []
+        @late_eval_list << [key, value]
+        '<evaluate later>'
+      end
+
+      def evaluate_now(key, value)
+        return @node.instance_eval(value)
+      rescue SystemStackError => exc
+        Util::log 0, :error, "while evaluating node '#{@node.name}'"
+        Util::log 0, "offending string: #{$1}", :indent => 1
+        Util::log 0, "STACK OVERFLOW, BAILING OUT. There must be an eval loop of death (variables with circular dependencies).", :indent => 1
+        raise SystemExit.new()
+      rescue FileMissing => exc
+        Util::bail! do
+          if exc.options[:missing]
+            Util::log :missing, exc.options[:missing].gsub('$node', @node.name)
+          else
+            Util::log :error, "while evaluating node '#{@node.name}'"
+            Util::log "offending string: #{$1}", :indent => 1
+            Util::log "error message: no file '#{exc}'", :indent => 1
+          end
+        end
+      rescue SyntaxError, StandardError => exc
+        Util::bail! do
+          Util::log exc.inspect
+          Util::log :error, "while evaluating node '#{@node.name}'"
+          Util::log "offending string: #{$1}", :indent => 1
+          Util::log "error message: #{exc}", :indent => 1
         end
       end
 
