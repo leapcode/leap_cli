@@ -1,7 +1,7 @@
 About LEAP command line interface
 =================================
 
-This gem installs an executable 'leap' that allows you to manage servers using the leap platform.
+This gem installs an executable 'leap' that allows you to manage servers using the leap platform. You can read about the [platform on-line](https://leap.se).
 
 Installation
 =================================
@@ -49,7 +49,7 @@ Within the provider directory:
     services/          # nodes inherit from these files if specified in node config.
     tags/              # nodes inherit from these files if specified in node config.
     files/             # text and binary files needed for services and nodes, including keypairs
-    users/             # crypto key material for sysadmins
+    users/             # cryptographic key material for sysadmins
     hiera/             # compile yaml files that contain everything needed to deploy a particular node.
     common.yaml        # all nodes inherit these options
     provider.yaml      # global service provider definition
