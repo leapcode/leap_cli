@@ -114,6 +114,7 @@ module LeapCli; module Commands
         lines << %[    config.vm.box = "minimal-wheezy"]
         lines << %[    config.vm.box_url = "http://cloud.github.com/downloads/leapcode/minimal-debian-vagrant/minimal-wheezy.box"]
         lines << %[    config.vm.network :hostonly, "#{node.ip_address}", :netmask => "#{netmask}"]
+        lines << %[    config.vm.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]]
         lines << %[  end]
       end
     end
