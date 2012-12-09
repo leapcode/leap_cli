@@ -18,8 +18,8 @@
   },
   "x509": {
     "use": false,
-    "cert": "= x509.use ? file(:node_x509_cert, :missing => 'x509 certificate for node $node. Run `leap update-cert`') : nil",
-    "key": "= x509.use ? file(:node_x509_key, :missing => 'x509 key for node $node. Run `leap update-cert`') : nil"
+    "cert": "= x509.use ? file(:node_x509_cert, :missing => 'x509 certificate for node $node. Run `leap cert update`') : nil",
+    "key": "= x509.use ? file(:node_x509_key, :missing => 'x509 key for node $node. Run `leap cert update`') : nil"
   },
   "local": false
 }

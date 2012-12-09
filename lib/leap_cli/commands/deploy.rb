@@ -16,6 +16,10 @@ module LeapCli
           end
         end
 
+        nodes.each_node do |node|
+          assert_files_exist! Path.named_path([:hiera, node.name]), :msg => 'try running `leap compile`'
+        end
+
         ssh_connect(nodes) do |ssh|
           ssh.leap.assert_initialized
 

@@ -2,6 +2,9 @@ require 'fileutils'
 
 module LeapCli; module Path
 
+  #
+  # all the named paths, relative to provider directory.
+  #
   NAMED_PATHS = {
     # directories
     :hiera_dir        => 'hiera',
@@ -23,16 +26,9 @@ module LeapCli; module Path
     :provider_json_template => 'files/service-definitions/provider.json.erb',
     :eip_service_json_template => 'files/service-definitions/eip-service.json.erb',
 
-    # input data files
-    :commercial_cert  => 'files/cert/#{arg}.crt',
-    :commercial_key   => 'files/cert/#{arg}.key',
-    :commercial_csr   => 'files/cert/#{arg}.csr',
-
     # output files
     :user_ssh         => 'users/#{arg}/#{arg}_ssh.pub',
     :user_pgp         => 'users/#{arg}/#{arg}_pgp.pub',
-    :hiera            => 'hiera/#{arg}.yaml',
-    :node_ssh_pub_key => 'files/nodes/#{arg}/#{arg}_ssh.pub',
     :known_hosts      => 'files/ssh/known_hosts',
     :authorized_keys  => 'files/ssh/authorized_keys',
     :ca_key           => 'files/ca/ca.key',
@@ -42,9 +38,13 @@ module LeapCli; module Path
     :commercial_csr   => 'files/cert/#{arg}.csr',
     :commercial_cert  => 'files/cert/#{arg}.crt',
     :commercial_ca_cert  => 'files/cert/commercial_ca.crt',
-    :node_x509_key       => 'files/nodes/#{arg}/#{arg}.key',
-    :node_x509_cert      => 'files/nodes/#{arg}/#{arg}.crt',
     :vagrantfile         => 'test/Vagrantfile',
+
+    # node output files
+    :hiera            => 'hiera/#{arg}.yaml',
+    :node_ssh_pub_key => 'files/nodes/#{arg}/#{arg}_ssh.pub',
+    :node_x509_key    => 'files/nodes/#{arg}/#{arg}.key',
+    :node_x509_cert   => 'files/nodes/#{arg}/#{arg}.crt',
 
     # testing files
     :test_client_key     => 'test/cert/client.key',
@@ -52,6 +52,13 @@ module LeapCli; module Path
     :test_client_openvpn_config   => 'test/openvpn/client.ovpn',
     :test_client_openvpn_template => 'test/openvpn/client.ovpn.erb'
   }
+
+  #
+  # paths that take node name as the argument
+  #
+  NODE_PATHS = [
+    :node_config, :hiera, :node_x509_cert, :node_x509_key, :node_ssh_pub_key
+  ]
 
   def self.platform
     @platform

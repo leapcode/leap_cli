@@ -28,9 +28,9 @@ module LeapCli
         LeapCli.log_level = 3
         yield
       elsif message
-        puts message
+        log 0, message
       end
-      log :bail, ""
+      log 0, :bail, ""
       raise SystemExit.new
     end
 
@@ -105,11 +105,11 @@ module LeapCli
 
     def assert_config!(conf_path)
       value = nil
-      begin
+      #begin
         value = manager.instance_eval(conf_path)
-      rescue NoMethodError
-      rescue NameError
-      end
+      #rescue NoMethodError
+      #rescue NameError
+      #end
       assert! !value.nil? && value != "REQUIRED" do
         log :missing, "required configuration value for #{conf_path}"
       end
@@ -199,19 +199,39 @@ module LeapCli
     def remove_file!(filepath)
       filepath = Path.named_path(filepath)
       if File.exists?(filepath)
-        File.unlink(filepath)
-        log :removed, filepath
+        if File.directory?(filepath)
+          remove_directory!(filepath)
+        else
+          begin
+            File.unlink(filepath)
+            log :removed, filepath
+          rescue Exception => exc
+            bail! do
+              log :failed, "to remove file #{filepath}"
+              log "error message: " + exc.to_s
+            end
+          end
+        end
       end
     end
 
     def remove_directory!(filepath)
       filepath = Path.named_path(filepath)
       if filepath !~ /^#{Regexp.escape(Path.provider)}/ || filepath =~ /\.\./
-        raise "sanity check on rm -r did not pass for #{filepath}"
+        bail! "sanity check on rm -r did not pass for #{filepath}"
       end
       if File.directory?(filepath)
-        FileUtils.rm_r(filepath)
-        log :removed, filepath
+        begin
+          FileUtils.rm_r(filepath)
+          log :removed, filepath
+        rescue Exception => exc
+          bail! do
+            log :failed, "to remove directory #{filepath}"
+            log "error message: " + exc.to_s
+          end
+        end
+      else
+        log :failed, "to remove '#{filepath}', it is not a directory"
       end
     end
 
@@ -235,6 +255,21 @@ module LeapCli
       else
         log :created, filepath
       end
+    end
+
+    def rename_file!(oldpath, newpath)
+      oldpath = Path.named_path(oldpath)
+      newpath = Path.named_path(newpath)
+      if File.exists? newpath
+        log :skipping, "#{Path.relative_path(newpath)}, file already exists"
+        return
+      end
+      if !File.exists? oldpath
+        log :skipping, "#{Path.relative_path(oldpath)}, file is missing"
+        return
+      end
+      FileUtils.mv oldpath, newpath
+      log :moved, "#{Path.relative_path(oldpath)} to #{Path.relative_path(newpath)}"
     end
 
     def cmd_exists?(cmd)

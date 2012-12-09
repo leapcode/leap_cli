@@ -40,6 +40,11 @@ module LeapCli
       end
 
       #
+      # load all the nodes everything
+      #
+      manager
+
+      #
       # check requirements
       #
       REQUIREMENTS.each do |key|

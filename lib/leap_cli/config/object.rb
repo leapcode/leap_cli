@@ -199,9 +199,18 @@ module LeapCli
       # returns true if this node has an ip address in the range of the vagrant network
       #
       def vagrant?
-        vagrant_range = IPAddr.new @manager.provider.vagrant.network
-        ip_address    = IPAddr.new @node.ip_address
-        vagrant_range.include?(ip_address)
+        begin
+          vagrant_range = IPAddr.new @manager.provider.vagrant.network
+        rescue ArgumentError => exc
+          Util::bail! { Util::log :invalid, "ip address '#{@node.ip_address}' vagrant.network" }
+        end
+
+        begin
+          ip_address = IPAddr.new @node.get('ip_address')
+        rescue ArgumentError => exc
+          Util::log :warning, "invalid ip address '#{@node.get('ip_address')}' for node '#{@node.name}'"
+        end
+        return vagrant_range.include?(ip_address)
       end
 
       ##

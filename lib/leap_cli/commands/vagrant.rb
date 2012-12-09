@@ -10,7 +10,6 @@ module LeapCli; module Commands
     local.arg_name 'node-filter', :optional => true #, :multiple => false
     local.command :start do |start|
       start.action do |global_options,options,args|
-        vagrant_setup
         vagrant_command(["up", "sandbox on"], args)
       end
     end
@@ -19,7 +18,6 @@ module LeapCli; module Commands
     local.arg_name 'node-filter', :optional => true #, :multiple => false
     local.command :stop do |stop|
       stop.action do |global_options,options,args|
-        vagrant_setup
         vagrant_command("halt", args)
       end
     end
@@ -28,7 +26,6 @@ module LeapCli; module Commands
     local.arg_name 'node-filter', :optional => true #, :multiple => false
     local.command :reset do |reset|
       reset.action do |global_options,options,args|
-        vagrant_setup
         vagrant_command("sandbox rollback", args)
       end
     end
@@ -37,7 +34,6 @@ module LeapCli; module Commands
     local.arg_name 'node-filter', :optional => true #, :multiple => false
     local.command :destroy do |destroy|
       destroy.action do |global_options,options,args|
-        vagrant_setup
         vagrant_command("destroy", args)
       end
     end
@@ -46,7 +42,6 @@ module LeapCli; module Commands
     local.arg_name 'node-filter', :optional => true #, :multiple => false
     local.command :status do |status|
       status.action do |global_options,options,args|
-        vagrant_setup
         vagrant_command("status", args)
       end
     end
@@ -66,18 +61,10 @@ module LeapCli; module Commands
     return file_path
   end
 
-  private
-
-  def vagrant_setup
-    assert_bin! 'vagrant', 'run "sudo gem install vagrant"'
-    unless `vagrant gem which sahara`.chars.any?
-      log :installing, "vagrant plugin 'sahara'"
-      assert_run! 'vagrant gem install sahara'
-    end
-    create_vagrant_file
-  end
+  protected
 
   def vagrant_command(cmds, args)
+    vagrant_setup
     cmds = cmds.to_a
     assert_config! 'provider.vagrant.network'
     if args.empty?
@@ -97,6 +84,17 @@ module LeapCli; module Commands
     else
       bail! "No nodes found. This command only works on nodes with ip_address in the network #{manager.provider.vagrant.network}"
     end
+  end
+
+  private
+
+  def vagrant_setup
+    assert_bin! 'vagrant', 'run "sudo gem install vagrant"'
+    unless `vagrant gem which sahara`.chars.any?
+      log :installing, "vagrant plugin 'sahara'"
+      assert_run! 'vagrant gem install sahara'
+    end
+    create_vagrant_file
   end
 
   def execute(cmd)
@@ -121,6 +119,17 @@ module LeapCli; module Commands
     lines << %[end]
     lines << ""
     write_file! :vagrantfile, lines.join("\n")
+  end
+
+  def pick_next_vagrant_ip_address
+    taken_ips = manager.nodes[:local => true].field(:ip_address)
+    if taken_ips.any?
+      highest_ip = taken_ips.map{|ip| IPAddr.new(ip)}.max
+      new_ip = highest_ip.succ
+    else
+      new_ip = IPAddr.new(manager.provider.vagrant.network).succ.succ
+    end
+    return new_ip.to_s
   end
 
 end; end
