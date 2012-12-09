@@ -47,15 +47,16 @@ task 'install' do
   if !File.exists?($gem_path)
     puts("Could not file #{$gem_path}. Try running 'rake build'")
   else
+    options = '--verbose --conservative --no-rdoc --no-ri'
     if ENV["USER"] == "root"
-      run "gem install '#{$gem_path}'"
+      run "gem install #{options} '#{$gem_path}'"
     else
       home_gem_path = Gem.path.grep(/home/).first
       puts "You are installing as an unprivileged user, which will result in the installation being placed in '#{home_gem_path}'."
       print "Do you want to continue installing to #{home_gem_path}? [y/N] "
       input = STDIN.readline
       if input =~ /[yY]/
-        puts "gem install '#{$gem_path}' --user-install"
+        run "gem install #{options} --user-install '#{$gem_path}'"
       else
         puts "bailing out."
       end
