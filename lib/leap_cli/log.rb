@@ -51,11 +51,11 @@ module LeapCli
       options = args.grep(Hash).first || {}
       options[:indent] ||= LeapCli.indent_level
       if message && LeapCli.log_level >= level
-        print "  " * (options[:indent]+1)
+        print "  " * (options[:indent])
         if options[:indent] > 0
-          print '- '
+          print ' - '
         else
-          print '= '
+          print ' = '
         end
         if title
           prefix = case title
@@ -74,6 +74,7 @@ module LeapCli
             when :completed then ['completed', :green, :bold]
             when :ran       then ['ran', :green, :bold]
             when :bail      then ['bailing out', :red, :bold]
+            when :invalid   then ['invalid', :red, :bold]
             else [title.to_s, :cyan, :bold]
           end
           if options[:host]
