@@ -138,8 +138,8 @@ module LeapCli; module Commands
         log :trusted, "- Public SSH host key for #{node.name} matches previously saved key", :indent => 1
       else
         bail! do
-          log 0, :error, "The public SSH host key we just fetched for #{node.name} doesn't match what we have saved previously.", :indent => 1
-          log 0, "Remove the file #{pub_key_path} if you really want to change it.", :indent => 2
+          log :error, "The public SSH host key we just fetched for #{node.name} doesn't match what we have saved previously.", :indent => 1
+          log "Remove the file #{pub_key_path} if you really want to change it.", :indent => 2
         end
       end
     elsif public_key.in_known_hosts?(node.name, node.ip_address, node.domain.name)
