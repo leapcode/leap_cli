@@ -307,7 +307,7 @@ module LeapCli
         @referenced_nodes.each_node do |node|
           entries << "#{node.ip_address}    #{node.name} #{node.domain.internal} #{node.domain.full}"
         end
-        {'leap_hosts' => entries}
+        entries.join("\n")
       end
 
       def known_hosts_file
