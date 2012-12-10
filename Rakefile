@@ -27,6 +27,8 @@ $spec_path = 'leap_cli.gemspec'
 $base_dir  = File.dirname(__FILE__)
 $spec      = eval(File.read(File.join($base_dir, $spec_path)))
 $gem_path  = File.join($base_dir, 'pkg', "#{$spec.name}-#{$spec.version}.gem")
+$lib_dir   = "#{$base_dir}/lib"
+$LOAD_PATH.unshift $lib_dir
 
 def built_gem_path
   Dir[File.join($base_dir, "#{$spec.name}-*.gem")].sort_by{|f| File.mtime(f)}.last
@@ -122,3 +124,109 @@ end
 #   rd.rdoc_files.include("README.rdoc","lib/**/*.rb","bin/**/*")
 #   rd.title = 'Your application title'
 # end
+
+desc "Generate documentation"
+task 'doc' do
+  require 'leap_cli'
+  require 'leap_cli/app'
+
+  class DocMaker < GLI::Command
+    def initialize(app)
+      @app = app
+      @listener = GLI::Commands::RdocDocumentListener.new([],[],[])
+    end
+
+    def create
+      @listener.beginning
+      @listener.program_desc(@app.program_desc) unless @app.program_desc.nil?
+      @listener.program_long_desc(@app.program_long_desc) unless @app.program_long_desc.nil?
+      @listener.version(@app.version_string)
+      if any_options?(@app)
+        @listener.options
+      end
+      document_flags_and_switches(@listener, @app.flags.values.sort(&by_name), @app.switches.values.sort(&by_name))
+      if any_options?(@app)
+        @listener.end_options
+      end
+      @listener.commands
+      document_commands(@listener, @app)
+      @listener.end_commands
+      @listener.ending
+    end
+
+    private
+
+    def document_commands(document_listener,context)
+      context.commands.values.reject {|_| _.nodoc }.sort(&by_name).each do |command|
+        call_command_method_being_backwards_compatible(document_listener,command)
+        document_listener.options if any_options?(command)
+        document_flags_and_switches(document_listener,command_flags(command),command_switches(command))
+        document_listener.end_options if any_options?(command)
+        document_listener.commands if any_commands?(command)
+        document_commands(document_listener,command)
+        document_listener.end_commands if any_commands?(command)
+        document_listener.end_command(command.name)
+      end
+      document_listener.default_command(context.get_default_command)
+    end
+
+    def call_command_method_being_backwards_compatible(document_listener,command)
+      command_args = [command.name,
+                      Array(command.aliases),
+                      command.description,
+                      command.long_description,
+                      command.arguments_description]
+      if document_listener.method(:command).arity == 6
+        command_args << command.arguments_options
+      end
+      document_listener.command(*command_args)
+    end
+
+    def by_name
+      lambda { |a,b| a.name.to_s <=> b.name.to_s }
+    end
+
+    def command_flags(command)
+      command.topmost_ancestor.flags.values.select { |flag| flag.associated_command == command }.sort(&by_name)
+    end
+
+    def command_switches(command)
+      command.topmost_ancestor.switches.values.select { |switch| switch.associated_command == command }.sort(&by_name)
+    end
+
+    def document_flags_and_switches(document_listener,flags,switches)
+      flags.each do |flag|
+        document_listener.flag(flag.name,
+                               Array(flag.aliases),
+                               flag.description,
+                               flag.long_description,
+                               flag.safe_default_value,
+                               flag.argument_name,
+                               flag.must_match,
+                               flag.type)
+      end
+      switches.each do |switch|
+        document_listener.switch(switch.name,
+                                 Array(switch.aliases),
+                                 switch.description,
+                                 switch.long_description,
+                                 switch.negatable)
+      end
+    end
+
+    def any_options?(context)
+      options = if context.kind_of?(GLI::Command)
+                  command_flags(context) + command_switches(context)
+                else
+                  context.flags.values + context.switches.values
+                end
+      !options.empty?
+    end
+
+    def any_commands?(command)
+      !command.commands.empty?
+    end
+  end
+
+  puts DocMaker.new(LeapCli::Commands).create
+end
