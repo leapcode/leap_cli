@@ -267,8 +267,15 @@ module LeapCli; module Commands
   end
 
   #
-  # for keyusage, openvpn server certs can have keyEncipherment or keyAgreement. I am not sure which is preferable.
-  # going with keyAgreement for now.
+  # For keyusage, openvpn server certs can have keyEncipherment or keyAgreement.
+  # Web browsers seem to break without keyEncipherment.
+  #
+  # * digitalSignature ==> for (EC)DHE cipher suites
+  # * keyEncipherment  ==> for plain RSA cipher suites
+  # * keyAgreement     ==> for used with DH, not RSA.
+  #
+  # I am including all three because that seems to work in all cases. I am not sure if this
+  # is the right thing to do.
   #
   # digest options: SHA512, SHA256, SHA1
   #
@@ -277,10 +284,10 @@ module LeapCli; module Commands
       "digest" => manager.provider.ca.server_certificates.digest,
       "extensions" => {
         "keyUsage" => {
-          "usage" => ["digitalSignature", "keyAgreement"]
+          "usage" => ["digitalSignature", "keyEncipherment", "keyAgreement"]
         },
         "extendedKeyUsage" => {
-          "usage" => ["serverAuth"]
+          "usage" => ["serverAuth", "clientAuth"]
         },
         "subjectAltName" => {
           "ips" => [node.ip_address],
