@@ -14,7 +14,9 @@ module LeapCli; module Commands
       if node.vagrant?
         options << "-i #{vagrant_ssh_key_file}"
       end
-      exec "ssh -l root -p #{node.ssh.port} #{options.join(' ')} {node.name}"
+      username = 'root'
+      # the echo sets the terminal title. it would be better to do this on the server
+      exec "echo -n \"\\033]0;#{username}@#{node.domain.full}\007\" && ssh -l #{username} -p #{node.ssh.port} #{options.join(' ')} #{node.name}"
     end
   end
 
