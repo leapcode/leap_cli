@@ -109,8 +109,8 @@ module LeapCli; module Commands
     manager.each_node do |node|
       if node.vagrant?
         lines << %[  config.vm.define :#{node.name} do |config|]
-        lines << %[    config.vm.box = "minimal-wheezy"]
-        lines << %[    config.vm.box_url = "http://cloud.github.com/downloads/leapcode/minimal-debian-vagrant/minimal-wheezy.box"]
+        lines << %[    config.vm.box = "leap-wheezy"]
+        lines << %[    config.vm.box_url = "http://cloud.github.com/downloads/leapcode/minimal-debian-vagrant/leap-wheezy.box"]
         lines << %[    config.vm.network :hostonly, "#{node.ip_address}", :netmask => "#{netmask}"]
         lines << %[    config.vm.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]]
         lines << %[  end]
