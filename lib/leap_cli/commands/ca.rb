@@ -58,14 +58,15 @@ module LeapCli; module Commands
         assert_config! 'provider.ca.server_certificates.life_span'
         assert_config! 'common.x509.use'
 
-        if args.first == 'all' || args.empty?
-          manager.each_node do |node|
+        nodes = manager.filter!(args)
+        if nodes.size == 1
+          generate_cert_for_node(nodes.values.first)
+        else
+          nodes.each_node do |node|
             if cert_needs_updating?(node)
               generate_cert_for_node(node)
             end
           end
-        else
-          generate_cert_for_node(get_node_from_args(args))
         end
       end
     end
@@ -269,13 +270,24 @@ module LeapCli; module Commands
   #
   # For keyusage, openvpn server certs can have keyEncipherment or keyAgreement.
   # Web browsers seem to break without keyEncipherment.
+  # For now, I am using digitalSignature + keyEncipherment
   #
-  # * digitalSignature ==> for (EC)DHE cipher suites
+  # * digitalSignature -- for (EC)DHE cipher suites
+  #   "The digitalSignature bit is asserted when the subject public key is used
+  #    with a digital signature mechanism to support security services other
+  #    than certificate signing (bit 5), or CRL signing (bit 6). Digital
+  #    signature mechanisms are often used for entity authentication and data
+  #    origin authentication with integrity."
+  #
   # * keyEncipherment  ==> for plain RSA cipher suites
-  # * keyAgreement     ==> for used with DH, not RSA.
+  #   "The keyEncipherment bit is asserted when the subject public key is used for
+  #    key transport. For example, when an RSA key is to be used for key management,
+  #    then this bit is set."
   #
-  # I am including all three because that seems to work in all cases. I am not sure if this
-  # is the right thing to do.
+  # * keyAgreement     ==> for used with DH, not RSA.
+  #   "The keyAgreement bit is asserted when the subject public key is used for key
+  #    agreement. For example, when a Diffie-Hellman key is to be used for key
+  #    management, then this bit is set."
   #
   # digest options: SHA512, SHA256, SHA1
   #
@@ -284,7 +296,7 @@ module LeapCli; module Commands
       "digest" => manager.provider.ca.server_certificates.digest,
       "extensions" => {
         "keyUsage" => {
-          "usage" => ["digitalSignature", "keyEncipherment", "keyAgreement"]
+          "usage" => ["digitalSignature", "keyEncipherment"]
         },
         "extendedKeyUsage" => {
           "usage" => ["serverAuth", "clientAuth"]
@@ -307,7 +319,7 @@ module LeapCli; module Commands
       "digest" => "SHA256",
       "extensions" => {
         "keyUsage" => {
-          "usage" => ["digitalSignature", "keyAgreement"]
+          "usage" => ["digitalSignature", "keyEncipherment"]
         },
         "extendedKeyUsage" => {
           "usage" => ["serverAuth"]
@@ -325,7 +337,7 @@ module LeapCli; module Commands
       "digest" => "SHA256",
       "extensions" => {
         "keyUsage" => {
-          "usage" => ["digitalSignature", "keyAgreement"]
+          "usage" => ["digitalSignature", "keyEncipherment"]
         },
         "extendedKeyUsage" => {
           "usage" => ["clientAuth"]
