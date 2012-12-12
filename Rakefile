@@ -24,8 +24,8 @@ end
 ##
 
 $spec_path = 'leap_cli.gemspec'
-$spec      = eval(File.read($spec_path))
 $base_dir  = File.dirname(__FILE__)
+$spec      = eval(File.read(File.join($base_dir, $spec_path)))
 $gem_path  = File.join($base_dir, 'pkg', "#{$spec.name}-#{$spec.version}.gem")
 
 def built_gem_path
