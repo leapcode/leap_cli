@@ -56,7 +56,7 @@ task 'install' do
       print "Do you want to continue installing to #{home_gem_path}? [y/N] "
       input = STDIN.readline
       if input =~ /[yY]/
-        run "gem install #{options} --user-install '#{$gem_path}'"
+        run "gem install #{$gem_path} #{options} --install-dir '#{home_gem_path}' "
       else
         puts "bailing out."
       end
