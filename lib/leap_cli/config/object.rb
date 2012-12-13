@@ -38,13 +38,18 @@ module LeapCli
       # greater control over how the yaml is exported (sorted keys, in particular).
       #
       def dump
-        self.evaluate_everything
-        self.late_evaluate_everything
-        self.ya2yaml(:syck_compatible => true)
+        evaluate
+        ya2yaml(:syck_compatible => true)
       end
 
       def dump_json
+        evaluate
         generate_json(self)
+      end
+
+      def evaluate
+        evaluate_everything
+        late_evaluate_everything
       end
 
       ##

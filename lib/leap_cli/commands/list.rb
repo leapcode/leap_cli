@@ -35,9 +35,10 @@ module LeapCli; module Commands
     node_list = manager.nodes
     properties = properties.split(',')
     max_width = nodes.keys.inject(0) {|max,i| [i.size,max].max}
-    nodes.keys.sort.each do |node_name|
-      value = properties.collect{|prop| node_list[node_name][prop]}.join(', ')
-      printf("%#{max_width}s  %s\n", node_name, value)
+    nodes.each_node do |node|
+      node.evaluate
+      value = properties.collect{|prop| node[prop]}.join(', ')
+      printf("%#{max_width}s  %s\n", node.name, value)
     end
     puts
   end
