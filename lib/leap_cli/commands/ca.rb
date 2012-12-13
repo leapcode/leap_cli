@@ -337,7 +337,7 @@ module LeapCli; module Commands
       "digest" => "SHA256",
       "extensions" => {
         "keyUsage" => {
-          "usage" => ["digitalSignature", "keyEncipherment"]
+          "usage" => ["digitalSignature"]
         },
         "extendedKeyUsage" => {
           "usage" => ["clientAuth"]
