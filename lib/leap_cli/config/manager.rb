@@ -53,23 +53,39 @@ module LeapCli
       #
       # save compiled hiera .yaml files
       #
-      def export_nodes
-        existing_hiera = Dir.glob(Path.named_path([:hiera, '*'], @provider_dir))
-        existing_files = Dir.glob(Path.named_path([:node_files_dir, '*'], @provider_dir))
+      # if a node_list is specified, only update those .yaml files.
+      # otherwise, update all files, destroying files that are no longer used.
+      #
+      def export_nodes(node_list=nil)
         updated_hiera = []
         updated_files = []
-        self.each_node do |node|
+        existing_hiera = nil
+        existing_files = nil
+
+        unless node_list
+          node_list = self.nodes
+          existing_hiera = Dir.glob(Path.named_path([:hiera, '*'], @provider_dir))
+          existing_files = Dir.glob(Path.named_path([:node_files_dir, '*'], @provider_dir))
+        end
+
+        node_list.each_node do |node|
           filepath = Path.named_path([:node_files_dir, node.name], @provider_dir)
-          updated_files << filepath
           hierapath = Path.named_path([:hiera, node.name], @provider_dir)
-          updated_hiera << hierapath
           Util::write_file!(hierapath, node.dump)
+          updated_files << filepath
+          updated_hiera << hierapath
         end
-        (existing_hiera - updated_hiera).each do |filepath|
-          Util::remove_file!(filepath)
+
+        # remove files that are no longer needed
+        if existing_hiera
+          (existing_hiera - updated_hiera).each do |filepath|
+            Util::remove_file!(filepath)
+          end
         end
-        (existing_files - updated_files).each do |filepath|
-          Util::remove_directory!(filepath)
+        if existing_files
+          (existing_files - updated_files).each do |filepath|
+            Util::remove_directory!(filepath)
+          end
         end
       end
 

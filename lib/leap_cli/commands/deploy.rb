@@ -16,17 +16,18 @@ module LeapCli
           end
         end
 
-        nodes.each_node do |node|
-          assert_files_exist! Path.named_path([:hiera, node.name]), :msg => 'try running `leap compile`'
-        end
+        compile_hiera_files(nodes)
 
         ssh_connect(nodes) do |ssh|
-          ssh.leap.assert_initialized
+          ssh.leap.log :checking, 'node' do
+            ssh.leap.assert_initialized
+          end
 
           # sync hiera conf
-          ssh.leap.log :updating, "hiera.yaml" do
+          ssh.leap.log :syching, "hiera.yaml" do
             ssh.leap.rsync_update do |server|
               node = manager.node(server.host)
+              ssh.leap.log Path.relative_path([:hiera, node.name]) + ' -> ' + node.name + ':/etc/leap/hiera.yaml'
               {:source => Path.named_path([:hiera, node.name]), :dest => "/etc/leap/hiera.yaml"}
             end
           end
