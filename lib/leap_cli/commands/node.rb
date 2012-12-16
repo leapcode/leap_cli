@@ -37,24 +37,28 @@ module LeapCli; module Commands
       end
     end
 
-    node.desc 'Bootstraps a node, setting up SSH keys and installing prerequisite packages'
+    node.desc 'Bootstraps a node or nodes, setting up SSH keys and installing prerequisite packages'
     node.long_desc "This command prepares a server to be used with the LEAP Platform by saving the server's SSH host key, " +
                    "copying the authorized_keys file, and installing packages that are required for deploying. " +
                    "Node init must be run before deploying to a server, and the server must be running and available via the network. " +
                    "This command only needs to be run once, but there is no harm in running it multiple times."
-    node.arg_name '<node-name>' #, :optional => false, :multiple => false
+    node.arg_name '<node-filter>' #, :optional => false, :multiple => false
     node.command :init do |init|
       init.switch 'echo', :desc => 'If set, passwords are visible as you type them (default is hidden)', :negatable => false
       init.action do |global_options,options,args|
-        node = get_node_from_args(args)
-        ping_node(node)
-        save_public_host_key(node)
-        update_compiled_ssh_configs
-        ssh_connect(node, :bootstrap => true, :echo => options[:echo]) do |ssh|
-          ssh.install_authorized_keys
-          ssh.install_prerequisites
+        assert! args.any?, 'You must specify a node-filter'
+        finished = []
+        manager.filter(args).each_node do |node|
+          ping_node(node)
+          save_public_host_key(node)
+          update_compiled_ssh_configs
+          ssh_connect(node, :bootstrap => true, :echo => options[:echo]) do |ssh|
+            ssh.install_authorized_keys
+            ssh.install_prerequisites
+          end
+          finished << node.name
         end
-        log :completed, "node init #{node.name}"
+        log :completed, "initialization of nodes #{finished.join(', ')}"
       end
     end
 
