@@ -6,7 +6,6 @@ require 'digest/md5'
 module LeapCli; module Commands
 
   desc "Manage X.509 certificates"
-  #long_desc ""
   command :cert do |cert|
 
     cert.desc 'Creates a Certificate Authority (private key and CA certificate)'
@@ -30,8 +29,8 @@ module LeapCli; module Commands
         end
 
         # set expiration
-        root.not_before = today
-        root.not_after = years_from_today(provider.ca.life_span.to_i)
+        root.not_before = yesterday
+        root.not_after = years_from_yesterday(provider.ca.life_span.to_i)
 
         # generate private key
         root.serial_number.number = 1
@@ -48,9 +47,15 @@ module LeapCli; module Commands
       end
     end
 
-    cert.desc 'Creates or renews a X.509 certificate/key pair for a single node or all nodes'
-    cert.arg_name 'node-name', :optional => false
+    cert.desc 'Creates or renews a X.509 certificate/key pair for a single node or all nodes, but only if needed'
+    cert.long_desc 'This command will a generate new certificate for a node if some value in the node has changed ' +
+                   'that is included in the certificate (like hostname or IP address), or if the old certificate will be expiring soon. ' +
+                   'Sometimes, you might want to force the generation of a new certificate, ' +
+                   'such as in the cases where you have changed a CA parameter for server certificates, like bit size or digest hash. ' +
+                   'In this case, use --force. If <node-filter> is empty, this command will apply to all nodes.'
+    cert.arg_name '<node-filter>'
     cert.command :update do |update|
+      update.switch 'force', :desc => 'Always generate new certificates', :negatable => false
       update.action do |global_options,options,args|
         assert_files_exist! :ca_cert, :ca_key, :msg => 'Run `leap cert ca` to create them'
         assert_config! 'provider.ca.server_certificates.bit_size'
@@ -59,13 +64,12 @@ module LeapCli; module Commands
         assert_config! 'common.x509.use'
 
         nodes = manager.filter!(args)
-        if nodes.size == 1
-          generate_cert_for_node(nodes.values.first)
-        else
-          nodes.each_node do |node|
-            if cert_needs_updating?(node)
-              generate_cert_for_node(node)
-            end
+        nodes.each_node do |node|
+          if options[:force] || cert_needs_updating?(node)
+            generate_cert_for_node(node)
+          elsif !node.x509.use
+            remove_file!([:node_x509_key, node.name])
+            remove_file!([:node_x509_cert, node.name])
           end
         end
       end
@@ -146,8 +150,8 @@ module LeapCli; module Commands
           log :generating, "self-signed x509 server certificate for testing purposes" do
             cert = csr.to_cert
             cert.serial_number.number = cert_serial_number(manager.provider.domain)
-            cert.not_before = today
-            cert.not_after  = years_from_today(1)
+            cert.not_before = yesterday
+            cert.not_after  = years_from_yesterday(1)
             cert.parent = ca_root
             cert.sign! domain_test_signing_profile
             write_file! [:commercial_cert, manager.provider.domain], cert.to_pem
@@ -165,7 +169,7 @@ module LeapCli; module Commands
       return true
     else
       cert = load_certificate_file([:node_x509_cert, node.name])
-      if cert.not_after < months_from_today(1)
+      if cert.not_after < months_from_yesterday(1)
         log :updating, "cert for node '#{node.name}' because it will expire soon"
         return true
       end
@@ -174,9 +178,6 @@ module LeapCli; module Commands
         return true
       end
       cert.openssl_body.extensions.each do |ext|
-        #
-        # TODO: currently this only works with a single IP or DNS.
-        #
         if ext.oid == "subjectAltName"
           ips = []
           dns_names = []
@@ -208,8 +209,8 @@ module LeapCli; module Commands
     cert.serial_number.number = cert_serial_number(node.domain.full)
 
     # set expiration
-    cert.not_before = today
-    cert.not_after = years_from_today(manager.provider.ca.server_certificates.life_span.to_i)
+    cert.not_before = yesterday
+    cert.not_after = years_from_yesterday(manager.provider.ca.server_certificates.life_span.to_i)
 
     # generate key
     cert.key_material.generate_key(manager.provider.ca.server_certificates.bit_size)
@@ -227,8 +228,8 @@ module LeapCli; module Commands
     cert = CertificateAuthority::Certificate.new
     cert.serial_number.number = cert_serial_number(manager.provider.domain)
     cert.subject.common_name = random_common_name(manager.provider.domain)
-    cert.not_before = today
-    cert.not_after  = years_from_today(1)
+    cert.not_before = yesterday
+    cert.not_after  = years_from_yesterday(1)
     cert.key_material.generate_key(1024) # just for testing, remember!
     cert.parent = ca_root
     cert.sign! client_test_signing_profile
@@ -373,18 +374,27 @@ module LeapCli; module Commands
     cert_serial_number(domain_name).to_s(36)
   end
 
-  def today
-    t = Time.now
+  ##
+  ## TIME HELPERS
+  ##
+  ## note: we use 'yesterday' instead of 'today', because times are in UTC, and some people on the planet
+  ## are behind UTC.
+  ##
+
+  def yesterday
+    t = Time.now - 24*24*60
     Time.utc t.year, t.month, t.day
   end
 
-  def years_from_today(num)
-    t = Time.now
+  def years_from_yesterday(num)
+    t = yesterday
     Time.utc t.year + num, t.month, t.day
   end
 
-  def months_from_today(num)
-    date = Date.today >> num  # >> is months in the future operator
+  def months_from_yesterday(num)
+    t = yesterday
+    date = Date.new t.year, t.month, t.day
+    date = date >> num  # >> is months in the future operator
     Time.utc date.year, date.month, date.day
   end
 
