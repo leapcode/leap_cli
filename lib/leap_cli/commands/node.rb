@@ -22,7 +22,7 @@ module LeapCli; module Commands
         # argument sanity checks
         name = args.first
         assert! name, 'No <node-name> specified.'
-        assert! name =~ /^[0-9a-z_-]+$/, "illegal characters used in node name '#{name}'"
+        assert! name =~ /^[0-9a-z-]+$/, "illegal characters used in node name '#{name}'"
         assert_files_missing! [:node_config, node.name]
 
         # create and seed new node

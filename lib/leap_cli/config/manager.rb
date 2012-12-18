@@ -43,6 +43,7 @@ module LeapCli
         @common.inherit_from!   base_common
         @provider.inherit_from! base_provider
         @nodes.each do |name, node|
+          Util::assert! name =~ /^[0-9a-z-]+$/, "Illegal character(s) used in node name '#{name}'"
           @nodes[name] = apply_inheritance(node)
         end
 
