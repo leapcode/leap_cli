@@ -158,6 +158,14 @@ module LeapCli; module Commands
             log "please replace this file with the real certificate you get from a CA using #{Path.relative_path([:commercial_csr, manager.provider.domain])}"
           end
         #end
+
+        # FAKE CA
+        unless file_exists? :commercial_ca_cert
+          log :using, "generated CA in place of commercial CA for testing purposes" do
+            write_file! :commercial_ca_cert, read_file!(:ca_cert)
+            log "please also replace this file with the CA cert from the commercial authority you use."
+          end
+        end
       end
     end
   end
