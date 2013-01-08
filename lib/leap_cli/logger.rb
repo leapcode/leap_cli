@@ -111,6 +111,7 @@ module LeapCli
       { :match => /^notice:/,                      :level => 1, :color => :cyan,   :priority => -20},
       { :match => /^err:/,                         :level => 0, :color => :red,    :priority => -20},
       { :match => /^warning:/,                     :level => 0, :color => :yellow, :priority => -20},
+      { :match => /^Duplicate declaration:/,       :level => 0, :color => :red,    :priority => -20},
       { :match => /Finished catalog run/,          :level => 0, :color => :green,  :priority => -10},
     ]
 
