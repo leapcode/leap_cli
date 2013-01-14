@@ -4,8 +4,10 @@ module SupplyDrop
       def command(from, to, options={})
         flags = ['-az']
         flags << '--delete' if options[:delete]
+        flags << includes(options[:includes]) if options.has_key?(:includes)
         flags << excludes(options[:excludes]) if options.has_key?(:excludes)
         flags << ssh_options(options[:ssh]) if options.has_key?(:ssh)
+        flags << options[:flags] if options.has_key?(:flags)
 
         "rsync #{flags.compact.join(' ')} #{from} #{to}"
       end
@@ -16,7 +18,11 @@ module SupplyDrop
       end
 
       def excludes(patterns)
-        [patterns].flatten.map { |p| "--exclude=#{p}" }
+        [patterns].flatten.map { |p| "--exclude='#{p}'" }
+      end
+
+      def includes(patterns)
+        [patterns].flatten.map { |p| "--include='#{p}'" }
       end
 
       def ssh_options(options)
