@@ -18,6 +18,8 @@ require 'leap_cli/logger'
 
 require 'leap_cli/ssh_key'
 require 'leap_cli/config/object'
+require 'leap_cli/config/node'
+require 'leap_cli/config/tag'
 require 'leap_cli/config/object_list'
 require 'leap_cli/config/manager'
 

@@ -21,21 +21,21 @@ module LeapCli
         @provider_dir = Path.provider
 
         # load base
-        base_services = load_all_json(Path.named_path([:service_config, '*'], Path.provider_base))
-        base_tags     = load_all_json(Path.named_path([:tag_config, '*'], Path.provider_base))
-        base_common   = load_json(Path.named_path(:common_config, Path.provider_base))
-        base_provider = load_json(Path.named_path(:provider_config, Path.provider_base))
+        base_services = load_all_json(Path.named_path([:service_config, '*'], Path.provider_base), Config::Tag)
+        base_tags     = load_all_json(Path.named_path([:tag_config, '*'], Path.provider_base), Config::Tag)
+        base_common   = load_json(Path.named_path(:common_config, Path.provider_base), Config::Object)
+        base_provider = load_json(Path.named_path(:provider_config, Path.provider_base), Config::Object)
 
         # load provider
         provider_path = Path.named_path(:provider_config, @provider_dir)
         common_path = Path.named_path(:common_config, @provider_dir)
         Util::assert_files_exist!(provider_path, common_path)
-        @services = load_all_json(Path.named_path([:service_config, '*'], @provider_dir))
-        @tags     = load_all_json(Path.named_path([:tag_config, '*'],     @provider_dir))
-        @nodes    = load_all_json(Path.named_path([:node_config, '*'],    @provider_dir))
-        @common   = load_json(common_path)
-        @provider = load_json(provider_path)
-        @secrets  = load_json(Path.named_path(:secrets_config,  @provider_dir))
+        @services = load_all_json(Path.named_path([:service_config, '*'], @provider_dir), Config::Tag)
+        @tags     = load_all_json(Path.named_path([:tag_config, '*'],     @provider_dir), Config::Tag)
+        @nodes    = load_all_json(Path.named_path([:node_config, '*'],    @provider_dir), Config::Node)
+        @common   = load_json(common_path, Config::Object)
+        @provider = load_json(provider_path, Config::Object)
+        @secrets  = load_json(Path.named_path(:secrets_config,  @provider_dir), Config::Object)
 
         # inherit
         @services.inherit_from! base_services
@@ -161,10 +161,10 @@ module LeapCli
 
       private
 
-      def load_all_json(pattern)
+      def load_all_json(pattern, object_class)
         results = Config::ObjectList.new
         Dir.glob(pattern).each do |filename|
-          obj = load_json(filename)
+          obj = load_json(filename, object_class)
           if obj
             name = File.basename(filename).sub(/\.json$/,'')
             obj['name'] ||= name
@@ -174,9 +174,9 @@ module LeapCli
         results
       end
 
-      def load_json(filename)
+      def load_json(filename, object_class)
         if !File.exists?(filename)
-          return Config::Object.new(self)
+          return object_class.new(self)
         end
 
         log :loading, filename, 2
@@ -201,7 +201,7 @@ module LeapCli
           log 0, exc.to_s, :indent => 1
           return nil
         end
-        object = Config::Object.new(self)
+        object = object_class.new(self)
         object.deep_merge!(hash)
         return object
       end
@@ -226,7 +226,7 @@ module LeapCli
       # makes a node inherit options from appropriate the common, service, and tag json files.
       #
       def apply_inheritance(node)
-        new_node = Config::Object.new(self)
+        new_node = Config::Node.new(self)
         name = node.name
 
         # inherit from common

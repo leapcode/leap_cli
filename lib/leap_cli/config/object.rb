@@ -1,6 +1,5 @@
 require 'erb'
 require 'json/pure'  # pure ruby implementation is required for our sorted trick to work.
-require 'ipaddr'
 
 $KCODE = 'UTF8' unless RUBY_VERSION > "1.9.0"
 require 'ya2yaml' # pure ruby yaml
@@ -17,7 +16,6 @@ module LeapCli
 
       attr_reader :node
       attr_reader :manager
-      attr_reader :node_list
       alias :global :manager
 
       def initialize(manager=nil, node=nil)
@@ -27,9 +25,6 @@ module LeapCli
 
         # an object that is a node as @node equal to self, otherwise all the child objects point back to the top level node.
         @node = node || self
-
-        # this is only used by Config::Objects that correspond to services or tags.
-        @node_list = Config::ObjectList.new
       end
 
       #
@@ -104,21 +99,6 @@ module LeapCli
       ##
       ## COPYING
       ##
-
-      #
-      # Make a copy of ourselves, except only including the specified keys.
-      #
-      # Also, the result is flattened to a single hash, so a key of 'a.b' becomes 'a_b'
-      #
-      def pick(*keys)
-        keys.map(&:to_s).inject(Config::Object.new(@manager,@node)) do |hsh, key|
-          value = self.get(key)
-          if !value.nil?
-            hsh[key.gsub('.','_')] = value
-          end
-          hsh
-        end
-      end
 
       #
       # a deep (recursive) merge with another Config::Object.
@@ -196,29 +176,6 @@ module LeapCli
       end
 
       ##
-      ## NODE SPECIFIC
-      ## maybe these should be moved to a Node class.
-      ##
-
-      #
-      # returns true if this node has an ip address in the range of the vagrant network
-      #
-      def vagrant?
-        begin
-          vagrant_range = IPAddr.new @manager.provider.vagrant.network
-        rescue ArgumentError => exc
-          Util::bail! { Util::log :invalid, "ip address '#{@node.ip_address}' vagrant.network" }
-        end
-
-        begin
-          ip_address = IPAddr.new @node.get('ip_address')
-        rescue ArgumentError => exc
-          Util::log :warning, "invalid ip address '#{@node.get('ip_address')}' for node '#{@node.name}'"
-        end
-        return vagrant_range.include?(ip_address)
-      end
-
-      ##
       ## MACROS
       ## these are methods used when eval'ing a value in the .json configuration
       ##
@@ -268,6 +225,43 @@ module LeapCli
         return file(filename)
       rescue FileMissing
         return nil
+      end
+
+      #
+      # returns what the file path will be, once the file is rsynced to the server.
+      # an internal list of discovered file paths is saved, in order to rsync these files when needed.
+      #
+      # notes:
+      #
+      # * argument 'path' is relative to Path.provider/files or Path.provider_base/files
+      # * the path returned by this method is absolute
+      # * the path stored for use later by rsync is relative to Path.provider
+      # * if the path does not exist locally, but exists in provider_base, then the default file from
+      #   provider_base is copied locally.
+      #
+      def file_path(path)
+        if path.is_a? Symbol
+          path = [path, @node.name]
+        end
+        actual_path = Path.find_file(path)
+        if actual_path.nil?
+          nil
+        else
+          if actual_path =~ /^#{Regexp.escape(Path.provider_base)}/
+            # if file is under Path.provider_base, we must copy the default file to
+            # to Path.provider in order for rsync to be able to sync the file.
+            local_provider_path = actual_path.sub(/^#{Regexp.escape(Path.provider_base)}/, Path.provider)
+            FileUtils.cp_r actual_path, local_provider_path
+            Util.log :created, Path.relative_path(local_provider_path)
+            actual_path = local_provider_path
+          end
+          if Dir.exists?(actual_path) && actual_path !~ /\/$/
+            actual_path += '/' # ensure directories end with /, important for building rsync command
+          end
+          relative_path = Path.relative_path(actual_path)
+          @node.file_paths << relative_path
+          @node.manager.provider.hiera_sync_destination + '/' + relative_path
+        end
       end
 
       #

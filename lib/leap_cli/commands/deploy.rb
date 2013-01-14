@@ -1,3 +1,4 @@
+
 module LeapCli
   module Commands
 
@@ -23,13 +24,9 @@ module LeapCli
             ssh.leap.assert_initialized
           end
 
-          # sync hiera conf
-          ssh.leap.log :syching, "hiera.yaml" do
-            ssh.leap.rsync_update do |server|
-              node = manager.node(server.host)
-              ssh.leap.log Path.relative_path([:hiera, node.name]) + ' -> ' + node.name + ':/etc/leap/hiera.yaml'
-              {:source => Path.named_path([:hiera, node.name]), :dest => "/etc/leap/hiera.yaml"}
-            end
+          ssh.leap.log :syching, "configuration files" do
+            sync_hiera_config(ssh)
+            sync_support_files(ssh)
           end
 
           # sync puppet manifests and apply them
@@ -46,6 +43,37 @@ module LeapCli
 
     private
 
+    def sync_hiera_config(ssh)
+      dest_dir = manager.provider.hiera_sync_destination
+      ssh.leap.rsync_update do |server|
+        node = manager.node(server.host)
+        hiera_file = Path.relative_path([:hiera, node.name])
+        ssh.leap.log hiera_file + ' -> ' + node.name + ':' + dest_dir + '/hiera.yaml'
+        {:source => hiera_file, :dest => dest_dir + '/hiera.yaml'}
+      end
+    end
+
+    def sync_support_files(ssh)
+      dest_dir = manager.provider.hiera_sync_destination
+      ssh.leap.rsync_update do |server|
+        node = manager.node(server.host)
+        files_to_sync = node.file_paths.collect {|path| Path.relative_path(path, Path.provider) }
+        if files_to_sync.any?
+          ssh.leap.log(files_to_sync.join(', ') + ' -> ' + node.name + ':' + dest_dir)
+          {
+            :chdir => Path.provider,
+            :source => ".",
+            :dest => dest_dir,
+            :excludes => "*",
+            :includes => calculate_includes_from_files(files_to_sync),
+            :flags => "--relative --dirs --delete --delete-excluded --filter='protect hiera.yaml' --copy-links"
+          }
+        else
+          nil
+        end
+      end
+    end
+
     def init_submodules
       Dir.chdir Path.platform do
         statuses = assert_run! "git submodule status"
@@ -57,6 +85,29 @@ module LeapCli
           end
         end
       end
+    end
+
+    def calculate_includes_from_files(files)
+      # prepend '/' (kind of like ^ for rsync)
+      includes = files.collect {|file| '/' + file}
+
+      # include all sub files of specified directories
+      includes.size.times do |i|
+        if includes[i] =~ /\/$/
+          includes << includes[i] + '**'
+        end
+      end
+
+      # include all parent directories
+      includes.size.times do |i|
+        path = File.dirname(includes[i])
+        while(path != '/')
+          includes << path unless includes.include?(path)
+          path = File.dirname(path)
+        end
+      end
+
+      return includes
     end
 
   end

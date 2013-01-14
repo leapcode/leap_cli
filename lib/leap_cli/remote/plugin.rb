@@ -57,22 +57,28 @@ module LeapCli; module Remote; module Plugin
     # rsync to each server
     failed_servers = []
     servers.each do |server|
+      options = yield server
+      next unless options
+
       # build rsync command
-      paths       = yield server
       remote_user = server.user || fetch(:user, ENV['USER'])
+      rsync_options = {
+        :flags => options[:flags],
+        :includes => options[:includes],
+        :excludes => options[:excludes],
+        :ssh => ssh_options.merge(server.options[:ssh_options]||{})
+      }
       rsync_cmd = SupplyDrop::Rsync.command(
-        paths[:source],
-        SupplyDrop::Rsync.remote_address(remote_user, server.host, paths[:dest]),
-        {:ssh => ssh_options.merge(server.options[:ssh_options]||{})}
+        options[:source],
+        SupplyDrop::Rsync.remote_address(remote_user, server.host, options[:dest]),
+        rsync_options
       )
 
       # run command
       logger.debug rsync_cmd
-      ok = system(rsync_cmd)
-      if ok
-        logger.log 1, "rsync #{paths[:source]} #{paths[:dest]}", server.host, :color => :green
-      else
-        failed_servers << server.host
+      Dir.chdir(options[:chdir] || '.') do
+        ok = system(rsync_cmd)
+        failed_servers << server.host unless ok
       end
     end
 

@@ -87,13 +87,14 @@ module LeapCli; module Path
   # tries to find a file somewhere
   #
   def self.find_file(arg)
-    file_path = named_path(arg, Path.provider)
-    return file_path if File.exists?(file_path)
-
-    file_path = named_path(arg, Path.provider_base)
-    return file_path if File.exists?(file_path)
-
-    # give up
+    [Path.provider, Path.provider_base].each do |base|
+      file_path = named_path(arg, base)
+      return file_path if File.exists?(file_path)
+      if arg.is_a? String
+        file_path = base + '/files/' + arg
+        return file_path if File.exists?(file_path)
+      end
+    end
     return nil
   end
 
