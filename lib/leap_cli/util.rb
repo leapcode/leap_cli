@@ -1,6 +1,7 @@
 require 'digest/md5'
 require 'paint'
 require 'fileutils'
+require 'pathname'
 require 'erb'
 require 'pty'
 
@@ -274,6 +275,24 @@ module LeapCli
 
     def cmd_exists?(cmd)
       `which #{cmd}`.strip.chars.any?
+    end
+
+    #
+    # creates a relative symlink from absolute paths, removing prior symlink if necessary
+    #
+    # symlink 'new' is created, pointing to 'old'
+    #
+    def relative_symlink(old, new)
+      relative_path  = Pathname.new(old).relative_path_from(Pathname.new(new))
+      if File.symlink?(new)
+        if File.readlink(new) != relative_path.to_s
+          File.unlink(new)
+          log :updated, 'symlink %s' % Path.relative_path(new)
+        end
+      else
+        log :created, 'symlink %s' % Path.relative_path(new)
+      end
+      FileUtils.ln_s(relative_path, new)
     end
 
     #
