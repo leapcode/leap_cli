@@ -48,7 +48,10 @@ module LeapCli; module Remote; module Plugin
   #end
 
   #
-  # takes a block, yielded a server, that should return {:source => '', :dest => ''}
+  # takes a block, yielded a server, that should return a hash with various rsync options.
+  # supported options include:
+  #
+  #   {:source => '', :dest => '', :flags => '', :includes => [], :excludes => []}
   #
   def rsync_update
     SupplyDrop::Util.thread_pool_size = puppet_parallel_rsync_pool_size
@@ -76,7 +79,7 @@ module LeapCli; module Remote; module Plugin
 
       # run command
       logger.debug rsync_cmd
-      Dir.chdir(options[:chdir] || '.') do
+      Dir.chdir(options[:chdir] || Path.provider) do
         ok = system(rsync_cmd)
         failed_servers << server.host unless ok
       end

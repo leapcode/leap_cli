@@ -18,11 +18,11 @@ module SupplyDrop
       end
 
       def excludes(patterns)
-        [patterns].flatten.map { |p| "--exclude='#{p}'" }
+        [patterns].flatten.compact.map { |p| "--exclude='#{p}'" }
       end
 
       def includes(patterns)
-        [patterns].flatten.map { |p| "--include='#{p}'" }
+        [patterns].flatten.compact.map { |p| "--include='#{p}'" }
       end
 
       def ssh_options(options)

@@ -88,6 +88,8 @@ module LeapCli
     end
 
     def calculate_includes_from_files(files)
+      return nil unless files and files.any?
+
       # prepend '/' (kind of like ^ for rsync)
       includes = files.collect {|file| '/' + file}
 
@@ -98,7 +100,7 @@ module LeapCli
         end
       end
 
-      # include all parent directories
+      # include all parent directories (required because of --exclude '*')
       includes.size.times do |i|
         path = File.dirname(includes[i])
         while(path != '/')
