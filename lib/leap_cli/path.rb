@@ -33,6 +33,8 @@ module LeapCli; module Path
     :authorized_keys  => 'files/ssh/authorized_keys',
     :ca_key           => 'files/ca/ca.key',
     :ca_cert          => 'files/ca/ca.crt',
+    :client_ca_key    => 'files/ca/client_ca.key',
+    :client_ca_cert   => 'files/ca/client_ca.crt',
     :dh_params        => 'files/ca/dh.pem',
     :commercial_key   => 'files/cert/#{arg}.key',
     :commercial_csr   => 'files/cert/#{arg}.csr',

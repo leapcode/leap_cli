@@ -8,42 +8,12 @@ module LeapCli; module Commands
   desc "Manage X.509 certificates"
   command :cert do |cert|
 
-    cert.desc 'Creates a Certificate Authority (private key and CA certificate)'
+    cert.desc 'Creates two Certificate Authorities (one for validating servers and one for validating clients).'
     cert.command :ca do |ca|
       ca.action do |global_options,options,args|
-        assert_files_missing! :ca_cert, :ca_key
         assert_config! 'provider.ca.name'
-        assert_config! 'provider.ca.bit_size'
-        assert_config! 'provider.ca.life_span'
-
-        provider = manager.provider
-        root = CertificateAuthority::Certificate.new
-
-        # set subject
-        root.subject.common_name = provider.ca.name
-        possible = ['country', 'state', 'locality', 'organization', 'organizational_unit', 'email_address']
-        provider.ca.keys.each do |key|
-          if possible.include?(key)
-            root.subject.send(key + '=', provider.ca[key])
-          end
-        end
-
-        # set expiration
-        root.not_before = yesterday
-        root.not_after = years_from_yesterday(provider.ca.life_span.to_i)
-
-        # generate private key
-        root.serial_number.number = 1
-        root.key_material.generate_key(provider.ca.bit_size)
-
-        # sign self
-        root.signing_entity = true
-        root.parent = root
-        root.sign!(ca_root_signing_profile)
-
-        # save
-        write_file!(:ca_key, root.key_material.private_key.to_pem)
-        write_file!(:ca_cert, root.to_pem)
+        generate_new_certificate_authority(:ca_key, :ca_cert, provider.ca.name)
+        generate_new_certificate_authority(:client_ca_key, :client_ca_cert, provider.ca.name + ' (client certificates only!)')
       end
     end
 
@@ -118,29 +88,29 @@ module LeapCli; module Commands
         assert_config! 'provider.default_language'
         assert_config! 'provider.ca.server_certificates.bit_size'
         assert_config! 'provider.ca.server_certificates.digest'
-        assert_files_missing! [:commercial_key, manager.provider.domain], [:commercial_csr, manager.provider.domain], :msg => 'If you really want to create a new key and CSR, remove these files first.'
-        if options[:sign]
-          assert_files_exist! :ca_cert, :ca_key, :msg => 'Run `leap cert ca` to create them'
-        end
+        assert_files_missing! [:commercial_key, provider.domain], [:commercial_csr, provider.domain], :msg => 'If you really want to create a new key and CSR, remove these files first.'
+        #if options[:sign]
+        #  assert_files_exist! :ca_cert, :ca_key, :msg => 'Run `leap cert ca` to create them'
+        #end
 
         # RSA key
         keypair = CertificateAuthority::MemoryKeyMaterial.new
-        log :generating, "%s bit RSA key" % manager.provider.ca.server_certificates.bit_size do
-          keypair.generate_key(manager.provider.ca.server_certificates.bit_size)
-          write_file! [:commercial_key, manager.provider.domain], keypair.private_key.to_pem
+        log :generating, "%s bit RSA key" % provider.ca.server_certificates.bit_size do
+          keypair.generate_key(provider.ca.server_certificates.bit_size)
+          write_file! [:commercial_key, provider.domain], keypair.private_key.to_pem
         end
 
         # CSR
         dn  = CertificateAuthority::DistinguishedName.new
         csr = CertificateAuthority::SigningRequest.new
-        dn.common_name = manager.provider.domain
-        dn.organization = manager.provider.name[manager.provider.default_language]
+        dn.common_name = provider.domain
+        dn.organization = provider.name[provider.default_language]
         log :generating, "CSR with commonName => '%s', organization => '%s'" % [dn.common_name, dn.organization] do
           csr.distinguished_name = dn
           csr.key_material = keypair
-          csr.digest = manager.provider.ca.server_certificates.digest
+          csr.digest = provider.ca.server_certificates.digest
           request = csr.to_x509_csr
-          write_file! [:commercial_csr, manager.provider.domain], csr.to_pem
+          write_file! [:commercial_csr, provider.domain], csr.to_pem
         end
 
         # Sign using our own CA, for use in testing but hopefully not production.
@@ -149,13 +119,13 @@ module LeapCli; module Commands
         #if options[:sign]
           log :generating, "self-signed x509 server certificate for testing purposes" do
             cert = csr.to_cert
-            cert.serial_number.number = cert_serial_number(manager.provider.domain)
+            cert.serial_number.number = cert_serial_number(provider.domain)
             cert.not_before = yesterday
             cert.not_after  = years_from_yesterday(1)
             cert.parent = ca_root
             cert.sign! domain_test_signing_profile
-            write_file! [:commercial_cert, manager.provider.domain], cert.to_pem
-            log "please replace this file with the real certificate you get from a CA using #{Path.relative_path([:commercial_csr, manager.provider.domain])}"
+            write_file! [:commercial_cert, provider.domain], cert.to_pem
+            log "please replace this file with the real certificate you get from a CA using #{Path.relative_path([:commercial_csr, provider.domain])}"
           end
         #end
 
@@ -171,6 +141,41 @@ module LeapCli; module Commands
   end
 
   private
+
+  def generate_new_certificate_authority(key_file, cert_file, common_name)
+    assert_files_missing! key_file, cert_file
+    assert_config! 'provider.ca.name'
+    assert_config! 'provider.ca.bit_size'
+    assert_config! 'provider.ca.life_span'
+
+    root = CertificateAuthority::Certificate.new
+
+    # set subject
+    root.subject.common_name = common_name
+    possible = ['country', 'state', 'locality', 'organization', 'organizational_unit', 'email_address']
+    provider.ca.keys.each do |key|
+      if possible.include?(key)
+        root.subject.send(key + '=', provider.ca[key])
+      end
+    end
+
+    # set expiration
+    root.not_before = yesterday
+    root.not_after = years_from_yesterday(provider.ca.life_span.to_i)
+
+    # generate private key
+    root.serial_number.number = 1
+    root.key_material.generate_key(provider.ca.bit_size)
+
+    # sign self
+    root.signing_entity = true
+    root.parent = root
+    root.sign!(ca_root_signing_profile)
+
+    # save
+    write_file!(key_file, root.key_material.private_key.to_pem)
+    write_file!(cert_file, root.to_pem)
+  end
 
   def cert_needs_updating?(node)
     if !file_exists?([:node_x509_cert, node.name], [:node_x509_key, node.name])
@@ -218,10 +223,10 @@ module LeapCli; module Commands
 
     # set expiration
     cert.not_before = yesterday
-    cert.not_after = years_from_yesterday(manager.provider.ca.server_certificates.life_span.to_i)
+    cert.not_after = years_from_yesterday(provider.ca.server_certificates.life_span.to_i)
 
     # generate key
-    cert.key_material.generate_key(manager.provider.ca.server_certificates.bit_size)
+    cert.key_material.generate_key(provider.ca.server_certificates.bit_size)
 
     # sign
     cert.parent = ca_root
@@ -234,12 +239,12 @@ module LeapCli; module Commands
 
   def generate_test_client_cert
     cert = CertificateAuthority::Certificate.new
-    cert.serial_number.number = cert_serial_number(manager.provider.domain)
-    cert.subject.common_name = random_common_name(manager.provider.domain)
+    cert.serial_number.number = cert_serial_number(provider.domain)
+    cert.subject.common_name = random_common_name(provider.domain)
     cert.not_before = yesterday
     cert.not_after  = years_from_yesterday(1)
     cert.key_material.generate_key(1024) # just for testing, remember!
-    cert.parent = ca_root
+    cert.parent = client_ca_root
     cert.sign! client_test_signing_profile
     write_file! :test_client_key, cert.key_material.private_key.to_pem
     write_file! :test_client_cert, cert.to_pem
@@ -248,6 +253,12 @@ module LeapCli; module Commands
   def ca_root
     @ca_root ||= begin
       load_certificate_file(:ca_cert, :ca_key)
+    end
+  end
+
+  def client_ca_root
+    @client_ca_root ||= begin
+      load_certificate_file(:client_ca_cert, :client_ca_key)
     end
   end
 
@@ -302,7 +313,7 @@ module LeapCli; module Commands
   #
   def server_signing_profile(node)
     {
-      "digest" => manager.provider.ca.server_certificates.digest,
+      "digest" => provider.ca.server_certificates.digest,
       "extensions" => {
         "keyUsage" => {
           "usage" => ["digitalSignature", "keyEncipherment"]
