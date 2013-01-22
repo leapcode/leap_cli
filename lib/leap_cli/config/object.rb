@@ -382,7 +382,8 @@ module LeapCli
         return @node.instance_eval(value)
       rescue SystemStackError => exc
         Util::log 0, :error, "while evaluating node '#{@node.name}'"
-        Util::log 0, "offending string: #{$1}", :indent => 1
+        Util::log 0, "offending key: #{key}", :indent => 1
+        Util::log 0, "offending string: #{value}", :indent => 1
         Util::log 0, "STACK OVERFLOW, BAILING OUT. There must be an eval loop of death (variables with circular dependencies).", :indent => 1
         raise SystemExit.new()
       rescue FileMissing => exc
@@ -391,16 +392,17 @@ module LeapCli
             Util::log :missing, exc.options[:missing].gsub('$node', @node.name)
           else
             Util::log :error, "while evaluating node '#{@node.name}'"
-            Util::log "offending string: #{$1}", :indent => 1
+            Util::log "offending key: #{key}", :indent => 1
+            Util::log "offending string: #{value}", :indent => 1
             Util::log "error message: no file '#{exc}'", :indent => 1
           end
         end
       rescue SyntaxError, StandardError => exc
         Util::bail! do
-          Util::log exc.inspect
           Util::log :error, "while evaluating node '#{@node.name}'"
-          Util::log "offending string: #{$1}", :indent => 1
-          Util::log "error message: #{exc}", :indent => 1
+          Util::log "offending key: #{key}", :indent => 1
+          Util::log "offending string: #{value}", :indent => 1
+          Util::log "error message: #{exc.inspect}", :indent => 1
         end
       end
 
