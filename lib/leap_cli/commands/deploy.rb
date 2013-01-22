@@ -24,7 +24,7 @@ module LeapCli
             ssh.leap.assert_initialized
           end
 
-          ssh.leap.log :syching, "configuration files" do
+          ssh.leap.log :synching, "configuration files" do
             sync_hiera_config(ssh)
             sync_support_files(ssh)
           end
@@ -44,7 +44,7 @@ module LeapCli
     private
 
     def sync_hiera_config(ssh)
-      dest_dir = manager.provider.hiera_sync_destination
+      dest_dir = provider.hiera_sync_destination
       ssh.leap.rsync_update do |server|
         node = manager.node(server.host)
         hiera_file = Path.relative_path([:hiera, node.name])
@@ -54,7 +54,7 @@ module LeapCli
     end
 
     def sync_support_files(ssh)
-      dest_dir = manager.provider.hiera_sync_destination
+      dest_dir = provider.hiera_sync_destination
       ssh.leap.rsync_update do |server|
         node = manager.node(server.host)
         files_to_sync = node.file_paths.collect {|path| Path.relative_path(path, Path.provider) }

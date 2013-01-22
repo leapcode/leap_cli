@@ -21,6 +21,10 @@ class MiniTest::Unit::TestCase
     end
   end
 
+  def provider
+    manager.provider
+  end
+
   def base_path
     File.expand_path '../..', __FILE__
   end

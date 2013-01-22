@@ -62,6 +62,13 @@ module LeapCli::Commands
   end
 
   #
+  # make provider config available as 'provider'
+  #
+  def self.provider
+    manager.provider
+  end
+
+  #
   # info about leap command line suite
   #
   program_desc       LeapCli::SUMMARY

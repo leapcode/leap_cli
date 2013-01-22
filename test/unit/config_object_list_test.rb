@@ -9,7 +9,7 @@ class ConfigObjectListTest < MiniTest::Unit::TestCase
   end
 
   def test_complex_node_search
-    domain = manager.provider.domain
+    domain = provider.domain
     nodes = manager.nodes['dns.public' => true]
     expected = [{"domain_full"=>"ns1.#{domain}"}, {"domain_full"=>"ns2.#{domain}"}, {"domain_full"=>"vpn1.#{domain}"}, {"domain_full"=>"web1.#{domain}"}]
     assert_equal expected.size, nodes.size
