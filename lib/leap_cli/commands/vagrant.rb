@@ -22,14 +22,6 @@ module LeapCli; module Commands
       end
     end
 
-    local.desc 'Resets virtual machine(s) to a pristine state'
-    local.arg_name 'node-filter', :optional => true #, :multiple => false
-    local.command :reset do |reset|
-      reset.action do |global_options,options,args|
-        vagrant_command("sandbox rollback", args)
-      end
-    end
-
     local.desc 'Destroys the virtual machine(s), reclaiming the disk space'
     local.arg_name 'node-filter', :optional => true #, :multiple => false
     local.command :destroy do |destroy|
@@ -43,6 +35,22 @@ module LeapCli; module Commands
     local.command :status do |status|
       status.action do |global_options,options,args|
         vagrant_command("status", args)
+      end
+    end
+
+    local.desc 'Saves the current state of the virtual machine as a new snapshot'
+    local.arg_name 'node-filter', :optional => true #, :multiple => false
+    local.command :save do |status|
+      status.action do |global_options,options,args|
+        vagrant_command("sandbox commit", args)
+      end
+    end
+
+    local.desc 'Resets virtual machine(s) to the last saved snapshot'
+    local.arg_name 'node-filter', :optional => true #, :multiple => false
+    local.command :reset do |reset|
+      reset.action do |global_options,options,args|
+        vagrant_command("sandbox rollback", args)
       end
     end
   end
