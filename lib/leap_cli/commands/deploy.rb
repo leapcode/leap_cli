@@ -34,7 +34,7 @@ module LeapCli
           ssh.set :puppet_destination, '/srv/leap'
           ssh.set :puppet_command, '/usr/bin/puppet apply --color=false'
           ssh.set :puppet_lib, "puppet/modules"
-          ssh.set :puppet_parameters, '--confdir puppet puppet/manifests/site.pp'
+          ssh.set :puppet_parameters, '--libdir puppet/lib --confdir puppet puppet/manifests/site.pp'
           ssh.set :puppet_stream_output, true
           ssh.apply_puppet
         end
