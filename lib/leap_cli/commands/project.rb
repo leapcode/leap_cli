@@ -61,10 +61,13 @@ module LeapCli; module Commands
   end
 
   def leapfile_content(options)
-    %[@platform_directory_path = "#{options[:platform]}"
+    %[## Required:
+@platform_directory_path = "#{options[:platform]}"
+@leap_version = "#{LeapCli::VERSION}"
+
+## Optional:
+# @custom_vagrant_vm_line = "config.vm.boot_mode = :gui"
 ]
-    # leap_version = "#{LeapCli::VERSION}"
-    # platform_version = ""
   end
 
   GITIGNORE_CONTENT = <<EOS

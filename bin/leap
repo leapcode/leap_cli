@@ -39,9 +39,7 @@ module LeapCli::Commands
   extend GLI::App
   extend Forwardable
 
-  #
   # delegate highline methods to make them available to sub-commands
-  #
   @terminal = HighLine.new
   def_delegator :@terminal, :ask,    'self.ask'
   def_delegator :@terminal, :agree,  'self.agree'
@@ -50,9 +48,7 @@ module LeapCli::Commands
   def_delegator :@terminal, :color,  'self.color'
   def_delegator :@terminal, :list,   'self.list'
 
-  #
   # make config manager available as 'manager'
-  #
   def self.manager
     @manager ||= begin
       manager = LeapCli::Config::Manager.new
@@ -61,30 +57,27 @@ module LeapCli::Commands
     end
   end
 
-  #
   # make provider config available as 'provider'
-  #
   def self.provider
     manager.provider
   end
 
-  #
+  # make leapfile available as 'leapfile'
+  def self.leapfile
+    LeapCli::leapfile
+  end
+
   # info about leap command line suite
-  #
   program_desc       LeapCli::SUMMARY
   program_long_desc  LeapCli::DESCRIPTION
 
-  #
   # handle --version ourselves
-  #
   if ARGV.grep(/--version/).any?
     puts "leap #{LeapCli::VERSION}, ruby #{RUBY_VERSION}"
     exit(0)
   end
 
-  #
   # load commands and run
-  #
   commands_from('leap_cli/commands')
   exit run(ARGV)
 end

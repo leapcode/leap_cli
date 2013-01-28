@@ -113,6 +113,7 @@ module LeapCli; module Commands
         lines << %[    config.vm.box_url = "http://cloud.github.com/downloads/leapcode/minimal-debian-vagrant/leap-wheezy.box"]
         lines << %[    config.vm.network :hostonly, "#{node.ip_address}", :netmask => "#{netmask}"]
         lines << %[    config.vm.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]]
+        lines << %[    #{leapfile.custom_vagrant_vm_line}] if leapfile.custom_vagrant_vm_line
         lines << %[  end]
       end
     end
