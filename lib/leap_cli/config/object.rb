@@ -270,7 +270,7 @@ module LeapCli
       # manager.export_secrets should be called later to capture any newly generated secrets.
       #
       def secret(name, length=32)
-        @manager.secrets[name.to_s] ||= Util::Secret.generate(length)
+        @manager.secrets.set(name, Util::Secret.generate(length))
       end
 
       #

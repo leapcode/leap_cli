@@ -35,7 +35,7 @@ module LeapCli
         @nodes    = load_all_json(Path.named_path([:node_config, '*'],    @provider_dir), Config::Node)
         @common   = load_json(common_path, Config::Object)
         @provider = load_json(provider_path, Config::Object)
-        @secrets  = load_json(Path.named_path(:secrets_config,  @provider_dir), Config::Object)
+        @secrets  = load_json(Path.named_path(:secrets_config,  @provider_dir), Config::Secrets)
 
         # inherit
         @services.inherit_from! base_services
