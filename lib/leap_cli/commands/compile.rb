@@ -15,7 +15,7 @@ module LeapCli
 
       # export generated files
       manager.export_nodes(nodes)
-      manager.export_secrets
+      manager.export_secrets(nodes.nil?) # only do a "clean" export if we are examining all the nodes
     end
 
     def update_compiled_ssh_configs

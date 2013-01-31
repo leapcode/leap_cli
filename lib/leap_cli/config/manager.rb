@@ -90,10 +90,9 @@ module LeapCli
         end
       end
 
-      def export_secrets(destination_file = nil)
+      def export_secrets(clean_unused_secrets = false)
         if @secrets.any?
-          file_path = destination_file || Path.named_path(:secrets_config, @provider_dir)
-          Util.write_file!(file_path, @secrets.dump_json + "\n")
+          Util.write_file!([:secrets_config, @provider_dir], @secrets.dump_json(clean_unused_secrets) + "\n")
         end
       end
 

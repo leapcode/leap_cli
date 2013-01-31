@@ -20,13 +20,23 @@ module LeapCli; module Config
       self[key] ||= value
     end
 
-    def dump_json
-      self.each_key do |key|
-        unless @discovered_keys[key]
-          self.delete(key)
+    #
+    # if only_discovered_keys is true, then we will only export
+    # those secrets that have been discovered and the prior ones will be cleaned out.
+    #
+    # this should only be triggered when all nodes have been processed, otherwise
+    # secrets that are actually in use will get mistakenly removed.
+    #
+    #
+    def dump_json(only_discovered_keys=false)
+      if only_discovered_keys
+        self.each_key do |key|
+          unless @discovered_keys[key]
+            self.delete(key)
+          end
         end
       end
-      super
+      super()
     end
   end
 
