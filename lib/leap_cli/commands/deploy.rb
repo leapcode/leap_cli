@@ -33,7 +33,7 @@ module LeapCli
           # sync puppet manifests and apply them
           ssh.set :puppet_source, [Path.platform, 'puppet'].join('/')
           ssh.set :puppet_destination, '/srv/leap'
-          tags = ['leap_base']
+          tags = ['leap_base,leap_service']
           tags << 'leap_slow' unless options[:fast]
           ssh.set :puppet_command, "/usr/bin/puppet apply --color=false --tags=#{tags.join(',')}"
           ssh.set :puppet_lib, "puppet/modules"
