@@ -35,7 +35,7 @@ module LeapCli
           ssh.set :puppet_destination, '/srv/leap'
           tags = ['default']
           tags << 'slow' unless options[:fast]
-          ssh.set :puppet_command, "/usr/bin/puppet apply --color=false --tags=#{tags.join(', ')}"
+          ssh.set :puppet_command, "/usr/bin/puppet apply --color=false --tags=#{tags.join(',')}"
           ssh.set :puppet_lib, "puppet/modules"
           ssh.set :puppet_parameters, '--libdir puppet/lib --confdir puppet puppet/manifests/site.pp'
           ssh.set :puppet_stream_output, true
