@@ -21,7 +21,6 @@ module LeapCli; module Remote; module Plugin
   end
 
   def assert_initialized
-
     begin
       test_initialized_file = "test -f /srv/leap/initialized"
       check_required_packages = "! dpkg-query -W --showformat='${Status}\n' #{required_packages} 2>&1 | grep -q -E '(deinstall|no packages)'"
@@ -78,11 +77,11 @@ module LeapCli; module Remote; module Plugin
       )
 
       # run command
+      chdir = options[:chdir] || Path.provider
+      rsync_cmd = "cd #{chdir}; #{rsync_cmd}"
       logger.debug rsync_cmd
-      Dir.chdir(options[:chdir] || Path.provider) do
-        ok = system(rsync_cmd)
-        failed_servers << server.host unless ok
-      end
+      ok = system(rsync_cmd)
+      failed_servers << server.host unless ok
     end
 
     raise "rsync failed on #{failed_servers.join(',')}" if failed_servers.any?
