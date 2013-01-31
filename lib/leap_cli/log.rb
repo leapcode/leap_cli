@@ -3,6 +3,8 @@ require 'paint'
 ##
 ## LOGGING
 ##
+## Ugh. This class does not work well with multiple threads!
+##
 
 module LeapCli
   extend self
@@ -51,11 +53,12 @@ module LeapCli
       options = args.grep(Hash).first || {}
       options[:indent] ||= LeapCli.indent_level
       if message && LeapCli.log_level >= level
-        print "  " * (options[:indent])
+        line = ""
+        line += "  " * (options[:indent])
         if options[:indent] > 0
-          print ' - '
+          line += ' - '
         else
-          print ' = '
+          line += ' = '
         end
         if title
           prefix = case title
@@ -78,17 +81,18 @@ module LeapCli
             else [title.to_s, :cyan, :bold]
           end
           if options[:host]
-            print "[%s] %s " % [Paint[options[:host], prefix[1], prefix[2]], prefix[0]]
+            line += "[%s] %s " % [Paint[options[:host], prefix[1], prefix[2]], prefix[0]]
           else
-            print "%s " % Paint[prefix[0], prefix[1], prefix[2]]
+            line += "%s " % Paint[prefix[0], prefix[1], prefix[2]]
           end
           if FILE_TITLES.include?(title) && message =~ /^\//
             message = LeapCli::Path.relative_path(message)
           end
         elsif options[:host]
-          print "[%s] " % options[:host]
+          line += "[%s] " % options[:host]
         end
-        puts "#{message}"
+        line += "#{message}\n"
+        print line
         if block_given?
           LeapCli.indent_level += 1
           yield
