@@ -51,7 +51,9 @@ module LeapCli; module Path
     # testing files
     :test_client_key     => 'test/cert/client.key',
     :test_client_cert    => 'test/cert/client.crt',
-    :test_client_openvpn_config   => 'test/openvpn/client.ovpn',
+    :test_openvpn_production  => 'test/openvpn/production.ovpn',
+    :test_openvpn_testing     => 'test/openvpn/testing.ovpn',
+    :test_openvpn_local       => 'test/openvpn/local.ovpn',
     :test_client_openvpn_template => 'test/openvpn/client.ovpn.erb'
   }
 
