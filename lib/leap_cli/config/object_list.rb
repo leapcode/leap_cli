@@ -12,30 +12,42 @@ module LeapCli
       end
 
       #
-      # if the key is a hash, we treat it as a condition and filter all the configs using the condition
+      # If the key is a string, the Config::Object it references is returned.
       #
-      # for example:
+      # If the key is a hash, we treat it as a condition and filter all the Config::Objects using the condition.
+      # A new ObjectList is returned.
       #
-      #   nodes[:public_dns => true]
+      # Examples:
       #
-      # will return a ConfigList with node configs that have public_dns set to true
+      # nodes['vpn1']
+      #   node named 'vpn1'
+      #
+      # nodes[:public_dns => true]
+      #   all nodes with public dns
+      #
+      # nodes[:services => 'openvpn', :services => 'tor']
+      #   nodes with openvpn OR tor service
+      #
+      # nodes[:services => 'openvpn'][:tags => 'production']
+      #   nodes with openvpn AND are production
       #
       def [](key)
         if key.is_a? Hash
           results = Config::ObjectList.new
-          field, match_value = key.to_a.first
-          field = field.is_a?(Symbol) ? field.to_s : field
-          match_value = match_value.is_a?(Symbol) ? match_value.to_s : match_value
-          each do |name, config|
-            value = config[field]
-            if !value.nil?
-              if value.is_a? Array
-                if value.include?(match_value)
-                  results[name] = config
-                end
-              else
-                if value == match_value
-                  results[name] = config
+          key.each do |field, match_value|
+            field = field.is_a?(Symbol) ? field.to_s : field
+            match_value = match_value.is_a?(Symbol) ? match_value.to_s : match_value
+            each do |name, config|
+              value = config[field]
+              if !value.nil?
+                if value.is_a? Array
+                  if value.include?(match_value)
+                    results[name] = config
+                  end
+                else
+                  if value == match_value
+                    results[name] = config
+                  end
                 end
               end
             end
