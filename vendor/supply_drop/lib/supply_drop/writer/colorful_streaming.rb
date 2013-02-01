@@ -20,6 +20,11 @@ module SupplyDrop
             @mode = 'notice'
           end
 
+          # make variable scope warnings like notices
+          if data =~ /^warning: Scope*$/
+            @mode = 'notice'
+          end
+
           # force the printing of 'finished catalog run' if there have not been any errors
           if @mode == 'notice' && !@error_encountered && data =~ /Finished catalog run/
             @mode = 'forced_notice'

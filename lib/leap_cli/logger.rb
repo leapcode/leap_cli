@@ -108,6 +108,7 @@ module LeapCli
 
       # PUPPET
       { :match => /^warning: .*is deprecated.*$/,  :level => 2, :color => :yellow, :priority => -10},
+      { :match => /^warning: Scope.*$/,            :level => 2, :color => :yellow, :priority => -10},
       { :match => /^notice:/,                      :level => 1, :color => :cyan,   :priority => -20},
       { :match => /^err:/,                         :level => 0, :color => :red,    :priority => -20},
       { :match => /^warning:/,                     :level => 0, :color => :yellow, :priority => -20},
