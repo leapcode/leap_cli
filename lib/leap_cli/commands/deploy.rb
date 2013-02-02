@@ -6,7 +6,15 @@ module LeapCli
     long_desc 'The node-filter can be the name of a node, service, or tag.'
     arg_name 'node-filter'
     command :deploy do |c|
+
+      # --fast
       c.switch :fast, :desc => 'Makes the deploy command faster by skipping some slow steps. A "fast" deploy can be used safely if you have done a normal deploy to the node recently.', :negatable => false
+
+      # --tags
+      c.desc 'Specify tags to pass through to puppet'
+      c.arg_name 'TAG[,TAG]'
+      c.flag :tags
+
       c.action do |global_options,options,args|
         init_submodules
 
@@ -35,6 +43,11 @@ module LeapCli
           ssh.set :puppet_destination, '/srv/leap'
           tags = ['leap_base,leap_service']
           tags << 'leap_slow' unless options[:fast]
+          if options[:tags]
+            options[:tags].split(',').each do |tag|
+              tags << tag
+            end
+          end
           ssh.set :puppet_command, "/usr/bin/puppet apply --color=false --tags=#{tags.join(',')}"
           ssh.set :puppet_lib, "puppet/modules"
           ssh.set :puppet_parameters, '--libdir puppet/lib --confdir puppet puppet/manifests/site.pp'
