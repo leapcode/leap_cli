@@ -6,9 +6,14 @@ module LeapCli
   module Commands
 
     desc 'Verbosity level 0..2'
-    arg_name 'level'
+    arg_name 'LEVEL'
     default_value '1'
     flag [:v, :verbose]
+
+    desc 'Override default log file'
+    arg_name 'FILE'
+    default_value nil
+    flag :log
 
     desc 'Display version number and exit'
     switch :version, :negatable => false
@@ -38,6 +43,11 @@ module LeapCli
       if !Path.platform || !File.directory?(Path.platform)
         bail! { log :missing, "platform directory '#{Path.platform}'" }
       end
+
+      #
+      # set log file
+      #
+      LeapCli.log_file = global[:log] || LeapCli.leapfile.log
 
       #
       # load all the nodes everything

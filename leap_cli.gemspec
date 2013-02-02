@@ -50,6 +50,7 @@ spec = Gem::Specification.new do |s|
   s.add_runtime_dependency('command_line_reporter')
   s.add_runtime_dependency('highline')
   s.add_runtime_dependency('paint')
+  s.add_runtime_dependency('tee')
 
   # network gems
   s.add_runtime_dependency('capistrano', '>= 2.13.5')

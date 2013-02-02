@@ -14,6 +14,7 @@ module LeapCli
     attr_accessor :provider_directory_path
     attr_accessor :custom_vagrant_vm_line
     attr_accessor :leap_version
+    attr_accessor :log
 
     def load
       directory = File.expand_path(find_in_directory_tree('Leapfile'))

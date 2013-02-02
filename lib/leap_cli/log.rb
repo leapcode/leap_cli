@@ -1,4 +1,5 @@
 require 'paint'
+require 'tee'
 
 ##
 ## LOGGING
@@ -23,6 +24,21 @@ module LeapCli
   def indent_level=(value)
     @indent_level = value
   end
+
+  def log_file
+    @log_file
+  end
+  def log_file=(value)
+    @log_file = value
+    if value
+      @log_output_stream = Tee.open(@log_file, :mode => 'a')
+    end
+  end
+
+  def log_output_stream
+    @log_output_stream || STDOUT
+  end
+
 end
 
 
@@ -92,7 +108,7 @@ module LeapCli
           line += "[%s] " % options[:host]
         end
         line += "#{message}\n"
-        print line
+        LeapCli.log_output_stream.print(line)
         if block_given?
           LeapCli.indent_level += 1
           yield
