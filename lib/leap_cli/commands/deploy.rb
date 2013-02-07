@@ -15,13 +15,13 @@ module LeapCli
       c.arg_name 'TAG[,TAG]'
       c.flag :tags
 
-      c.action do |global_options,options,args|
+      c.action do |global,options,args|
         init_submodules
 
         nodes = manager.filter!(args)
         if nodes.size > 1
           say "Deploying to these nodes: #{nodes.keys.join(', ')}"
-          unless agree "Continue? "
+          if !global[:yes] && !agree("Continue? ")
             quit! "OK. Bye."
           end
         end

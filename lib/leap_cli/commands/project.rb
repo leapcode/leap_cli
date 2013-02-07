@@ -9,7 +9,7 @@ module LeapCli; module Commands
     c.flag 'name', :desc => "The name of the provider", :default_value => 'Example'
     c.flag 'domain', :desc => "The primary domain of the provider", :default_value => 'example.org'
     c.flag 'platform', :desc => "File path of the leap_platform directory", :default_value => '../leap_platform'
-    c.action do |global_options, options, args|
+    c.action do |global, options, args|
       directory = args.first
       unless directory && directory.any?
         help! "Directory name is required."
@@ -18,7 +18,7 @@ module LeapCli; module Commands
       unless File.exists?(directory)
         bail! { log :missing, "directory #{directory}" }
       end
-      create_initial_provider_files(directory, options)
+      create_initial_provider_files(directory, global, options)
     end
   end
 
@@ -29,7 +29,7 @@ module LeapCli; module Commands
   #
   # creates new provider directory
   #
-  def create_initial_provider_files(directory, options)
+  def create_initial_provider_files(directory, global, options)
     Path.set_provider_path(directory)
     Dir.chdir(directory) do
       assert_files_missing! 'provider.json', 'common.json', 'Leapfile', :base => directory
@@ -37,7 +37,7 @@ module LeapCli; module Commands
       platform_dir = File.expand_path(options[:platform])
 
       unless File.symlink?(platform_dir) || File.directory?(platform_dir)
-        if agree("The platform directory \"#{options[:platform]}\" does not exist.\nDo you want me to create it by cloning from the\ngit repository #{DEFAULT_REPO}? ")
+        if global[:yes] || agree("The platform directory \"#{options[:platform]}\" does not exist.\nDo you want me to create it by cloning from the\ngit repository #{DEFAULT_REPO}? ")
           assert_bin! 'git'
           ensure_dir platform_dir
           Dir.chdir(platform_dir) do

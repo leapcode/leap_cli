@@ -45,12 +45,12 @@ module LeapCli; module Commands
     node.arg_name '<node-filter>' #, :optional => false, :multiple => false
     node.command :init do |init|
       init.switch 'echo', :desc => 'If set, passwords are visible as you type them (default is hidden)', :negatable => false
-      init.action do |global_options,options,args|
+      init.action do |global,options,args|
         assert! args.any?, 'You must specify a node-filter'
         finished = []
         manager.filter(args).each_node do |node|
           ping_node(node)
-          save_public_host_key(node)
+          save_public_host_key(node, global)
           update_compiled_ssh_configs
           ssh_connect(node, :bootstrap => true, :echo => options[:echo]) do |ssh|
             ssh.install_authorized_keys
@@ -133,7 +133,7 @@ module LeapCli; module Commands
   #
   # see `man sshd` for the format of known_hosts
   #
-  def save_public_host_key(node)
+  def save_public_host_key(node, global)
     log :fetching, "public SSH host key for #{node.name}"
     public_key = get_public_key_for_ip(node.ip_address, node.ssh.port)
     pub_key_path = Path.named_path([:node_ssh_pub_key, node.name])
@@ -154,7 +154,7 @@ module LeapCli; module Commands
       say("Type        -- #{public_key.bits} bit #{public_key.type.upcase}")
       say("Fingerprint -- " + public_key.fingerprint)
       say("Public Key  -- " + public_key.key)
-      if !agree("Is this correct? ")
+      if !global[:yes] && !agree("Is this correct? ")
         bail!
       else
         puts

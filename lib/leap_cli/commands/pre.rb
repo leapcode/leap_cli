@@ -18,6 +18,9 @@ module LeapCli
     desc 'Display version number and exit'
     switch :version, :negatable => false
 
+    desc 'Skip prompts and assume "yes"'
+    switch :yes, :negatable => false
+
     pre do |global,command,options,args|
       #
       # set verbosity
