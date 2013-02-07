@@ -2,18 +2,20 @@
 module LeapCli
   module Commands
 
+    DEFAULT_TAGS = ['leap_base','leap_service']
+
     desc 'Apply recipes to a node or set of nodes'
     long_desc 'The node-filter can be the name of a node, service, or tag.'
     arg_name 'node-filter'
     command :deploy do |c|
 
       # --fast
-      c.switch :fast, :desc => 'Makes the deploy command faster by skipping some slow steps. A "fast" deploy can be used safely if you have done a normal deploy to the node recently.', :negatable => false
+      c.switch :fast, :desc => 'Makes the deploy command faster by skipping some slow steps. A "fast" deploy can be used safely if you recently completed a normal deploy.',
+                      :negatable => false
 
       # --tags
-      c.desc 'Specify tags to pass through to puppet'
-      c.arg_name 'TAG[,TAG]'
-      c.flag :tags
+      c.flag :tags, :desc => 'Specify tags to pass through to puppet (overriding the default).',
+                    :default_value => DEFAULT_TAGS.join(','), :arg_name => 'TAG[,TAG]'
 
       c.action do |global,options,args|
         init_submodules
@@ -41,13 +43,15 @@ module LeapCli
           # sync puppet manifests and apply them
           ssh.set :puppet_source, [Path.platform, 'puppet'].join('/')
           ssh.set :puppet_destination, '/srv/leap'
-          tags = ['leap_base,leap_service']
-          tags << 'leap_slow' unless options[:fast]
+
+          # set tags
           if options[:tags]
-            options[:tags].split(',').each do |tag|
-              tags << tag
-            end
+            tags = options[:tags].split(',')
+          else
+            tags = DEFAULT_TAGS.dup
           end
+          tags << 'leap_slow' unless options[:fast]
+
           ssh.set :puppet_command, "/usr/bin/puppet apply --color=false --tags=#{tags.join(',')}"
           ssh.set :puppet_lib, "puppet/modules"
           ssh.set :puppet_parameters, '--libdir puppet/lib --confdir puppet puppet/manifests/site.pp'
