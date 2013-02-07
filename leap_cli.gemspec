@@ -55,9 +55,11 @@ spec = Gem::Specification.new do |s|
   # network gems
   s.add_runtime_dependency('capistrano', '>= 2.13.5')
   #s.add_runtime_dependency('supply_drop')
+  # ^^ currently vendored
 
   # crypto gems
-  s.add_runtime_dependency('certificate_authority') # this gem pulls in ActiveModel, but it just uses it for validation logic.
+  #s.add_runtime_dependency('certificate_authority', '>= 0.2.0')  # fyi, this gem pulls in ActiveModel, but it just uses it for validation logic.
+  # ^^ currently vendored
   s.add_runtime_dependency('net-ssh')
   s.add_runtime_dependency('gpgme')     # not essential, but used for some minor stuff in adding sysadmins
 
