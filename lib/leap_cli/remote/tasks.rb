@@ -16,6 +16,7 @@ end
 
 task :install_prerequisites, :max_hosts => MAX_HOSTS do
   leap.mkdirs puppet_destination
+  run "locale-gen"
   leap.log :updating, "package list" do
     run "apt-get update"
   end
