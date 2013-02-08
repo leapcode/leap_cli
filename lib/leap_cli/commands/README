@@ -4,7 +4,7 @@ For example, the command:
 
   leap init <directory>
 
-Lives in lib/leap_cli/commands/init.rb
+Lives in lib/leap_cli/commands/project.rb
 
 These files use a DSL (called GLI) for defining command suites.
 See https://github.com/davetron5000/gli for more information.

@@ -19,6 +19,7 @@ module LeapCli; module Commands
         bail! { log :missing, "directory #{directory}" }
       end
       create_initial_provider_files(directory, global, options)
+      create_initial_branding_files(directory)
     end
   end
 
@@ -57,6 +58,19 @@ module LeapCli; module Commands
         ensure_dir dir
       end
       log :completed, 'initialization'
+    end
+  end
+
+  def create_initial_branding_files(directory)
+    branding_dir = File.join('files', 'branding')
+    Dir.chdir(directory) do
+      ["files", branding_dir].each do |dir|
+        ensure_dir dir
+      end
+      ["head.scss", "tail.scss", "favicon.ico"].each do |file|
+        write_file! File.join(branding_dir, file), ""
+      end
+      log :completed, 'seeding branding files'
     end
   end
 
