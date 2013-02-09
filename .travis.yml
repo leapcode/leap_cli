@@ -1,2 +1,3 @@
 language: ruby
 script: "rake build"
+install: "true"  # 0 exit state and does nothing
