@@ -70,6 +70,11 @@ module LeapCli
         end
       end
 
+      # override behavior of #default() from Hash
+      def default
+        get!('default')
+      end
+
       #
       # Like a normal Hash#[], except:
       #
