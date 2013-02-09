@@ -1,4 +1,5 @@
 language: ruby
 install: "true"  # 0 exit state and does nothing
 script: "rake build"
-after_script: "rake install"
+# will install as user but not ask:
+after_script: "rake install USER=root" 
