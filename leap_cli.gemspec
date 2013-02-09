@@ -33,6 +33,7 @@ spec = Gem::Specification.new do |s|
   ##
   ## DOCUMENTATION
   ##
+
   #s.has_rdoc = true
   #s.extra_rdoc_files = ['README.rdoc','leap_cli.rdoc']
   #s.rdoc_options << '--title' << 'leap_cli' << '--main' << 'README.rdoc' << '-ri'
@@ -40,6 +41,8 @@ spec = Gem::Specification.new do |s|
   ##
   ## DEPENDENCIES
   ##
+
+  # test
   s.add_development_dependency('rake')
   s.add_development_dependency('minitest')
   #s.add_development_dependency('rdoc')
@@ -58,7 +61,7 @@ spec = Gem::Specification.new do |s|
   # ^^ currently vendored
 
   # crypto gems
-  #s.add_runtime_dependency('certificate_authority', '>= 0.2.0')  # fyi, this gem pulls in ActiveModel, but it just uses it for validation logic.
+  #s.add_runtime_dependency('certificate_authority', '>= 0.2.0')
   # ^^ currently vendored
   s.add_runtime_dependency('net-ssh')
   s.add_runtime_dependency('gpgme')     # not essential, but used for some minor stuff in adding sysadmins
@@ -67,4 +70,10 @@ spec = Gem::Specification.new do |s|
   s.add_runtime_dependency('ya2yaml')   # pure ruby yaml, so we can better control output. see https://github.com/afunai/ya2yaml
   s.add_runtime_dependency('json_pure') # pure ruby json, so we can better control output.
 
+  ##
+  ## DEPENDENCIES for VENDORED GEMS
+  ##
+
+  # certificate_authority
+  s.add_runtime_dependency("activemodel", ">= 3.0.6")
 end
