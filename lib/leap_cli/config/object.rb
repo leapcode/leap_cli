@@ -187,6 +187,13 @@ module LeapCli
         global.nodes
       end
 
+      #
+      # returns a list of nodes that match similar production level (production, local, testing, etc)
+      #
+      def nodes_like_me
+        nodes[:production => @node.production, :local => @node.local]
+      end
+
       class FileMissing < Exception
         attr_accessor :path, :options
         def initialize(path, options={})
