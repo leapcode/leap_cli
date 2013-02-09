@@ -57,6 +57,11 @@ spec = Gem::Specification.new do |s|
 
   # network gems
   s.add_runtime_dependency('capistrano', '>= 2.13.5')
+  # ensure we do not include too recent net-ssh derivatives
+  # as vagrant can't deal with net-ssh >= 2.3
+  s.add_runtime_dependency('net-ssh-gateway', '~> 1.1.0')
+  s.add_runtime_dependency('net-scp', '~> 1.0.4')
+  s.add_runtime_dependency('net-sftp', '~> 2.0.5')
   #s.add_runtime_dependency('supply_drop')
   # ^^ currently vendored
 
