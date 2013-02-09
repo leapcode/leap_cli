@@ -135,8 +135,12 @@ module LeapCli; module Path
   end
 
   def self.relative_path(path, provider_dir=Path.provider)
-    path = named_path(path, provider_dir)
-    path.sub(/^#{Regexp.escape(provider_dir)}\//,'')
+    if provider_dir
+      path = named_path(path, provider_dir)
+      path.sub(/^#{Regexp.escape(provider_dir)}\//,'')
+    else
+      path
+    end
   end
 
 end; end
