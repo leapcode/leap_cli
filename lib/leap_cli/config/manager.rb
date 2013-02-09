@@ -158,6 +158,10 @@ module LeapCli
         nodes.each_node &block
       end
 
+      def reload_node(node)
+        @nodes[node.name] = apply_inheritance(node)
+      end
+
       private
 
       def load_all_json(pattern, object_class)

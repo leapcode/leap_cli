@@ -1,5 +1,6 @@
 require 'net/ssh/known_hosts'
 require 'tempfile'
+require 'ipaddr'
 
 module LeapCli; module Commands
 
@@ -23,17 +24,22 @@ module LeapCli; module Commands
         name = args.first
         assert! name, 'No <node-name> specified.'
         assert! name =~ /^[0-9a-z-]+$/, "illegal characters used in node name '#{name}'"
-        assert_files_missing! [:node_config, node.name]
+        assert_files_missing! [:node_config, name]
 
         # create and seed new node
-        node = Config::Object.new
+        node = Config::Node.new(manager)
         if options[:local]
           node['ip_address'] = pick_next_vagrant_ip_address
         end
         seed_node_data(node, args[1..-1])
+        validate_ip_address(node)
 
         # write the file
         write_file! [:node_config, name], node.dump_json + "\n"
+        node['name'] = name
+        if file_exists? :ca_cert, :ca_key
+          generate_cert_for_node(manager.reload_node(node))
+        end
       end
     end
 
@@ -195,6 +201,18 @@ module LeapCli; module Commands
         current_object[final_key] = value
       else
         node[key] = value
+      end
+    end
+  end
+
+  def validate_ip_address(node)
+    IPAddr.new(node['ip_address'])
+  rescue ArgumentError
+    bail! do
+      if node['ip_address']
+        log :invalid, "ip_address #{node['ip_address'].inspect}"
+      else
+        log :missing, "ip_address"
       end
     end
   end

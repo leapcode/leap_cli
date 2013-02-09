@@ -70,6 +70,11 @@ module LeapCli
         end
       end
 
+      # override behavior of #default() from Hash
+      def default
+        get!('default')
+      end
+
       #
       # Like a normal Hash#[], except:
       #
@@ -185,6 +190,13 @@ module LeapCli
       #
       def nodes
         global.nodes
+      end
+
+      #
+      # returns a list of nodes that match similar production level (production, local, testing, etc)
+      #
+      def nodes_like_me
+        nodes[:production => @node.production, :local => @node.local]
       end
 
       class FileMissing < Exception

@@ -168,6 +168,7 @@ Running as a gem
 To install ``leap`` as a gem, do this:
 
     cd leap_cli
+    bundle                        # install required gems
     rake build
     rake install
 

@@ -18,7 +18,11 @@ module LeapCli; module Commands
     local.arg_name 'node-filter', :optional => true #, :multiple => false
     local.command :stop do |stop|
       stop.action do |global_options,options,args|
-        vagrant_command("halt", args)
+        if global_options[:yes]
+          vagrant_command("halt --force", args)
+        else
+          vagrant_command("halt", args)
+        end
       end
     end
 
@@ -26,7 +30,11 @@ module LeapCli; module Commands
     local.arg_name 'node-filter', :optional => true #, :multiple => false
     local.command :destroy do |destroy|
       destroy.action do |global_options,options,args|
-        vagrant_command("destroy", args)
+        if global_options[:yes]
+          vagrant_command("destroy --force", args)
+        else
+          vagrant_command("destroy", args)
+        end
       end
     end
 
