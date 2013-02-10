@@ -88,6 +88,7 @@ module LeapCli; module Commands
 ## Optional:
 # @custom_vagrant_vm_line = "config.vm.boot_mode = :gui"
 # @log = "/tmp/leap.log"
+# @vagrant_network = '10.5.5.0/24'
 ]
   end
 
