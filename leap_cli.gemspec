@@ -70,10 +70,6 @@ spec = Gem::Specification.new do |s|
   s.add_runtime_dependency('ya2yaml')   # pure ruby yaml, so we can better control output. see https://github.com/afunai/ya2yaml
   s.add_runtime_dependency('json_pure') # pure ruby json, so we can better control output.
 
-  # vagrant
-  s.add_runtime_dependency('vagrant', '>= 1.0.5')
-  s.add_runtime_dependency('sahara')
-
   ##
   ## DEPENDENCIES for VENDORED GEMS
   ##
