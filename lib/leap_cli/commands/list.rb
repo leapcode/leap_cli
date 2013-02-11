@@ -37,7 +37,15 @@ module LeapCli; module Commands
     max_width = nodes.keys.inject(0) {|max,i| [i.size,max].max}
     nodes.each_node do |node|
       node.evaluate
-      value = properties.collect{|prop| node[prop]}.join(', ')
+      value = properties.collect{|prop|
+        if node[prop].nil?
+          "[null]"
+        elsif node[prop] == ""
+          "[empty]"
+        else
+          node[prop]
+        end
+      }.join(', ')
       printf("%#{max_width}s  %s\n", node.name, value)
     end
     puts
