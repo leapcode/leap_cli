@@ -249,7 +249,7 @@ module LeapCli
       # * the path returned by this method is absolute
       # * the path stored for use later by rsync is relative to Path.provider
       # * if the path does not exist locally, but exists in provider_base, then the default file from
-      #   provider_base is copied locally.
+      #   provider_base is copied locally. this is required for rsync to work correctly.
       #
       def file_path(path)
         if path.is_a? Symbol
@@ -257,12 +257,14 @@ module LeapCli
         end
         actual_path = Path.find_file(path)
         if actual_path.nil?
+          Util::log 2, :missing, path
           nil
         else
           if actual_path =~ /^#{Regexp.escape(Path.provider_base)}/
             # if file is under Path.provider_base, we must copy the default file to
             # to Path.provider in order for rsync to be able to sync the file.
             local_provider_path = actual_path.sub(/^#{Regexp.escape(Path.provider_base)}/, Path.provider)
+            FileUtils.mkdir_p File.dirname(local_provider_path)
             FileUtils.cp_r actual_path, local_provider_path
             Util.log :created, Path.relative_path(local_provider_path)
             actual_path = local_provider_path
