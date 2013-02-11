@@ -88,6 +88,7 @@ module LeapCli
             when :nochange  then ['no change', :magenta]
             when :loading   then ['loading', :magenta]
             when :missing   then ['missing', :yellow, :bold]
+            when :skipping  then ['skipping', :yellow, :bold]
             when :run       then ['run', :magenta]
             when :failed    then ['FAILED', :red, :bold]
             when :completed then ['completed', :green, :bold]

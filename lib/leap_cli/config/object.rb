@@ -257,7 +257,7 @@ module LeapCli
         end
         actual_path = Path.find_file(path)
         if actual_path.nil?
-          Util::log 2, :missing, path
+          Util::log 2, :skipping, "file_path(\"#{path}\") because there is no such file."
           nil
         else
           if actual_path =~ /^#{Regexp.escape(Path.provider_base)}/
