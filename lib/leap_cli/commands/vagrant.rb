@@ -82,7 +82,6 @@ module LeapCli; module Commands
   def vagrant_command(cmds, args)
     vagrant_setup
     cmds = cmds.to_a
-    assert_config! 'provider.vagrant.network'
     if args.empty?
       nodes = [""]
     else
@@ -98,7 +97,7 @@ module LeapCli; module Commands
       end
       execute exec.join('; ')
     else
-      bail! "No nodes found. This command only works on nodes with ip_address in the network #{provider.vagrant.network}"
+      bail! "No nodes found. This command only works on nodes with ip_address in the network #{LeapCli.leapfile.vagrant_network}"
     end
   end
 
@@ -120,7 +119,7 @@ module LeapCli; module Commands
 
   def create_vagrant_file
     lines = []
-    netmask = IPAddr.new('255.255.255.255').mask(provider.vagrant.network.split('/').last).to_s
+    netmask = IPAddr.new('255.255.255.255').mask(LeapCli.leapfile.vagrant_network.split('/').last).to_s
     lines << %[Vagrant::Config.run do |config|]
     manager.each_node do |node|
       if node.vagrant?
@@ -144,7 +143,7 @@ module LeapCli; module Commands
       highest_ip = taken_ips.map{|ip| IPAddr.new(ip)}.max
       new_ip = highest_ip.succ
     else
-      new_ip = IPAddr.new(provider.vagrant.network).succ.succ
+      new_ip = IPAddr.new(LeapCli.leapfile.vagrant_network).succ.succ
     end
     return new_ip.to_s
   end

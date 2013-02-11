@@ -35,7 +35,7 @@ module LeapCli; module Config
     #
     def vagrant?
       begin
-        vagrant_range = IPAddr.new @manager.provider.vagrant.network
+        vagrant_range = IPAddr.new LeapCli.leapfile.vagrant_network
       rescue ArgumentError => exc
         Util::bail! { Util::log :invalid, "ip address '#{@node.ip_address}' vagrant.network" }
       end
