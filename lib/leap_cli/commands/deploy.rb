@@ -96,9 +96,10 @@ module LeapCli
 
     def init_submodules
       Dir.chdir Path.platform do
+        assert_run! "git submodule sync"
         statuses = assert_run! "git submodule status"
         statuses.strip.split("\n").each do |status_line|
-          if status_line =~ /^-/
+          if status_line =~ /^[\+-]/
             submodule = status_line.split(' ')[1]
             log "Updating submodule #{submodule}"
             assert_run! "git submodule update --init #{submodule}"
