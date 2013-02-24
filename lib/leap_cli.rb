@@ -24,6 +24,8 @@ require 'leap_cli/config/secrets'
 require 'leap_cli/config/object_list'
 require 'leap_cli/config/manager'
 
+require 'leap_cli/markdown_document_listener'
+
 module LeapCli::Commands; end
 
 #
