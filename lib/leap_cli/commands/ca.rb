@@ -9,6 +9,7 @@ module LeapCli; module Commands
   command :cert do |cert|
 
     cert.desc 'Creates two Certificate Authorities (one for validating servers and one for validating clients).'
+    cert.long_desc 'See see what values are used in the generation of the certificates (like name and key size), run `leap inspect provider` and look for the "ca" property. To see the details of the created certs, run `leap inspect <file>`.'
     cert.command :ca do |ca|
       ca.action do |global_options,options,args|
         assert_config! 'provider.ca.name'
@@ -17,7 +18,7 @@ module LeapCli; module Commands
       end
     end
 
-    cert.desc 'Creates or renews a X.509 certificate/key pair for a single node or all nodes, but only if needed'
+    cert.desc 'Creates or renews a X.509 certificate/key pair for a single node or all nodes, but only if needed.'
     cert.long_desc 'This command will a generate new certificate for a node if some value in the node has changed ' +
                    'that is included in the certificate (like hostname or IP address), or if the old certificate will be expiring soon. ' +
                    'Sometimes, you might want to force the generation of a new certificate, ' +
@@ -45,7 +46,7 @@ module LeapCli; module Commands
       end
     end
 
-    cert.desc 'Creates a Diffie-Hellman parameter file' # (needed for server-side of some TLS connections)
+    cert.desc 'Creates a Diffie-Hellman parameter file.' # (needed for server-side of some TLS connections)
     cert.command :dh do |dh|
       dh.action do |global_options,options,args|
         long_running do
@@ -79,7 +80,8 @@ module LeapCli; module Commands
     # nice details about CSRs:
     #   http://www.redkestrel.co.uk/Articles/CSR.html
     #
-    cert.desc 'Creates a CSR for use in buying a commercial X.509 certificate'
+    cert.desc "Creates a CSR for use in buying a commercial X.509 certificate."
+    cert.long_desc "The CSR created is for the for the provider's primary domain. The properties used for this CSR come from `provider.ca.server_certificates`."
     cert.command :csr do |csr|
       #c.switch 'sign', :desc => 'additionally creates a cert that is signed by your own CA (recommended only for testing)', :negatable => false
       csr.action do |global_options,options,args|

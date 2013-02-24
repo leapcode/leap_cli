@@ -4,9 +4,9 @@ module LeapCli
 
     DEFAULT_TAGS = ['leap_base','leap_service']
 
-    desc 'Apply recipes to a node or set of nodes'
-    long_desc 'The node-filter can be the name of a node, service, or tag.'
-    arg_name 'node-filter'
+    desc 'Apply recipes to a node or set of nodes.'
+    long_desc 'The FILTER can be the name of a node, service, or tag.'
+    arg_name 'FILTER'
     command :deploy do |c|
 
       # --fast

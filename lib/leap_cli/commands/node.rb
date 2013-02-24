@@ -10,13 +10,13 @@ module LeapCli; module Commands
 
   desc 'Node management'
   command :node do |node|
-    node.desc 'Create a new configuration file for a node'
-    node.long_desc ["If specified, the optional argument seed-options can be used to seed values in the node configuration file.",
+    node.desc 'Create a new configuration file for a node named NAME.'
+    node.long_desc ["If specified, the optional argument SEED can be used to seed values in the node configuration file.",
                     "The format is property_name:value.",
                     "For example: `leap node add web1 ip_address:1.2.3.4 services:webapp`.",
                     "To set nested properties, property name can contain '.', like so: `leap node add web1 ssh.port:44`",
-                    "To set multiple values for a single property, use ',', like so: `leap node add mynode services:webapp,dns`"].join("\n\n")
-    node.arg_name '<node-name> [seed-options]' # , :optional => false, :multiple => false
+                    "Separeate multiple values for a single property with a comma, like so: `leap node add mynode services:webapp,dns`"].join("\n\n")
+    node.arg_name 'NAME [SEED]' # , :optional => false, :multiple => false
     node.command :add do |add|
       add.switch :local, :desc => 'Make a local testing node (by automatically assigning the next available local IP address). Local nodes are run as virtual machines on your computer.', :negatable => false
       add.action do |global_options,options,args|
@@ -48,7 +48,7 @@ module LeapCli; module Commands
                    "copying the authorized_keys file, and installing packages that are required for deploying. " +
                    "Node init must be run before deploying to a server, and the server must be running and available via the network. " +
                    "This command only needs to be run once, but there is no harm in running it multiple times."
-    node.arg_name '<node-filter>' #, :optional => false, :multiple => false
+    node.arg_name 'FILTER' #, :optional => false, :multiple => false
     node.command :init do |init|
       init.switch 'echo', :desc => 'If set, passwords are visible as you type them (default is hidden)', :negatable => false
       init.action do |global,options,args|
@@ -68,8 +68,8 @@ module LeapCli; module Commands
       end
     end
 
-    node.desc 'Renames a node file, and all its related files'
-    node.arg_name '<old-name> <new-name>'
+    node.desc 'Renames a node file, and all its related files.'
+    node.arg_name 'OLD_NAME NEW_NAME'
     node.command :mv do |mv|
       mv.action do |global_options,options,args|
         node = get_node_from_args(args)
@@ -82,8 +82,8 @@ module LeapCli; module Commands
       end
     end
 
-    node.desc 'Removes a node file, and all its related files'
-    node.arg_name '<node-name>' #:optional => false #, :multiple => false
+    node.desc 'Removes all the files related to the node named NAME.'
+    node.arg_name 'NAME' #:optional => false #, :multiple => false
     node.command :rm do |rm|
       rm.action do |global_options,options,args|
         node = get_node_from_args(args)

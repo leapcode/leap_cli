@@ -3,11 +3,11 @@ require 'fileutils'
 
 module LeapCli; module Commands
 
-  desc "Manage local virtual machines"
-  long_desc "This command provides a convient way to manage Vagrant-based virtual machines. If node-filter argument is missing, the command runs on all local virtual machines. The Vagrantfile is automatically generated in 'test/Vagrantfile'. If you want to run vagrant commands manually, cd to 'test'."
+  desc "Manage local virtual machines."
+  long_desc "This command provides a convient way to manage Vagrant-based virtual machines. If FILTER argument is missing, the command runs on all local virtual machines. The Vagrantfile is automatically generated in 'test/Vagrantfile'. If you want to run vagrant commands manually, cd to 'test'."
   command :local do |local|
     local.desc 'Starts up the virtual machine(s)'
-    local.arg_name 'node-filter', :optional => true #, :multiple => false
+    local.arg_name 'FILTER', :optional => true #, :multiple => false
     local.command :start do |start|
       start.action do |global_options,options,args|
         vagrant_command(["up", "sandbox on"], args)
@@ -15,7 +15,7 @@ module LeapCli; module Commands
     end
 
     local.desc 'Shuts down the virtual machine(s)'
-    local.arg_name 'node-filter', :optional => true #, :multiple => false
+    local.arg_name 'FILTER', :optional => true #, :multiple => false
     local.command :stop do |stop|
       stop.action do |global_options,options,args|
         if global_options[:yes]
@@ -27,7 +27,7 @@ module LeapCli; module Commands
     end
 
     local.desc 'Destroys the virtual machine(s), reclaiming the disk space'
-    local.arg_name 'node-filter', :optional => true #, :multiple => false
+    local.arg_name 'FILTER', :optional => true #, :multiple => false
     local.command :destroy do |destroy|
       destroy.action do |global_options,options,args|
         if global_options[:yes]
@@ -39,7 +39,7 @@ module LeapCli; module Commands
     end
 
     local.desc 'Print the status of local virtual machine(s)'
-    local.arg_name 'node-filter', :optional => true #, :multiple => false
+    local.arg_name 'FILTER', :optional => true #, :multiple => false
     local.command :status do |status|
       status.action do |global_options,options,args|
         vagrant_command("status", args)
@@ -47,7 +47,7 @@ module LeapCli; module Commands
     end
 
     local.desc 'Saves the current state of the virtual machine as a new snapshot'
-    local.arg_name 'node-filter', :optional => true #, :multiple => false
+    local.arg_name 'FILTER', :optional => true #, :multiple => false
     local.command :save do |status|
       status.action do |global_options,options,args|
         vagrant_command("sandbox commit", args)
@@ -55,7 +55,7 @@ module LeapCli; module Commands
     end
 
     local.desc 'Resets virtual machine(s) to the last saved snapshot'
-    local.arg_name 'node-filter', :optional => true #, :multiple => false
+    local.arg_name 'FILTER', :optional => true #, :multiple => false
     local.command :reset do |reset|
       reset.action do |global_options,options,args|
         vagrant_command("sandbox rollback", args)

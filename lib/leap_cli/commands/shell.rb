@@ -1,7 +1,7 @@
 module LeapCli; module Commands
 
-  desc 'Log in to the specified node with an interactive shell'
-  arg_name '<node-name>', :optional => false, :multiple => false
+  desc 'Log in to the specified node with an interactive shell.'
+  arg_name 'NAME' #, :optional => false, :multiple => false
   command :ssh do |c|
     c.action do |global_options,options,args|
       node = get_node_from_args(args)

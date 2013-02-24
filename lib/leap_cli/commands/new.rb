@@ -6,10 +6,10 @@ module LeapCli; module Commands
   arg_name 'DIRECTORY'
   skips_pre
   command :new do |c|
-    c.flag 'name', :desc => "The name of the provider" #, :default_value => 'Example'
-    c.flag 'domain', :desc => "The primary domain of the provider" #, :default_value => 'example.org'
-    c.flag 'platform', :desc => "File path of the leap_platform directory" #, :default_value => '../leap_platform'
-    c.flag 'contacts', :desc => "Default email address contacts" #, :default_value => 'root'
+    c.flag 'name', :desc => "The name of the provider." #, :default_value => 'Example'
+    c.flag 'domain', :desc => "The primary domain of the provider." #, :default_value => 'example.org'
+    c.flag 'platform', :desc => "File path of the leap_platform directory." #, :default_value => '../leap_platform'
+    c.flag 'contacts', :desc => "Default email address contacts." #, :default_value => 'root'
 
     c.action do |global, options, args|
       directory = File.expand_path(args.first)

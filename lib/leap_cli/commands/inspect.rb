@@ -1,11 +1,11 @@
 module LeapCli; module Commands
 
-  desc 'Prints information about a file or node.'
-  arg_name '<file-or-node>', :optional => false
+  desc 'Prints details about a file. Alternately, the argument FILE can be the name of a node, service or tag.'
+  arg_name 'FILE'
   command :inspect do |c|
     c.action do |global_options,options,args|
       object = args.first
-      assert! object, 'A file path or node name is required'
+      assert! object, 'A file path or node/service/tag name is required'
       method = inspection_method(object)
       if method && defined?(method)
         self.send(method, object, options)

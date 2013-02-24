@@ -2,7 +2,7 @@
 module LeapCli
   module Commands
 
-    desc 'Compiles node configuration files into hiera files used for deployment'
+    desc 'Compiles node configuration files into hiera files used for deployment.'
     command :compile do |c|
       c.action do |global_options,options,args|
         compile_hiera_files

@@ -15,7 +15,7 @@ module LeapCli
   module Commands
 
     desc 'Adds a new trusted sysadmin'
-    arg_name '<username>', :optional => false, :multiple => false
+    arg_name 'USERNAME' #, :optional => false, :multiple => false
     command :'add-user' do |c|
 
       c.switch 'self', :desc => 'lets you choose among your public keys', :negatable => false

@@ -4,13 +4,13 @@ module LeapCli; module Commands
 
   desc 'List nodes and their classifications'
   long_desc 'Prints out a listing of nodes, services, or tags. ' +
-            'The node-filter can be a list of names of nodes, services, or tags. ' +
+            'If present, the FILTER can be a list of names of nodes, services, or tags. ' +
             'If the name is prefixed with +, this acts like an AND condition. ' +
             "For example:\n\n" +
-            " * node1 node2    -> matches all nodes named \"node1\" OR \"node2\"\n\n" +
-            " * openvpn +local -> matches all nodes with service \"openvpn\" AND tag \"local\""
+            "`leap list node1 node2` matches all nodes named \"node1\" OR \"node2\"\n\n" +
+            "`leap list openvpn +local` matches all nodes with service \"openvpn\" AND tag \"local\""
 
-  arg_name '[node-filter]', :optional => true
+  arg_name 'FILTER', :optional => true
   command :list do |c|
     c.flag 'print', :desc => 'What attributes to print (optional)'
     c.action do |global_options,options,args|
