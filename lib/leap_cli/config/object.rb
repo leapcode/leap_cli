@@ -393,6 +393,14 @@ module LeapCli
       end
 
       def evaluate_now(key, value)
+        if LeapCli.log_level >= 2
+          @node.instance_eval(value)
+        else
+          evaluate_now!(key, value)
+        end
+      end
+
+      def evaluate_now!(key, value)
         return @node.instance_eval(value)
       rescue SystemStackError => exc
         Util::log 0, :error, "while evaluating node '#{@node.name}'"
