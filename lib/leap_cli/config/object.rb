@@ -269,7 +269,7 @@ module LeapCli
             Util.log :created, Path.relative_path(local_provider_path)
             actual_path = local_provider_path
           end
-          if Dir.exists?(actual_path) && actual_path !~ /\/$/
+          if File.directory?(actual_path) && actual_path !~ /\/$/
             actual_path += '/' # ensure directories end with /, important for building rsync command
           end
           relative_path = Path.relative_path(actual_path)
