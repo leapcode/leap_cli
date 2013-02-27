@@ -57,15 +57,19 @@ module LeapCli
 
       options[:level] ||= level
       message.lines.each do |line|
-        formatted_line, formatted_prefix, line_options = apply_formatting(line, line_prefix, options)
-        if formatted_line && line_options[:level] <= self.level
-          if formatted_line.chars.any?
-            if formatted_prefix
-              LeapCli::log "[#{formatted_prefix}] #{formatted_line}"
+        [:stdout, :log].each do |mode|
+          LeapCli::log_raw(mode) {
+            formatted_line, formatted_prefix, line_options = apply_formatting(mode, line, line_prefix, options)
+            if line_options[:level] <= self.level && formatted_line && formatted_line.chars.any?
+              if formatted_prefix
+                "[#{formatted_prefix}] #{formatted_line}"
+              else
+                formatted_line
+              end
             else
-              LeapCli::log formatted_line
+              nil
             end
-          end
+          }
         end
       end
     end
@@ -127,7 +131,7 @@ module LeapCli
     ]
     def self.prefix_formatters; @prefix_formatters; end
 
-    def apply_formatting(message, line_prefix = nil, options={})
+    def apply_formatting(mode, message, line_prefix = nil, options={})
       message = message.dup
       options = options.dup
       if !line_prefix.nil?
@@ -168,7 +172,7 @@ module LeapCli
 
       if color == :hide
         return nil
-      elsif color == :none && style.nil?
+      elsif mode == :log || (color == :none && style.nil?)
         return [message, line_prefix, options]
       else
         term_color = COLORS[color]

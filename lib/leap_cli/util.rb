@@ -1,5 +1,4 @@
 require 'digest/md5'
-require 'paint'
 require 'fileutils'
 require 'pathname'
 require 'erb'

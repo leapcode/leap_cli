@@ -1,5 +1,4 @@
 require 'paint'
-require 'tee'
 
 ##
 ## LOGGING
@@ -30,13 +29,16 @@ module LeapCli
   end
   def log_file=(value)
     @log_file = value
-    if value
-      @log_output_stream = Tee.open(@log_file, :mode => 'a')
+    if @log_file
+      if !File.directory?(File.dirname(@log_file))
+        Util.bail!('Invalid log file "%s", directory "%s" does not exist' % [@log_file, File.dirname(@log_file)])
+      end
+      @log_output_stream = File.open(@log_file, 'a')
     end
   end
 
   def log_output_stream
-    @log_output_stream || STDOUT
+    @log_output_stream
   end
 
 end
@@ -67,55 +69,93 @@ module LeapCli
       title   = args.grep(Symbol).first
       message = args.grep(String).first
       options = args.grep(Hash).first || {}
-      options[:indent] ||= LeapCli.indent_level
-      if message && LeapCli.log_level >= level
-        line = ""
-        line += "  " * (options[:indent])
-        if options[:indent] > 0
-          line += ' - '
+      unless message && LeapCli.log_level >= level
+        return
+      end
+
+      # prefix
+      clear_prefix = colored_prefix = ""
+      if title
+        prefix_options = case title
+          when :error     then ['error', :red, :bold]
+          when :warning   then ['warning', :yellow, :bold]
+          when :info      then ['info', :cyan, :bold]
+          when :updated   then ['updated', :cyan, :bold]
+          when :updating  then ['updating', :cyan, :bold]
+          when :created   then ['created', :green, :bold]
+          when :removed   then ['removed', :red, :bold]
+          when :nochange  then ['no change', :magenta]
+          when :loading   then ['loading', :magenta]
+          when :missing   then ['missing', :yellow, :bold]
+          when :skipping  then ['skipping', :yellow, :bold]
+          when :run       then ['run', :magenta]
+          when :failed    then ['FAILED', :red, :bold]
+          when :completed then ['completed', :green, :bold]
+          when :ran       then ['ran', :green, :bold]
+          when :bail      then ['bailing out', :red, :bold]
+          when :invalid   then ['invalid', :red, :bold]
+          else [title.to_s, :cyan, :bold]
+        end
+        if options[:host]
+          clear_prefix = "[%s] %s " % options[:host], prefix_options[0]
+          colored_prefix = "[%s] %s " % [Paint[options[:host], prefix_options[1], prefix_options[2]], prefix_options[0]]
         else
-          line += ' = '
+          clear_prefix = "%s " % prefix_options[0]
+          colored_prefix = "%s " % Paint[prefix_options[0], prefix_options[1], prefix_options[2]]
         end
-        if title
-          prefix = case title
-            when :error     then ['error', :red, :bold]
-            when :warning   then ['warning', :yellow, :bold]
-            when :info      then ['info', :cyan, :bold]
-            when :updated   then ['updated', :cyan, :bold]
-            when :updating  then ['updating', :cyan, :bold]
-            when :created   then ['created', :green, :bold]
-            when :removed   then ['removed', :red, :bold]
-            when :nochange  then ['no change', :magenta]
-            when :loading   then ['loading', :magenta]
-            when :missing   then ['missing', :yellow, :bold]
-            when :skipping  then ['skipping', :yellow, :bold]
-            when :run       then ['run', :magenta]
-            when :failed    then ['FAILED', :red, :bold]
-            when :completed then ['completed', :green, :bold]
-            when :ran       then ['ran', :green, :bold]
-            when :bail      then ['bailing out', :red, :bold]
-            when :invalid   then ['invalid', :red, :bold]
-            else [title.to_s, :cyan, :bold]
+      elsif options[:host]
+        clear_prefix = colored_prefix =  "[%s] " % options[:host]
+      end
+
+      # transform absolute path names
+      if title && FILE_TITLES.include?(title) && message =~ /^\//
+        message = LeapCli::Path.relative_path(message)
+      end
+
+      log_raw(:log, nil)                 { [clear_prefix, message].join }
+      log_raw(:stdout, options[:indent]) { [colored_prefix, message].join }
+
+      # run block, if given
+      if block_given?
+        LeapCli.indent_level += 1
+        yield
+        LeapCli.indent_level -= 1
+      end
+    end
+
+    #
+    # Add a raw log entry, without any modifications (other than indent).
+    # Content to be logged is yielded by the block.
+    #
+    # if mode == :stdout, output is sent to STDOUT.
+    # if mode == :log, output is sent to log file, if present.
+    #
+    def log_raw(mode, indent=nil, &block)
+      # NOTE: print message (using 'print' produces better results than 'puts' when multiple threads are logging)
+      if mode == :log
+        if LeapCli.log_output_stream
+          message = yield
+          if message
+            timestamp = Time.now.strftime("%b %d %H:%M:%S")
+            LeapCli.log_output_stream.print("#{timestamp} #{message}\n")
+            LeapCli.log_output_stream.flush
           end
-          if options[:host]
-            line += "[%s] %s " % [Paint[options[:host], prefix[1], prefix[2]], prefix[0]]
+        end
+      elsif mode == :stdout
+        message = yield
+        if message
+          indent ||= LeapCli.indent_level
+          indent_str = ""
+          indent_str += "  " * indent.to_i
+          if indent.to_i > 0
+            indent_str += ' - '
           else
-            line += "%s " % Paint[prefix[0], prefix[1], prefix[2]]
+            indent_str += ' = '
           end
-          if FILE_TITLES.include?(title) && message =~ /^\//
-            message = LeapCli::Path.relative_path(message)
-          end
-        elsif options[:host]
-          line += "[%s] " % options[:host]
-        end
-        line += "#{message}\n"
-        LeapCli.log_output_stream.print(line)
-        if block_given?
-          LeapCli.indent_level += 1
-          yield
-          LeapCli.indent_level -= 1
+          STDOUT.print("#{indent_str}#{message}\n")
         end
       end
     end
+
   end
 end
