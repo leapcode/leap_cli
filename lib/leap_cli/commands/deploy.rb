@@ -52,7 +52,15 @@ module LeapCli
           end
           tags << 'leap_slow' unless options[:fast]
 
-          ssh.set :puppet_command, "/usr/bin/puppet apply --color=false --tags=#{tags.join(',')}"
+          # set verbosity
+          verbosity = case LeapCli.log_level
+            when 3 then '--verbose'
+            when 4 then '--verbose --debug'
+            when 5 then '--verbose --debug --trace'
+            else ''
+          end
+
+          ssh.set :puppet_command, "/usr/bin/puppet apply --color=false --tags=#{tags.join(',')} #{verbosity}"
           ssh.set :puppet_lib, "puppet/modules"
           ssh.set :puppet_parameters, '--libdir puppet/lib --confdir puppet puppet/manifests/site.pp'
           ssh.set :puppet_stream_output, true
