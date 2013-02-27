@@ -12,6 +12,10 @@ module LeapCli
     ## QUITTING
     ##
 
+    def exit_status(code)
+      @exit_status = code
+    end
+
     #
     # quit and print help
     #
@@ -21,7 +25,7 @@ module LeapCli
     end
 
     #
-    # quit with a message that we are bailing out.
+    # exit with error code and with a message that we are bailing out.
     #
     def bail!(message=nil)
       if block_given?
@@ -31,15 +35,15 @@ module LeapCli
         log 0, message
       end
       log 0, :bail, ""
-      raise SystemExit.new
+      raise SystemExit.new(@exit_status || 1)
     end
 
     #
-    # quit with no message
+    # quit with message, but no additional error or warning about bailing.
     #
     def quit!(message='')
       puts(message)
-      raise SystemExit.new
+      raise SystemExit.new(@exit_status || 0)
     end
 
     #
@@ -72,6 +76,7 @@ module LeapCli
       cmd = cmd + " 2>&1"
       output = `#{cmd}`
       unless $?.success?
+        exit_status($?.exitstatus)
         bail! do
           log :run, cmd
           log :failed, "(exit #{$?.exitstatus}) #{output}", :indent => 1
