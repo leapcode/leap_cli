@@ -51,6 +51,7 @@ module LeapCli
       # set log file
       #
       LeapCli.log_file = global[:log] || LeapCli.leapfile.log
+      LeapCli::Util.log_raw(:log) { $0 + ' ' + ORIGINAL_ARGV.join(' ')}
 
       #
       # load all the nodes everything

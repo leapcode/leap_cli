@@ -79,5 +79,6 @@ module LeapCli::Commands
 
   # load commands and run
   commands_from('leap_cli/commands')
+  ORIGINAL_ARGV = ARGV.dup
   exit run(ARGV)
 end
