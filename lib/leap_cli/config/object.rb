@@ -140,17 +140,8 @@ module LeapCli
           elsif old_value.nil?
             value = new_value
 
-          # merge boolean
-          elsif old_value.is_a?(Boolean) && new_value.is_a?(Boolean)
-            # FalseClass and TrueClass are different classes, so we must handle them separately
-            if prefer_self
-              value = old_value
-            else
-              value = new_value
-            end
-
           # catch errors
-          elsif old_value.class != new_value.class
+          elsif type_mismatch?(old_value, new_value)
             raise 'Type mismatch. Cannot merge %s (%s) with %s (%s). Key is "%s", name is "%s".' % [
               old_value.inspect, old_value.class,
               new_value.inspect, new_value.class,
@@ -393,39 +384,42 @@ module LeapCli
       end
 
       def evaluate_now(key, value)
+        result = nil
         if LeapCli.log_level >= 2
-          @node.instance_eval(value)
+          result = @node.instance_eval(value)
         else
-          evaluate_now!(key, value)
-        end
-      end
-
-      def evaluate_now!(key, value)
-        return @node.instance_eval(value)
-      rescue SystemStackError => exc
-        Util::log 0, :error, "while evaluating node '#{@node.name}'"
-        Util::log 0, "offending key: #{key}", :indent => 1
-        Util::log 0, "offending string: #{value}", :indent => 1
-        Util::log 0, "STACK OVERFLOW, BAILING OUT. There must be an eval loop of death (variables with circular dependencies).", :indent => 1
-        raise SystemExit.new()
-      rescue FileMissing => exc
-        Util::bail! do
-          if exc.options[:missing]
-            Util::log :missing, exc.options[:missing].gsub('$node', @node.name)
-          else
-            Util::log :error, "while evaluating node '#{@node.name}'"
-            Util::log "offending key: #{key}", :indent => 1
-            Util::log "offending string: #{value}", :indent => 1
-            Util::log "error message: no file '#{exc}'", :indent => 1
+          begin
+            result = @node.instance_eval(value)
+          rescue SystemStackError => exc
+            Util::log 0, :error, "while evaluating node '#{@node.name}'"
+            Util::log 0, "offending key: #{key}", :indent => 1
+            Util::log 0, "offending string: #{value}", :indent => 1
+            Util::log 0, "STACK OVERFLOW, BAILING OUT. There must be an eval loop of death (variables with circular dependencies).", :indent => 1
+            raise SystemExit.new(1)
+          rescue FileMissing => exc
+            Util::bail! do
+              if exc.options[:missing]
+                Util::log :missing, exc.options[:missing].gsub('$node', @node.name)
+              else
+                Util::log :error, "while evaluating node '#{@node.name}'"
+                Util::log "offending key: #{key}", :indent => 1
+                Util::log "offending string: #{value}", :indent => 1
+                Util::log "error message: no file '#{exc}'", :indent => 1
+              end
+            end
+          rescue SyntaxError, StandardError => exc
+            Util::bail! do
+              Util::log :error, "while evaluating node '#{@node.name}'"
+              Util::log "offending key: #{key}", :indent => 1
+              Util::log "offending string: #{value}", :indent => 1
+              Util::log "error message: #{exc.inspect}", :indent => 1
+            end
           end
         end
-      rescue SyntaxError, StandardError => exc
-        Util::bail! do
-          Util::log :error, "while evaluating node '#{@node.name}'"
-          Util::log "offending key: #{key}", :indent => 1
-          Util::log "offending string: #{value}", :indent => 1
-          Util::log "error message: #{exc.inspect}", :indent => 1
+        if result == "REQUIRED"
+          Util::log 0, :warning, "required key \"#{key}\" is not set in node \"#{node.name}\"."
         end
+        return result
       end
 
       #
@@ -465,6 +459,26 @@ module LeapCli
         Array.class_eval {alias_method :each, :each_without_sort}
 
         return return_value
+      end
+
+      #
+      # when merging, we raise an error if this method returns true for the two values.
+      #
+      def type_mismatch?(old_value, new_value)
+        if old_value.is_a?(Boolean) && new_value.is_a?(Boolean)
+          # note: FalseClass and TrueClass are different classes
+          # so we can't do old_value.class == new_value.class
+          return false
+        elsif old_value.is_a?(String) && old_value =~ /^=/
+          # pass through macros, since we don't know what the type will eventually be.
+          return false
+        elsif new_value.is_a?(String) && new_value =~ /^=/
+          return false
+        elsif old_value.class == new_value.class
+          return false
+        else
+          return true
+        end
       end
 
     end # class
