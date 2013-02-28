@@ -78,7 +78,7 @@ module LeapCli
       if title
         prefix_options = case title
           when :error     then ['error', :red, :bold]
-          when :warning   then ['warning', :yellow, :bold]
+          when :warning   then ['warning:', :yellow, :bold]
           when :info      then ['info', :cyan, :bold]
           when :updated   then ['updated', :cyan, :bold]
           when :updating  then ['updating', :cyan, :bold]
@@ -126,6 +126,7 @@ module LeapCli
     #
     # Add a raw log entry, without any modifications (other than indent).
     # Content to be logged is yielded by the block.
+    # Block may be either a string or array of strings.
     #
     # if mode == :stdout, output is sent to STDOUT.
     # if mode == :log, output is sent to log file, if present.
@@ -134,16 +135,18 @@ module LeapCli
       # NOTE: print message (using 'print' produces better results than 'puts' when multiple threads are logging)
       if mode == :log
         if LeapCli.log_output_stream
-          message = yield
-          if message
+          messages = [yield].compact.flatten
+          if messages.any?
             timestamp = Time.now.strftime("%b %d %H:%M:%S")
-            LeapCli.log_output_stream.print("#{timestamp} #{message}\n")
+            messages.each do |message|
+              LeapCli.log_output_stream.print("#{timestamp} #{message}\n")
+            end
             LeapCli.log_output_stream.flush
           end
         end
       elsif mode == :stdout
-        message = yield
-        if message
+        messages = [yield].compact.flatten
+        if messages.any?
           indent ||= LeapCli.indent_level
           indent_str = ""
           indent_str += "  " * indent.to_i
@@ -152,7 +155,9 @@ module LeapCli
           else
             indent_str += ' = '
           end
-          STDOUT.print("#{indent_str}#{message}\n")
+          messages.each do |message|
+            STDOUT.print("#{indent_str}#{message}\n")
+          end
         end
       end
     end

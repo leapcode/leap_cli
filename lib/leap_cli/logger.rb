@@ -44,9 +44,9 @@ module LeapCli
     end
 
     def log(level, message, line_prefix=nil, options={})
-      # in some cases, when the message doesn't end with a return, we buffer it and
-      # wait until we encounter the return before we log the message out.
       if message !~ /\n$/ && level <= 2 && line_prefix.is_a?(String)
+        # in some cases, when the message doesn't end with a return, we buffer it and
+        # wait until we encounter the return before we log the message out.
         @message_buffer ||= ""
         @message_buffer += message
         return
@@ -56,25 +56,29 @@ module LeapCli
       end
 
       options[:level] ||= level
-      message.lines.each do |line|
-        [:stdout, :log].each do |mode|
-          LeapCli::log_raw(mode) {
-            formatted_line, formatted_prefix, line_options = apply_formatting(mode, line, line_prefix, options)
-            if line_options[:level] <= self.level && formatted_line && formatted_line.chars.any?
-              if formatted_prefix
-                "[#{formatted_prefix}] #{formatted_line}"
-              else
-                formatted_line
-              end
-            else
-              nil
-            end
-          }
+      [:stdout, :log].each do |mode|
+        LeapCli::log_raw(mode) do
+          message_lines(mode, message, line_prefix, options)
         end
       end
     end
 
     private
+
+    def message_lines(mode, message, line_prefix, options)
+      formatted_message, formatted_prefix, message_options = apply_formatting(mode, message, line_prefix, options)
+      if message_options[:level] <= self.level && formatted_message && formatted_message.chars.any?
+        if formatted_prefix
+          formatted_message.lines.collect { |line|
+            "[#{formatted_prefix}] #{line.sub(/\s+$/, '')}"
+          }
+        else
+          formatted_message.lines.collect {|line| line.sub(/\s+$/, '')}
+        end
+      else
+        nil
+      end
+    end
 
     ##
     ## FORMATTING
@@ -114,10 +118,15 @@ module LeapCli
       { :match => /^warning: .*is deprecated.*$/,  :level => 2, :color => :yellow, :priority => -10},
       { :match => /^warning: Scope.*$/,            :level => 2, :color => :yellow, :priority => -10},
       { :match => /^notice:/,                      :level => 1, :color => :cyan,   :priority => -20},
-      { :match => /^err:/,                         :level => 0, :color => :red,    :priority => -20},
       { :match => /^warning:/,                     :level => 0, :color => :yellow, :priority => -20},
       { :match => /^Duplicate declaration:/,       :level => 0, :color => :red,    :priority => -20},
       { :match => /Finished catalog run/,          :level => 0, :color => :green,  :priority => -10},
+
+      # PUPPET FATAL ERRORS
+      { :match => /^err:/,                         :level => 0, :color => :red, :priority => -1, :exit => 1},
+      { :match => /^Failed to parse template/,     :level => 0, :color => :red, :priority => -1, :exit => 1},
+      { :match => /^Parameter matches failed:/,    :level => 0, :color => :red, :priority => -1, :exit => 1},
+      { :match => /^Syntax error/,                 :level => 0, :color => :red, :priority => -1, :exit => 1}
     ]
 
     def self.sorted_formatters
@@ -163,6 +172,10 @@ module LeapCli
             message.replace(formatter[:prepend] + message) unless formatter[:prepend].nil?
             message.replace(message + formatter[:append])  unless formatter[:append].nil?
             message.replace(Time.now.strftime('%Y-%m-%d %T') + ' ' + message) if formatter[:timestamp]
+
+            if formatter[:exit]
+              LeapCli::Util.exit_status(formatter[:exit])
+            end
 
             # stop formatting, unless formatter was just for string replacement
             break unless formatter[:replace]
