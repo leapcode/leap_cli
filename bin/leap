@@ -15,11 +15,7 @@ rescue LoadError
   #
   require 'rubygems'
   base_dir = File.expand_path('..', File.dirname(File.symlink?(__FILE__) ? File.readlink(__FILE__) : __FILE__))
-  require File.join([base_dir, 'lib','leap_cli','version.rb'])
-  LeapCli::REQUIRE_PATHS.each do |path|
-    path = File.expand_path(path, base_dir)
-    $LOAD_PATH.unshift path unless $LOAD_PATH.include?(path)
-  end
+  require File.join(base_dir, 'lib','leap_cli','load_paths')
   require 'leap_cli'
 end
 

@@ -26,7 +26,7 @@ spec = Gem::Specification.new do |s|
   s.files += ["bin/leap"]
   s.files += `find vendor -name '*.rb'`.split("\n")
   s.files += `find vendor/vagrant_ssh_keys -name '*.pub' -o -name '*.key'`.split("\n")
-  s.require_paths += LeapCli::REQUIRE_PATHS
+  s.require_paths += LeapCli::LOAD_PATHS
   s.bindir = 'bin'
   s.executables << 'leap'
 
@@ -43,7 +43,7 @@ spec = Gem::Specification.new do |s|
   ##
 
   # test
-  s.add_development_dependency('rake')
+  s.add_development_dependency('rake', '>= 10.0.3')
   s.add_development_dependency('minitest')
   #s.add_development_dependency('rdoc')
   #s.add_development_dependency('aruba')

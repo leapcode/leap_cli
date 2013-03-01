@@ -2,6 +2,7 @@ require "rubygems"
 require "pty"
 require "fileutils"
 require "rake/testtask"
+require 'paint'
 
 ##
 ## HELPER
@@ -27,11 +28,8 @@ $spec_path = 'leap_cli.gemspec'
 $base_dir  = File.dirname(__FILE__)
 $spec      = eval(File.read(File.join($base_dir, $spec_path)))
 $gem_path  = File.join($base_dir, 'pkg', "#{$spec.name}-#{$spec.version}.gem")
-require    File.join([$base_dir, 'lib','leap_cli','version.rb'])
-LeapCli::REQUIRE_PATHS.each do |path|
-  path = File.expand_path(path, $base_dir)
-  $LOAD_PATH.unshift path unless $LOAD_PATH.include?(path)
-end
+
+require File.join([$base_dir, 'lib','leap_cli','load_paths'])
 
 def built_gem_path
   Dir[File.join($base_dir, "#{$spec.name}-*.gem")].sort_by{|f| File.mtime(f)}.last
