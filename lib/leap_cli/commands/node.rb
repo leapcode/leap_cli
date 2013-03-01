@@ -54,7 +54,7 @@ module LeapCli; module Commands
       init.action do |global,options,args|
         assert! args.any?, 'You must specify a node-filter'
         finished = []
-        manager.filter(args).each_node do |node|
+        manager.filter!(args).each_node do |node|
           ping_node(node)
           save_public_host_key(node, global)
           update_compiled_ssh_configs
