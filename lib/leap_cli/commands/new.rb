@@ -81,15 +81,7 @@ module LeapCli; module Commands
   end
 
   def leapfile_content(options)
-    # @leap_version = "#{LeapCli::VERSION}"
-    %[## Required:
-@platform_directory_path = "#{options[:platform]}"
-
-## Optional:
-# @custom_vagrant_vm_line = "config.vm.boot_mode = :gui"
-# @log = "/tmp/leap.log"
-# @vagrant_network = '10.5.5.0/24'
-]
+    %[@platform_directory_path = "#{options[:platform]}"\n# see https://leap.se/en/docs/platform/config for more options]
   end
 
   GITIGNORE_CONTENT = <<EOS
@@ -100,9 +92,9 @@ test/cert
 EOS
 
   def provider_content(options)
-  %[#
-# General service provider configuration.
-#
+  %[//
+// General service provider configuration.
+//
 {
   "domain": "#{options[:domain]}",
   "name": {
@@ -122,9 +114,9 @@ EOS
   end
 
   COMMON_CONTENT = <<EOS
-#
-# Options put here are inherited by all nodes.
-#
+//
+// Options put here are inherited by all nodes.
+//
 {
 }
 EOS

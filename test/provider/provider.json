@@ -1,6 +1,6 @@
-#
-# General service provider configuration.
-#
+//
+// General service provider configuration.
+//
 {
   "domain": "bitmask.net",
   "name": {

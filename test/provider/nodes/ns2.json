@@ -1,6 +1,6 @@
-#
-# A nameserver
-#
+//
+// A nameserver
+//
 {
   "services": "dns",
   "tags": "production",

@@ -191,7 +191,7 @@ module LeapCli
         buffer = StringIO.new
         File.open(filename) do |f|
           while (line = f.gets)
-            next if line =~ /^\s*#/
+            next if line =~ /^\s*\/\//
             buffer << line
           end
         end

@@ -1,7 +1,7 @@
-#
-#  "server_crt": "= file :node_x509_cert",
-#  "server_key": "= file :node_x509_key"
-#
+//
+//  "server_crt": "= file :node_x509_cert",
+//  "server_key": "= file :node_x509_key"
+//
 {
   "service_type": "user_service",
   "x509": {
