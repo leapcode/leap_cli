@@ -140,7 +140,7 @@ module LeapCli
       #
       def filter!(filters)
         node_list = filter(filters)
-        Util::assert! node_list.any?, "Could not match any nodes from '#{filters}'"
+        Util::assert! node_list.any?, "Could not match any nodes from '#{filters.join ' '}'"
         return node_list
       end
 

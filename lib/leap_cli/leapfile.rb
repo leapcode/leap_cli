@@ -16,6 +16,8 @@ module LeapCli
     attr_accessor :leap_version
     attr_accessor :log
     attr_accessor :vagrant_network
+    attr_accessor :platform_branch
+    attr_accessor :allow_production_deploy
 
     def initialize
       @vagrant_network = '10.5.5.0/24'
@@ -26,10 +28,15 @@ module LeapCli
       if directory == '/'
         return nil
       else
-        self.provider_directory_path = directory
+        @provider_directory_path = directory
         read_settings(directory + '/Leapfile')
         read_settings(ENV['HOME'] + '/.leaprc')
-        self.platform_directory_path = File.expand_path(self.platform_directory_path || '../leap_platform', self.provider_directory_path)
+        @platform_directory_path = File.expand_path(@platform_directory_path || '../leap_platform', @provider_directory_path)
+        if @allow_production_deploy.nil?
+          # by default, only allow production deploys from 'master' or if not a git repo
+          @allow_production_deploy = !LeapCli::Util.is_git_directory?(@provider_directory_path) ||
+            LeapCli::Util.current_git_branch(@provider_directory_path) == 'master'
+        end
         return true
       end
     end

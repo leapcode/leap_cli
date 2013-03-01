@@ -105,7 +105,7 @@ module LeapCli; module Commands
 
   def vagrant_setup
     assert_bin! 'vagrant', 'Vagrant is required for running local virtual machines. Run "sudo apt-get install vagrant".'
-    unless `vagrant gem which sahara`.chars.any?
+    unless assert_run!('vagrant gem which sahara').chars.any?
       log :installing, "vagrant plugin 'sahara'"
       assert_run! 'vagrant gem install sahara'
     end

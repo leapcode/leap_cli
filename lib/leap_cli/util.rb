@@ -74,7 +74,7 @@ module LeapCli
     #
     def assert_run!(cmd, message=nil)
       cmd = cmd + " 2>&1"
-      output = `#{cmd}`
+      output = `#{cmd}`.strip
       unless $?.success?
         exit_status($?.exitstatus)
         bail! do
@@ -361,6 +361,28 @@ module LeapCli
 
     def erb_eval(string, binding=nil)
       ERB.new(string, nil, '%<>-').result(binding)
+    end
+
+    ##
+    ## GIT
+    ##
+
+    def is_git_directory?(dir)
+      Dir.chdir(dir) do
+        `which git && git rev-parse 2>/dev/null`
+        return $? == 0
+      end
+    end
+
+    def current_git_branch(dir)
+      Dir.chdir(dir) do
+        branch = `git symbolic-ref HEAD 2>/dev/null`.strip
+        if branch.chars.any?
+          branch.sub /^refs\/heads\//, ''
+        else
+          nil
+        end
+      end
     end
 
   end
