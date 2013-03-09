@@ -184,10 +184,10 @@ module LeapCli
       end
 
       #
-      # returns a list of nodes that match similar production level (production, local, testing, etc)
+      # returns a list of nodes that match similar production level (production, local, development, etc)
       #
       def nodes_like_me
-        nodes[:production => @node.production, :local => @node.local]
+        nodes[:production => @node.production, :local => @node.local, :development => @node.development]
       end
 
       class FileMissing < Exception
