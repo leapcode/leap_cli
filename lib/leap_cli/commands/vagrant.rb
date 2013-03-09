@@ -85,7 +85,7 @@ module LeapCli; module Commands
     if args.empty?
       nodes = [""]
     else
-      nodes = manager.filter(args)[:local => true].field(:name)
+      nodes = manager.filter(args)[:environment => "local"].field(:name)
     end
     if nodes.any?
       vagrant_dir = File.dirname(Path.named_path(:vagrantfile))
@@ -138,7 +138,7 @@ module LeapCli; module Commands
   end
 
   def pick_next_vagrant_ip_address
-    taken_ips = manager.nodes[:local => true].field(:ip_address)
+    taken_ips = manager.nodes[:environment => "local"].field(:ip_address)
     if taken_ips.any?
       highest_ip = taken_ips.map{|ip| IPAddr.new(ip)}.max
       new_ip = highest_ip.succ

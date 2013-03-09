@@ -124,8 +124,8 @@ module LeapCli
           # merge hashes
           if old_value.is_a?(Hash) || new_value.is_a?(Hash)
             value = Config::Object.new(@manager, @node)
-            old_value.is_a?(Hash) ? value.deep_merge!(old_value) : (value[key] = old_value if old_value.any?)
-            new_value.is_a?(Hash) ? value.deep_merge!(new_value, prefer_self) : (value[key] = new_value if new_value.any?)
+            old_value.is_a?(Hash) ? value.deep_merge!(old_value) : (value[key] = old_value if !old_value.nil?)
+            new_value.is_a?(Hash) ? value.deep_merge!(new_value, prefer_self) : (value[key] = new_value if !new_value.nil?)
 
           # merge arrays
           elsif old_value.is_a?(Array) || new_value.is_a?(Array)
@@ -184,10 +184,10 @@ module LeapCli
       end
 
       #
-      # returns a list of nodes that match similar production level (production, local, development, etc)
+      # returns a list of nodes that match the same environment
       #
       def nodes_like_me
-        nodes[:production => @node.production, :local => @node.local, :development => @node.development]
+        nodes[:environment => @node.environment]
       end
 
       class FileMissing < Exception
