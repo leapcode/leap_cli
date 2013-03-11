@@ -45,7 +45,6 @@ spec = Gem::Specification.new do |s|
   # test
   s.add_development_dependency('rake', '>= 10.0.3')
   s.add_development_dependency('minitest')
-  s.add_development_dependency('rubygems')
 
   #s.add_development_dependency('rdoc')
   #s.add_development_dependency('aruba')
