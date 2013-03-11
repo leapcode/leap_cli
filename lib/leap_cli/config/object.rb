@@ -106,10 +106,18 @@ module LeapCli
       ##
 
       #
-      # a deep (recursive) merge with another Config::Object.
+      # A deep (recursive) merge with another Config::Object.
       #
-      # if prefer_self is set to true, the value from self will be picked when there is a conflict
+      # If prefer_self is set to true, the value from self will be picked when there is a conflict
       # that cannot be merged.
+      #
+      # Merging rules:
+      #
+      # - If a value is a hash, we recursively merge it.
+      # - If the value is simple, like a string, the new one overwrites the value.
+      # - If the value is an array:
+      #   - If both old and new values are arrays, the new one replaces the old.
+      #   - If one of the values is simple but the other is an array, the simple is added to the array.
       #
       def deep_merge!(object, prefer_self=false)
         object.each do |key,new_value|
@@ -127,18 +135,17 @@ module LeapCli
             old_value.is_a?(Hash) ? value.deep_merge!(old_value) : (value[key] = old_value if !old_value.nil?)
             new_value.is_a?(Hash) ? value.deep_merge!(new_value, prefer_self) : (value[key] = new_value if !new_value.nil?)
 
-          # merge arrays
-          elsif old_value.is_a?(Array) || new_value.is_a?(Array)
-            value = []
-            old_value.is_a?(Array) ? value += old_value : value << old_value
-            new_value.is_a?(Array) ? value += new_value : value << new_value
-            value = value.compact.uniq
-
           # merge nil
           elsif new_value.nil?
             value = old_value
           elsif old_value.nil?
             value = new_value
+
+          # merge arrays when one value is not an array
+          elsif old_value.is_a?(Array) && !new_value.is_a?(Array)
+            value = (old_value.dup << new_value).compact.uniq
+          elsif new_value.is_a?(Array) && !old_value.is_a?(Array)
+            value = (new_value.dup << old_value).compact.uniq
 
           # catch errors
           elsif type_mismatch?(old_value, new_value)
@@ -148,7 +155,7 @@ module LeapCli
               key, self.class
             ]
 
-          # merge strings and numbers
+          # merge strings, numbers, and sometimes arrays
           else
             if prefer_self
               value = old_value
