@@ -37,6 +37,7 @@ module LeapCli
           key.each do |field, match_value|
             field = field.is_a?(Symbol) ? field.to_s : field
             match_value = match_value.is_a?(Symbol) ? match_value.to_s : match_value
+            operator = match_value =~ /^!/ ? :not_equal : :equal
             each do |name, config|
               value = config[field]
               if !value.nil?
@@ -45,7 +46,9 @@ module LeapCli
                     results[name] = config
                   end
                 else
-                  if value == match_value
+                  if operator == :equal && value == match_value
+                    results[name] = config
+                  elsif operator == :not_equal && value != match_value
                     results[name] = config
                   end
                 end

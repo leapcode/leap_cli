@@ -147,7 +147,7 @@ module LeapCli
     def filter_deploy_nodes(filter)
       nodes = manager.filter!(filter)
       if !leapfile.allow_production_deploy
-        nodes = nodes[:production => false]
+        nodes = nodes[:environment => "!production"]
         assert! nodes.any?, "Skipping deploy because @allow_production_deploy is disabled."
       end
       nodes

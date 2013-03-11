@@ -25,11 +25,11 @@ module LeapCli; module Commands
   def generate_test_client_openvpn_config
     template = read_file! Path.find_file(:test_client_openvpn_template)
 
-    ['production', 'testing', 'local'].each do |tag|
-      vpn_nodes = manager.nodes[:tags => tag][:services => 'openvpn']
+    ['production', 'testing', 'local', 'development'].each do |env|
+      vpn_nodes = manager.nodes[:environment => env][:services => 'openvpn']
       if vpn_nodes.any?
         config = Util.erb_eval(template, binding)
-        write_file! ('test_openvpn_'+tag).to_sym, config
+        write_file! [:test_openvpn_config, env], config
       end
     end
   end
