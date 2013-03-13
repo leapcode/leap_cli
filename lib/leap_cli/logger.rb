@@ -126,7 +126,9 @@ module LeapCli
       { :match => /^err:/,                         :level => 0, :color => :red, :priority => -1, :exit => 1},
       { :match => /^Failed to parse template/,     :level => 0, :color => :red, :priority => -1, :exit => 1},
       { :match => /^Parameter matches failed:/,    :level => 0, :color => :red, :priority => -1, :exit => 1},
-      { :match => /^Syntax error/,                 :level => 0, :color => :red, :priority => -1, :exit => 1}
+      { :match => /^Syntax error/,                 :level => 0, :color => :red, :priority => -1, :exit => 1},
+      { :match => /^Cannot reassign variable/,     :level => 0, :color => :red, :priority => -1, :exit => 1},
+      { :match => /^Could not find template/,      :level => 0, :color => :red, :priority => -1, :exit => 1}
     ]
 
     def self.sorted_formatters
