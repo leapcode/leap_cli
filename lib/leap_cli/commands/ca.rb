@@ -83,7 +83,7 @@ module LeapCli; module Commands
     cert.desc "Creates a CSR for use in buying a commercial X.509 certificate."
     cert.long_desc "Unless specified, the CSR is created for the provider's primary domain. The properties used for this CSR come from `provider.ca.server_certificates`."
     cert.command :csr do |csr|
-      csr.flag 'domain', :arg_name => 'DOMAIN', :desc => 'Specify what domain to create the CSR for.', :default_value => 'primary domain'
+      csr.flag 'domain', :arg_name => 'DOMAIN', :desc => 'Specify what domain to create the CSR for.'
       csr.action do |global_options,options,args|
         assert_config! 'provider.domain'
         assert_config! 'provider.name'
