@@ -10,7 +10,8 @@ module SupplyDrop
           SupplyDrop::Rsync.remote_address(server.user || fetch(:user, ENV['USER']), server.host, puppet_destination),
           :delete => true,
           :excludes => puppet_excludes,
-          :ssh => ssh_options.merge(server.options[:ssh_options]||{})
+          :ssh => ssh_options.merge(server.options[:ssh_options]||{}),
+          :flags => '--copy-links'
         )
         logger.debug rsync_cmd
         server.host unless system rsync_cmd
