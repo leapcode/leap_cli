@@ -24,7 +24,7 @@ module LeapCli; module Commands
                    'Sometimes, you might want to force the generation of a new certificate, ' +
                    'such as in the cases where you have changed a CA parameter for server certificates, like bit size or digest hash. ' +
                    'In this case, use --force. If <node-filter> is empty, this command will apply to all nodes.'
-    cert.arg_name '<node-filter>'
+    cert.arg_name 'FILTER'
     cert.command :update do |update|
       update.switch 'force', :desc => 'Always generate new certificates', :negatable => false
       update.action do |global_options,options,args|
@@ -81,38 +81,36 @@ module LeapCli; module Commands
     #   http://www.redkestrel.co.uk/Articles/CSR.html
     #
     cert.desc "Creates a CSR for use in buying a commercial X.509 certificate."
-    cert.long_desc "The CSR created is for the for the provider's primary domain. The properties used for this CSR come from `provider.ca.server_certificates`."
+    cert.long_desc "Unless specified, the CSR is created for the provider's primary domain. The properties used for this CSR come from `provider.ca.server_certificates`."
     cert.command :csr do |csr|
-      #c.switch 'sign', :desc => 'additionally creates a cert that is signed by your own CA (recommended only for testing)', :negatable => false
+      csr.flag 'domain', :arg_name => 'DOMAIN', :desc => 'Specify what domain to create the CSR for.', :default_value => 'primary domain'
       csr.action do |global_options,options,args|
         assert_config! 'provider.domain'
         assert_config! 'provider.name'
         assert_config! 'provider.default_language'
         assert_config! 'provider.ca.server_certificates.bit_size'
         assert_config! 'provider.ca.server_certificates.digest'
-        assert_files_missing! [:commercial_key, provider.domain], [:commercial_csr, provider.domain], :msg => 'If you really want to create a new key and CSR, remove these files first.'
-        #if options[:sign]
-        #  assert_files_exist! :ca_cert, :ca_key, :msg => 'Run `leap cert ca` to create them'
-        #end
+        domain = options[:domain] || provider.domain
+        assert_files_missing! [:commercial_key, domain], [:commercial_csr, domain], :msg => 'If you really want to create a new key and CSR, remove these files first.'
 
         # RSA key
         keypair = CertificateAuthority::MemoryKeyMaterial.new
         log :generating, "%s bit RSA key" % provider.ca.server_certificates.bit_size do
           keypair.generate_key(provider.ca.server_certificates.bit_size)
-          write_file! [:commercial_key, provider.domain], keypair.private_key.to_pem
+          write_file! [:commercial_key, domain], keypair.private_key.to_pem
         end
 
         # CSR
         dn  = CertificateAuthority::DistinguishedName.new
         csr = CertificateAuthority::SigningRequest.new
-        dn.common_name = provider.domain
+        dn.common_name = domain
         dn.organization = provider.name[provider.default_language]
         log :generating, "CSR with commonName => '%s', organization => '%s'" % [dn.common_name, dn.organization] do
           csr.distinguished_name = dn
           csr.key_material = keypair
           csr.digest = provider.ca.server_certificates.digest
           request = csr.to_x509_csr
-          write_file! [:commercial_csr, provider.domain], csr.to_pem
+          write_file! [:commercial_csr, domain], csr.to_pem
         end
 
         # Sign using our own CA, for use in testing but hopefully not production.
@@ -121,13 +119,13 @@ module LeapCli; module Commands
         #if options[:sign]
           log :generating, "self-signed x509 server certificate for testing purposes" do
             cert = csr.to_cert
-            cert.serial_number.number = cert_serial_number(provider.domain)
+            cert.serial_number.number = cert_serial_number(domain)
             cert.not_before = yesterday
             cert.not_after  = years_from_yesterday(1)
             cert.parent = ca_root
             cert.sign! domain_test_signing_profile
-            write_file! [:commercial_cert, provider.domain], cert.to_pem
-            log "please replace this file with the real certificate you get from a CA using #{Path.relative_path([:commercial_csr, provider.domain])}"
+            write_file! [:commercial_cert, domain], cert.to_pem
+            log "please replace this file with the real certificate you get from a CA using #{Path.relative_path([:commercial_csr, domain])}"
           end
         #end
 
