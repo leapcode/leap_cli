@@ -34,18 +34,8 @@ module LeapCli
         @platform_directory_path = File.expand_path(@platform_directory_path || '../leap_platform', @provider_directory_path)
         if @allow_production_deploy.nil?
           # by default, only allow production deploys from 'master' or if not a git repo
-          @allow_production_deploy = !Util.is_git_directory?(@provider_directory_path) ||
-            Util.current_git_branch(@provider_directory_path) == 'master'
-        end
-        if @platform_branch && Util.is_git_directory?(@platform_directory_path)
-          Util.assert!(
-            Util.current_git_branch(@platform_directory_path) == @platform_branch,
-            "@platform_branch is set to '%s', but current branch of %s is '%s'." % [
-               @platform_branch,
-               @platform_directory_path,
-               Util.current_git_branch(@platform_directory_path)
-            ]
-          )
+          @allow_production_deploy = !LeapCli::Util.is_git_directory?(@provider_directory_path) ||
+            LeapCli::Util.current_git_branch(@provider_directory_path) == 'master'
         end
         return true
       end
