@@ -12,8 +12,9 @@ module LeapCli
     ## QUITTING
     ##
 
-    def exit_status(code)
-      @exit_status = code
+    def exit_status(code=nil)
+      @exit_status = code if code
+      @exit_status
     end
 
     #

@@ -121,6 +121,8 @@ module LeapCli
       { :match => /^warning:/,                     :level => 0, :color => :yellow, :priority => -20},
       { :match => /^Duplicate declaration:/,       :level => 0, :color => :red,    :priority => -20},
       { :match => /Finished catalog run/,          :level => 0, :color => :green,  :priority => -10},
+      { :match => /^Puppet apply complete \(changes made\)/, :level => 0, :color => :green,  :priority => -10},
+      { :match => /^Puppet apply complete \(no changes\)/, :level => 0, :color => :green,  :priority => -10},
 
       # PUPPET FATAL ERRORS
       { :match => /^err:/,                         :level => 0, :color => :red, :priority => -1, :exit => 1},
@@ -128,7 +130,8 @@ module LeapCli
       { :match => /^Parameter matches failed:/,    :level => 0, :color => :red, :priority => -1, :exit => 1},
       { :match => /^Syntax error/,                 :level => 0, :color => :red, :priority => -1, :exit => 1},
       { :match => /^Cannot reassign variable/,     :level => 0, :color => :red, :priority => -1, :exit => 1},
-      { :match => /^Could not find template/,      :level => 0, :color => :red, :priority => -1, :exit => 1}
+      { :match => /^Could not find template/,      :level => 0, :color => :red, :priority => -1, :exit => 1},
+      { :match => /^Puppet apply complete.*fail/,  :level => 0, :color => :red, :priority => -1, :exit => 1}
     ]
 
     def self.sorted_formatters

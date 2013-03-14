@@ -60,7 +60,7 @@ module LeapCli
             else ''
           end
 
-          ssh.set :puppet_command, "/usr/bin/puppet apply --color=false --tags=#{tags.join(',')} #{verbosity}"
+          ssh.set :puppet_command, "/usr/bin/puppet apply --color=false --tags=#{tags.join(',')} --detailed-exitcodes #{verbosity}"
           ssh.set :puppet_lib, "puppet/modules"
           ssh.set :puppet_parameters, '--libdir puppet/lib --confdir puppet puppet/manifests/site.pp'
           ssh.set :puppet_stream_output, true

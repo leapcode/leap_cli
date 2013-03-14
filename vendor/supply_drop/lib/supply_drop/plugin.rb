@@ -71,12 +71,27 @@ fi
       writer = SupplyDrop::Writer::File.new(writer, puppet_write_to_file) unless puppet_write_to_file.nil?
 
       begin
-        run "#{puppet_cmd} #{flag}" do |channel, stream, data|
-          writer.collect_output(channel[:host], data)
+        exitcode = nil
+        run "#{puppet_cmd} #{flag}; echo exitcode:$?" do |channel, stream, data|
+          if data =~ /exitcode:(\d+)/
+            exitcode = $1
+            writer.collect_output(channel[:host], "Puppet #{command} complete (#{exitcode_description(exitcode)}).\n")
+          else
+            writer.collect_output(channel[:host], data)
+          end
         end
-        logger.debug "Puppet #{command} complete."
       ensure
         writer.all_output_collected
+      end
+    end
+
+    def exitcode_description(code)
+      case code
+        when "0" then "no changes"
+        when "2" then "changes made"
+        when "4" then "failed"
+        when "6" then "changes and failures"
+        else code
       end
     end
 
