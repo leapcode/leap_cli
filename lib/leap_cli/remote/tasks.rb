@@ -14,6 +14,12 @@ task :install_authorized_keys, :max_hosts => MAX_HOSTS do
   end
 end
 
+task :set_hostname, :max_hosts => MAX_HOSTS do
+  leap.log :setting, "hostname" do
+    run "hostname $CAPISTRANO:HOST$"
+  end
+end
+
 task :install_prerequisites, :max_hosts => MAX_HOSTS do
   leap.mkdirs puppet_destination
   run "locale-gen"

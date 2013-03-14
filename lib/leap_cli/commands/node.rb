@@ -52,13 +52,14 @@ module LeapCli; module Commands
     node.command :init do |init|
       init.switch 'echo', :desc => 'If set, passwords are visible as you type them (default is hidden)', :negatable => false
       init.action do |global,options,args|
-        assert! args.any?, 'You must specify a node-filter'
+        assert! args.any?, 'You must specify a FILTER'
         finished = []
         manager.filter!(args).each_node do |node|
           ping_node(node)
           save_public_host_key(node, global)
           update_compiled_ssh_configs
           ssh_connect(node, :bootstrap => true, :echo => options[:echo]) do |ssh|
+            ssh.set_hostname
             ssh.install_authorized_keys
             ssh.install_prerequisites
           end
