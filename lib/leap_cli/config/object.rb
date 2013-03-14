@@ -95,7 +95,7 @@ module LeapCli
             value
           end
         elsif self.has_key?(key)
-          evaluate_key(key)
+          fetch_value(key)
         else
           raise NoMethodError.new(key, "No method '#{key}' for #{self.class}")
         end
@@ -341,8 +341,10 @@ module LeapCli
       #
       def evaluate_everything
         keys.each do |key|
-          obj = evaluate_key(key)
-          if obj.is_a? Config::Object
+          obj = fetch_value(key)
+          if obj == "REQUIRED"
+            Util::log 0, :warning, "required key \"#{key}\" is not set in node \"#{node.name}\"."
+          elsif obj.is_a? Config::Object
             obj.evaluate_everything
           end
         end
@@ -355,6 +357,9 @@ module LeapCli
         if @late_eval_list
           @late_eval_list.each do |key, value|
             self[key] = evaluate_now(key, value)
+            if self[key] == "REQUIRED"
+              Util::log 0, :warning, "required key \"#{key}\" is not set in node \"#{node.name}\"."
+            end
           end
         end
         values.each do |obj|
@@ -369,19 +374,17 @@ module LeapCli
       #
       # fetches the value for the key, evaluating the value as ruby if it begins with '='
       #
-      def evaluate_key(key)
+      def fetch_value(key)
         value = fetch(key, nil)
-        if !value.is_a?(String)
-          value
-        else
+        if value.is_a?(String) && value =~ /^=/
           if value =~ /^=> (.*)$/
             value = evaluate_later(key, $1)
           elsif value =~ /^= (.*)$/
             value = evaluate_now(key, $1)
           end
           self[key] = value
-          value
         end
+        return value
       end
 
       def evaluate_later(key, value)
@@ -423,9 +426,6 @@ module LeapCli
             end
           end
         end
-        if result == "REQUIRED"
-          Util::log 0, :warning, "required key \"#{key}\" is not set in node \"#{node.name}\"."
-        end
         return result
       end
 
@@ -441,7 +441,6 @@ module LeapCli
       # The Oj way that we are not using: Oj.dump(obj, :mode => :compat, :indent => 2)
       #
       def generate_json(obj)
-
         # modify hash and array
         Hash.class_eval do
           alias_method :each_without_sort, :each
