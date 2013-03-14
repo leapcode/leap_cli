@@ -5,7 +5,7 @@
 module LeapCli
   module Commands
 
-    desc 'Verbosity level 0..2'
+    desc 'Verbosity level 0..5'
     arg_name 'LEVEL'
     default_value '1'
     flag [:v, :verbose]
