@@ -12,6 +12,8 @@ module LeapCli
     "provider.ca.server_certificates.digest",
     "provider.ca.name",
     "provider.ca.bit_size",
-    "provider.ca.life_span"
+    "provider.ca.life_span",
+    "provider.ca.client_certificates.unlimited_prefix",
+    "provider.ca.client_certificates.limited_prefix"
   ]
 end

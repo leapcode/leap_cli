@@ -177,6 +177,9 @@ module LeapCli; module Commands
     write_file!(cert_file, root.to_pem)
   end
 
+  #
+  # returns true if the certs associated with +node+ need to be regenerated.
+  #
   def cert_needs_updating?(node)
     if !file_exists?([:node_x509_cert, node.name], [:node_x509_key, node.name])
       return true
@@ -237,17 +240,19 @@ module LeapCli; module Commands
     write_file!([:node_x509_cert, node.name], cert.to_pem)
   end
 
-  def generate_test_client_cert
+  #
+  # yields client key and cert suitable for testing
+  #
+  def generate_test_client_cert(prefix=nil)
     cert = CertificateAuthority::Certificate.new
     cert.serial_number.number = cert_serial_number(provider.domain)
-    cert.subject.common_name = random_common_name(provider.domain)
+    cert.subject.common_name = [prefix, random_common_name(provider.domain)].join
     cert.not_before = yesterday
     cert.not_after  = years_from_yesterday(1)
     cert.key_material.generate_key(1024) # just for testing, remember!
     cert.parent = client_ca_root
     cert.sign! client_test_signing_profile
-    write_file! :test_client_key, cert.key_material.private_key.to_pem
-    write_file! :test_client_cert, cert.to_pem
+    yield cert.key_material.private_key.to_pem, cert.to_pem
   end
 
   def ca_root
