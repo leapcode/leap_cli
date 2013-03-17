@@ -118,6 +118,7 @@ module LeapCli
       { :match => /^warning: .*is deprecated.*$/,  :level => 2, :color => :yellow, :priority => -10},
       { :match => /^warning: Scope.*$/,            :level => 2, :color => :yellow, :priority => -10},
       { :match => /^notice:/,                      :level => 1, :color => :cyan,   :priority => -20},
+      { :match => /^notice:.*executed successfully$/, :level => 2, :color => :cyan, :priority => -15},
       { :match => /^warning:/,                     :level => 0, :color => :yellow, :priority => -20},
       { :match => /^Duplicate declaration:/,       :level => 0, :color => :red,    :priority => -20},
       { :match => /Finished catalog run/,          :level => 0, :color => :green,  :priority => -10},
