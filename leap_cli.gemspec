@@ -16,7 +16,7 @@ spec = Gem::Specification.new do |s|
   s.platform = Gem::Platform::RUBY
   s.summary = LeapCli::SUMMARY
   s.description = LeapCli::DESCRIPTION
-  s.license = "GPLv3"
+  s.license = "MIT"
 
   ##
   ## GEM FILES
