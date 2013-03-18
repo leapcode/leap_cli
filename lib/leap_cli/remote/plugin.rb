@@ -2,6 +2,8 @@
 # these methods are made available in capistrano tasks as 'leap.method_name'
 #
 
+require 'rsync_command'
+
 module LeapCli; module Remote; module Plugin
 
   def required_packages
@@ -53,38 +55,22 @@ module LeapCli; module Remote; module Plugin
   #   {:source => '', :dest => '', :flags => '', :includes => [], :excludes => []}
   #
   def rsync_update
-    SupplyDrop::Util.thread_pool_size = puppet_parallel_rsync_pool_size
-    servers = SupplyDrop::Util.optionally_async(find_servers, puppet_parallel_rsync)
-
-    # rsync to each server
-    failed_servers = []
-    servers.each do |server|
+    rsync = RsyncCommand.new(:logger => logger, :flags => '-a')
+    rsync.asynchronously(find_servers) do |server|
       options = yield server
       next unless options
-
-      # build rsync command
       remote_user = server.user || fetch(:user, ENV['USER'])
-      rsync_options = {
-        :flags => options[:flags],
-        :includes => options[:includes],
-        :excludes => options[:excludes],
-        :ssh => ssh_options.merge(server.options[:ssh_options]||{})
-      }
-      rsync_cmd = SupplyDrop::Rsync.command(
-        options[:source],
-        SupplyDrop::Rsync.remote_address(remote_user, server.host, options[:dest]),
-        rsync_options
-      )
-
-      # run command
-      chdir = options[:chdir] || Path.provider
-      rsync_cmd = "cd #{chdir}; #{rsync_cmd}"
-      logger.debug rsync_cmd
-      ok = system(rsync_cmd)
-      failed_servers << server.host unless ok
+      src = options[:source]
+      dest = {:user => remote_user, :host => server.host, :path => options[:dest]}
+      options[:ssh] = ssh_options.merge(server.options[:ssh_options]||{})
+      options[:chdir] ||= Path.provider
+      rsync.exec(src, dest, options)
     end
-
-    raise "rsync failed on #{failed_servers.join(',')}" if failed_servers.any?
+    if rsync.failed?
+      LeapCli::Util.bail! do
+        LeapCli::Util.log :failed, "to rsync to #{rsync.failures.map{|f|f[:dest][:host]}.join(' ')}"
+      end
+    end
   end
 
   #def logrun(cmd)
