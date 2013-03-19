@@ -1,8 +1,8 @@
 #
 # A simple alphanumeric secret generator, with no ambiguous characters.
 #
-# Only alphanumerics are allows, in order to make these passwords work
-# for REST url calls and to allow you to easily copy and past them.
+# Only alphanumerics are allowed, in order to make these passwords work
+# for REST url calls and to allow you to easily copy and paste them.
 #
 # Uses OpenSSL random number generator instead of Ruby's rand function
 #
