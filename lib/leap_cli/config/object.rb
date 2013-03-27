@@ -334,6 +334,66 @@ module LeapCli
         entries.join("\n")
       end
 
+      #
+      # stunnel configuration for the client side.
+      #
+      # +node_list+ is a ObjectList of nodes running stunnel servers.
+      #
+      # +port+ is the real port of the ultimate service running on the servers
+      # that the client wants to connect to.
+      #
+      # About ths stunnel puppet names:
+      #
+      # * accept_port is the port on localhost to which local clients
+      #   can connect. it is auto generated serially.
+      # * connect_port is the port on the stunnel server to connect to.
+      #   it is auto generated from the +port+ argument.
+      #
+      #  The network looks like this:
+      #
+      #  |------ stunnel client ---------------| |--------- stunnel server -----------------------|
+      #  consumer app -> localhost:accept_port -> server:connect_port -> server:port -> service app
+      #
+      # generates an entry appropriate to be passed directly to
+      # create_resources(stunnel::service, hiera('..'), defaults)
+      #
+      def stunnel_client(node_list, port, options={})
+        @next_stunnel_port ||= 4000
+        node_list.values.inject(Config::ObjectList.new) do |hsh, node|
+          if node.name != self.name || options[:include_self]
+            hsh["#{node.name}#{port}"] = Config::Object[
+              'accept_port', @next_stunnel_port,
+              'connect', node.domain.internal,
+              'connect_port', stunnel_port(port)
+            ]
+            @next_stunnel_port += 1
+          end
+          hsh
+        end
+      end
+
+      #
+      # generates a stunnel server entry.
+      #
+      # +port+ is the real port targeted service.
+      #
+      def stunnel_server(port)
+        {"accept" => stunnel_port(port), "connect" => "127.0.0.1:#{port}"}
+      end
+
+      #
+      # maps a real port to a stunnel port (used as the connect_port in the client config
+      # and the accept_port in the server config)
+      #
+      def stunnel_port(port)
+        port = port.to_i
+        if port < 50000
+          return port + 10000
+        else
+          return port - 10000
+        end
+      end
+
       protected
 
       #
