@@ -197,6 +197,7 @@ module LeapCli; module Config
     #
     def stunnel_client(node_list, port, options={})
       @next_stunnel_port ||= 4000
+      hostnames(node_list) # record the hosts
       node_list.values.inject(Config::ObjectList.new) do |hsh, node|
         if node.name != self.name || options[:include_self]
           hsh["#{node.name}#{port}"] = Config::Object[
