@@ -4,6 +4,8 @@ require 'json/pure'  # pure ruby implementation is required for our sorted trick
 $KCODE = 'UTF8' unless RUBY_VERSION > "1.9.0"
 require 'ya2yaml' # pure ruby yaml
 
+require 'leap_cli/config/macros'
+
 module LeapCli
   module Config
     #
@@ -13,6 +15,8 @@ module LeapCli
     # It is called 'object' because it corresponds to an Object in JSON.
     #
     class Object < Hash
+
+      include Config::Macros
 
       attr_reader :node
       attr_reader :manager
@@ -176,222 +180,6 @@ module LeapCli
       #
       def inherit_from!(object)
         self.deep_merge!(object, true)
-      end
-
-      ##
-      ## MACROS
-      ## these are methods used when eval'ing a value in the .json configuration
-      ##
-
-      #
-      # the list of all the nodes
-      #
-      def nodes
-        global.nodes
-      end
-
-      #
-      # returns a list of nodes that match the same environment
-      #
-      def nodes_like_me
-        nodes[:environment => @node.environment]
-      end
-
-      class FileMissing < Exception
-        attr_accessor :path, :options
-        def initialize(path, options={})
-          @path = path
-          @options = options
-        end
-        def to_s
-          @path
-        end
-      end
-
-      #
-      # inserts the contents of a file
-      #
-      def file(filename, options={})
-        if filename.is_a? Symbol
-          filename = [filename, @node.name]
-        end
-        filepath = Path.find_file(filename)
-        if filepath
-          if filepath =~ /\.erb$/
-            ERB.new(File.read(filepath), nil, '%<>').result(binding)
-          else
-            File.read(filepath)
-          end
-        else
-          raise FileMissing.new(Path.named_path(filename), options)
-          ""
-        end
-      end
-
-      #
-      # like #file, but allow missing files
-      #
-      def try_file(filename)
-        return file(filename)
-      rescue FileMissing
-        return nil
-      end
-
-      #
-      # returns what the file path will be, once the file is rsynced to the server.
-      # an internal list of discovered file paths is saved, in order to rsync these files when needed.
-      #
-      # notes:
-      #
-      # * argument 'path' is relative to Path.provider/files or Path.provider_base/files
-      # * the path returned by this method is absolute
-      # * the path stored for use later by rsync is relative to Path.provider
-      # * if the path does not exist locally, but exists in provider_base, then the default file from
-      #   provider_base is copied locally. this is required for rsync to work correctly.
-      #
-      def file_path(path)
-        if path.is_a? Symbol
-          path = [path, @node.name]
-        end
-        actual_path = Path.find_file(path)
-        if actual_path.nil?
-          Util::log 2, :skipping, "file_path(\"#{path}\") because there is no such file."
-          nil
-        else
-          if actual_path =~ /^#{Regexp.escape(Path.provider_base)}/
-            # if file is under Path.provider_base, we must copy the default file to
-            # to Path.provider in order for rsync to be able to sync the file.
-            local_provider_path = actual_path.sub(/^#{Regexp.escape(Path.provider_base)}/, Path.provider)
-            FileUtils.mkdir_p File.dirname(local_provider_path)
-            FileUtils.cp_r actual_path, local_provider_path
-            Util.log :created, Path.relative_path(local_provider_path)
-            actual_path = local_provider_path
-          end
-          if File.directory?(actual_path) && actual_path !~ /\/$/
-            actual_path += '/' # ensure directories end with /, important for building rsync command
-          end
-          relative_path = Path.relative_path(actual_path)
-          @node.file_paths << relative_path
-          @node.manager.provider.hiera_sync_destination + '/' + relative_path
-        end
-      end
-
-      #
-      # inserts a named secret, generating it if needed.
-      #
-      # manager.export_secrets should be called later to capture any newly generated secrets.
-      #
-      def secret(name, length=32)
-        @manager.secrets.set(name, Util::Secret.generate(length))
-      end
-
-      #
-      # return a fingerprint for a x509 certificate
-      #
-      def fingerprint(filename)
-        "SHA256: " + X509.fingerprint("SHA256", Path.named_path(filename))
-      end
-
-      #
-      # records the list of hosts that are encountered for this node
-      #
-      def hostnames(nodes)
-        @referenced_nodes ||= ObjectList.new
-        if nodes.is_a? Config::Object
-          nodes = ObjectList.new nodes
-        end
-        nodes.each_node do |node|
-          @referenced_nodes[node.name] = node
-        end
-        nodes.values.collect do |node|
-          node.domain.name
-        end
-      end
-
-      #
-      # generates entries needed for updating /etc/hosts on a node, but only including the IPs of the
-      # other nodes we have encountered.
-      #
-      def hosts_file
-        return nil unless @referenced_nodes
-        entries = []
-        @referenced_nodes.each_node do |node|
-          entries << "#{node.ip_address}    #{node.name} #{node.domain.internal} #{node.domain.full}"
-        end
-        entries.join("\n")
-      end
-
-      def known_hosts_file
-        return nil unless @referenced_nodes
-        entries = []
-        @referenced_nodes.each_node do |node|
-          hostnames = [node.name, node.domain.internal, node.domain.full, node.ip_address].join(',')
-          pub_key   = Util::read_file([:node_ssh_pub_key,node.name])
-          if pub_key
-            entries << [hostnames, pub_key].join(' ')
-          end
-        end
-        entries.join("\n")
-      end
-
-      #
-      # stunnel configuration for the client side.
-      #
-      # +node_list+ is a ObjectList of nodes running stunnel servers.
-      #
-      # +port+ is the real port of the ultimate service running on the servers
-      # that the client wants to connect to.
-      #
-      # About ths stunnel puppet names:
-      #
-      # * accept_port is the port on localhost to which local clients
-      #   can connect. it is auto generated serially.
-      # * connect_port is the port on the stunnel server to connect to.
-      #   it is auto generated from the +port+ argument.
-      #
-      #  The network looks like this:
-      #
-      #  |------ stunnel client ---------------| |--------- stunnel server -----------------------|
-      #  consumer app -> localhost:accept_port -> server:connect_port -> server:port -> service app
-      #
-      # generates an entry appropriate to be passed directly to
-      # create_resources(stunnel::service, hiera('..'), defaults)
-      #
-      def stunnel_client(node_list, port, options={})
-        @next_stunnel_port ||= 4000
-        node_list.values.inject(Config::ObjectList.new) do |hsh, node|
-          if node.name != self.name || options[:include_self]
-            hsh["#{node.name}#{port}"] = Config::Object[
-              'accept_port', @next_stunnel_port,
-              'connect', node.domain.internal,
-              'connect_port', stunnel_port(port)
-            ]
-            @next_stunnel_port += 1
-          end
-          hsh
-        end
-      end
-
-      #
-      # generates a stunnel server entry.
-      #
-      # +port+ is the real port targeted service.
-      #
-      def stunnel_server(port)
-        {"accept" => stunnel_port(port), "connect" => "127.0.0.1:#{port}"}
-      end
-
-      #
-      # maps a real port to a stunnel port (used as the connect_port in the client config
-      # and the accept_port in the server config)
-      #
-      def stunnel_port(port)
-        port = port.to_i
-        if port < 50000
-          return port + 10000
-        else
-          return port - 10000
-        end
       end
 
       protected
