@@ -111,13 +111,14 @@ module LeapCli
 
     def assert_config!(conf_path)
       value = nil
-      #begin
+      begin
         value = manager.instance_eval(conf_path)
       #rescue NoMethodError
       #rescue NameError
-      #end
-      assert! !value.nil? && value != "REQUIRED" do
-        log :missing, "required configuration value for #{conf_path}"
+      ensure
+        assert! !value.nil? && value != "REQUIRED" do
+          log :missing, "required configuration value for #{conf_path}"
+        end
       end
     end
 

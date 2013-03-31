@@ -199,7 +199,7 @@ module LeapCli
         # parse json
         begin
           hash = JSON.parse(buffer.string, :object_class => Hash, :array_class => Array) || {}
-        rescue SyntaxError => exc
+        rescue SyntaxError, JSON::ParserError => exc
           log 0, :error, 'in file "%s":' % filename
           log 0, exc.to_s, :indent => 1
           return nil
