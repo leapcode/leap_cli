@@ -28,17 +28,17 @@ module LeapCli; module Commands
     assert_config! 'provider.ca.client_certificates.unlimited_prefix'
     assert_config! 'provider.ca.client_certificates.limited_prefix'
     template = read_file! Path.find_file(:test_client_openvpn_template)
-    ['production', 'testing', 'local', 'development'].each do |env|
+    ['production', 'testing', 'local', 'development', nil].each do |env|
       vpn_nodes = manager.nodes[:environment => env][:services => 'openvpn']['openvpn.allow_limited' => true]
       if vpn_nodes.any?
         generate_test_client_cert(provider.ca.client_certificates.limited_prefix) do |key, cert|
-          write_file! [:test_openvpn_config, env+'_limited'], Util.erb_eval(template, binding)
+          write_file! [:test_openvpn_config, [env, 'limited'].compact.join('_')], Util.erb_eval(template, binding)
         end
       end
       vpn_nodes = manager.nodes[:environment => env][:services => 'openvpn']['openvpn.allow_unlimited' => true]
       if vpn_nodes.any?
         generate_test_client_cert(provider.ca.client_certificates.unlimited_prefix) do |key, cert|
-          write_file! [:test_openvpn_config, env+'_unlimited'], Util.erb_eval(template, binding)
+          write_file! [:test_openvpn_config, [env, 'unlimited'].compact.join('_')], Util.erb_eval(template, binding)
         end
       end
     end

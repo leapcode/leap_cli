@@ -21,6 +21,9 @@ module LeapCli; module Config
     #
     # returns a list of nodes that match the same environment
     #
+    # if @node.environment is not set, we return other nodes
+    # where environment is not set.
+    #
     def nodes_like_me
       nodes[:environment => @node.environment]
     end

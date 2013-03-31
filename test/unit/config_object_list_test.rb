@@ -10,12 +10,28 @@ class ConfigObjectListTest < MiniTest::Unit::TestCase
 
   def test_complex_node_search
     domain = provider.domain
-    nodes = manager.nodes['dns.public' => true]
-    expected = [{"domain_full"=>"ns1.#{domain}"}, {"domain_full"=>"ns2.#{domain}"}, {"domain_full"=>"vpn1.#{domain}"}, {"domain_full"=>"web1.#{domain}"}]
+    nodes = manager.nodes['x509.use' => true]
+    assert nodes.size != manager.nodes.size, 'should not return all nodes'
+    assert nodes.size > 2, 'should be some nodes'
+    expected = manager.nodes.collect {|name, node|
+      if node.x509.use
+        node.domain.full
+      end
+    }.compact
     assert_equal expected.size, nodes.size
-    assert_equal expected, nodes.fields('domain.full')
+    assert_equal expected.sort, nodes.field('domain.full').sort
   end
 
+  def test_nodes_like_me
+    nodes = manager.nodes[:environment => nil]
+    node = nodes.values.first
+    assert nodes.size > 1, "should be nodes with no environment set"
+    assert_equal node.nodes_like_me.values, nodes.values
 
+    nodes = manager.nodes[:environment => "production"]
+    node = nodes.values.first
+    assert nodes.size > 1, "should be production nodes"
+    assert_equal node.nodes_like_me.values, nodes.values
+  end
 
 end

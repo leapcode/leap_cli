@@ -1,7 +1,6 @@
 {
   "services": "openvpn",
   "ip_address": "10.5.5.3",
-  "tags": "production",
   "openvpn": {
     "gateway_address": "3.3.3.3",
     "filter_dns": true

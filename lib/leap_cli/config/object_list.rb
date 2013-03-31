@@ -40,17 +40,15 @@ module LeapCli
             operator = match_value =~ /^!/ ? :not_equal : :equal
             each do |name, config|
               value = config[field]
-              if !value.nil?
-                if value.is_a? Array
-                  if value.include?(match_value)
-                    results[name] = config
-                  end
-                else
-                  if operator == :equal && value == match_value
-                    results[name] = config
-                  elsif operator == :not_equal && value != match_value
-                    results[name] = config
-                  end
+              if value.is_a? Array
+                if value.include?(match_value)
+                  results[name] = config
+                end
+              else
+                if operator == :equal && value == match_value
+                  results[name] = config
+                elsif operator == :not_equal && value != match_value
+                  results[name] = config
                 end
               end
             end
