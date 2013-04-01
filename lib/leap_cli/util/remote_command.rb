@@ -73,8 +73,12 @@ module LeapCli; module Util; module RemoteCommand
     @capistrano_enabled ||= begin
       require 'capistrano'
       require 'capistrano/cli'
-      require 'leap_cli/remote/plugin'
-      Capistrano.plugin :leap, LeapCli::Remote::Plugin
+      require 'leap_cli/remote/leap_plugin'
+      require 'leap_cli/remote/puppet_plugin'
+      require 'leap_cli/remote/rsync_plugin'
+      Capistrano.plugin :leap, LeapCli::Remote::LeapPlugin
+      Capistrano.plugin :puppet, LeapCli::Remote::PuppetPlugin
+      Capistrano.plugin :rsync, LeapCli::Remote::RsyncPlugin
       true
     end
 

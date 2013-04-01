@@ -101,6 +101,7 @@ module LeapCli
 
       # IMPORTANT
       { :match => /^err ::/,                   :color => :red,     :match_level => 0, :priority => -10 },
+      { :match => /^ERROR:/,                   :color => :red,     :match_level => 0, :priority => -10 },
       { :match => /.*/,                        :color => :blue,    :match_level => 0, :priority => -20 },
 
       # CLEANUP

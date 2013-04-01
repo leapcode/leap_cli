@@ -59,7 +59,6 @@ module LeapCli; module Commands
           save_public_host_key(node, global)
           update_compiled_ssh_configs
           ssh_connect(node, :bootstrap => true, :echo => options[:echo]) do |ssh|
-            ssh.set_hostname
             ssh.install_authorized_keys
             ssh.install_prerequisites
           end

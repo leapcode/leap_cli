@@ -2,8 +2,6 @@
 module LeapCli
   module Commands
 
-    DEFAULT_TAGS = ['leap_base','leap_service']
-
     desc 'Apply recipes to a node or set of nodes.'
     long_desc 'The FILTER can be the name of a node, service, or tag.'
     arg_name 'FILTER'
@@ -12,6 +10,9 @@ module LeapCli
       # --fast
       c.switch :fast, :desc => 'Makes the deploy command faster by skipping some slow steps. A "fast" deploy can be used safely if you recently completed a normal deploy.',
                       :negatable => false
+
+      # --force
+      c.switch :force, :desc => 'Deploy even if there is a lockfile.', :negatable => false
 
       # --tags
       c.flag :tags, :desc => 'Specify tags to pass through to puppet (overriding the default).',
@@ -34,37 +35,16 @@ module LeapCli
           ssh.leap.log :checking, 'node' do
             ssh.leap.assert_initialized
           end
-
           ssh.leap.log :synching, "configuration files" do
             sync_hiera_config(ssh)
             sync_support_files(ssh)
           end
-
-          # sync puppet manifests and apply them
-          ssh.set :puppet_source, [Path.platform, 'puppet'].join('/')
-          ssh.set :puppet_destination, '/srv/leap'
-
-          # set tags
-          if options[:tags]
-            tags = options[:tags].split(',')
-          else
-            tags = DEFAULT_TAGS.dup
+          ssh.leap.log :synching, "puppet manifests" do
+            sync_puppet_files(ssh)
           end
-          tags << 'leap_slow' unless options[:fast]
-
-          # set verbosity
-          verbosity = case LeapCli.log_level
-            when 3 then '--verbose'
-            when 4 then '--verbose --debug'
-            when 5 then '--verbose --debug --trace'
-            else ''
+          ssh.leap.log :applying, "puppet" do
+            ssh.puppet.apply(:verbosity => LeapCli.log_level, :tags => tags(options), :force => options[:force])
           end
-
-          ssh.set :puppet_command, "/usr/bin/puppet apply --color=false --tags=#{tags.join(',')} --detailed-exitcodes #{verbosity}"
-          ssh.set :puppet_lib, "puppet/modules"
-          ssh.set :puppet_parameters, '--libdir puppet/lib --confdir puppet puppet/manifests/site.pp'
-          ssh.set :puppet_stream_output, true
-          ssh.apply_puppet
         end
       end
     end
@@ -73,7 +53,7 @@ module LeapCli
 
     def sync_hiera_config(ssh)
       dest_dir = provider.hiera_sync_destination
-      ssh.leap.rsync_update do |server|
+      ssh.rsync.update do |server|
         node = manager.node(server.host)
         hiera_file = Path.relative_path([:hiera, node.name])
         ssh.leap.log hiera_file + ' -> ' + node.name + ':' + dest_dir + '/hiera.yaml'
@@ -83,7 +63,7 @@ module LeapCli
 
     def sync_support_files(ssh)
       dest_dir = provider.hiera_sync_destination
-      ssh.leap.rsync_update do |server|
+      ssh.rsync.update do |server|
         node = manager.node(server.host)
         files_to_sync = node.file_paths.collect {|path| Path.relative_path(path, Path.provider) }
         if files_to_sync.any?
@@ -99,6 +79,20 @@ module LeapCli
         else
           nil
         end
+      end
+    end
+
+    def sync_puppet_files(ssh)
+      ssh.rsync.update do |server|
+        ssh.leap.log(Path.platform + '/[bin,puppet] -> ' + server.host + ':' + LeapCli::PUPPET_DESTINATION)
+        {
+          :dest => LeapCli::PUPPET_DESTINATION,
+          :source => '.',
+          :chdir => Path.platform,
+          :excludes => '*',
+          :includes => ['/bin', '/bin/**', '/puppet', '/puppet/**'],
+          :flags => "--relative --dirs --delete --copy-links"
+        }
       end
     end
 
@@ -139,6 +133,16 @@ module LeapCli
       end
 
       return includes
+    end
+
+    def tags(options)
+      if options[:tags]
+        tags = options[:tags].split(',')
+      else
+        tags = LeapCli::DEFAULT_TAGS.dup
+      end
+      tags << 'leap_slow' unless options[:fast]
+      tags.join(',')
     end
 
     #

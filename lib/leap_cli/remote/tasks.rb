@@ -3,8 +3,6 @@
 # For DSL manual, see https://github.com/capistrano/capistrano/wiki
 #
 
-require 'supply_drop'
-
 MAX_HOSTS = 10
 
 task :install_authorized_keys, :max_hosts => MAX_HOSTS do
@@ -14,14 +12,8 @@ task :install_authorized_keys, :max_hosts => MAX_HOSTS do
   end
 end
 
-task :set_hostname, :max_hosts => MAX_HOSTS do
-  leap.log :setting, "hostname" do
-    run "hostname $CAPISTRANO:HOST$"
-  end
-end
-
 task :install_prerequisites, :max_hosts => MAX_HOSTS do
-  leap.mkdirs puppet_destination
+  leap.mkdirs LeapCli::PUPPET_DESTINATION
   run "locale-gen"
   leap.log :updating, "package list" do
     run "apt-get update"
@@ -33,9 +25,9 @@ task :install_prerequisites, :max_hosts => MAX_HOSTS do
   leap.mark_initialized
 end
 
-task :apply_puppet, :max_hosts => MAX_HOSTS do
-  raise "now such directory #{puppet_source}" unless File.directory?(puppet_source)
-  leap.log :applying, "puppet" do
-    puppet.apply
-  end
-end
+#task :apply_puppet, :max_hosts => MAX_HOSTS do
+#  raise "now such directory #{puppet_source}" unless File.directory?(puppet_source)
+#  leap.log :applying, "puppet" do
+#    puppet.apply
+#  end
+#end
