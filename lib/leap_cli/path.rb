@@ -25,6 +25,7 @@ module LeapCli; module Path
     # input templates
     :provider_json_template => 'files/service-definitions/provider.json.erb',
     :eip_service_json_template => 'files/service-definitions/#{arg}/eip-service.json.erb',
+    :soledad_service_json_template => 'files/service-definitions/#{arg}/soledad-service.json.erb',
 
     # output files
     :user_ssh         => 'users/#{arg}/#{arg}_ssh.pub',
