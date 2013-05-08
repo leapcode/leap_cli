@@ -185,11 +185,13 @@ module LeapCli
         log :loading, filename, 2
 
         #
-        # read file, strip out comments
-        # (File.read(filename) would be faster, but we like ability to have comments)
+        # Read a JSON file, strip out comments.
+        #
+        # UTF8 is the default encoding for JSON, but others are allowed:
+        # https://www.ietf.org/rfc/rfc4627.txt
         #
         buffer = StringIO.new
-        File.open(filename) do |f|
+        File.open(filename, "rb") do |f|
           while (line = f.gets)
             next if line =~ /^\s*\/\//
             buffer << line
