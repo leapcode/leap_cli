@@ -195,7 +195,7 @@ module LeapCli; module Commands
         final_key = key_parts.pop
         current_object = node
         key_parts.each do |key_part|
-          current_object[key_part] = Config::Object.new
+          current_object[key_part] ||= Config::Object.new
           current_object = current_object[key_part]
         end
         current_object[final_key] = value
