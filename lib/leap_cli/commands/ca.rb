@@ -372,12 +372,11 @@ module LeapCli; module Commands
   end
 
   def dns_names_for_node(node)
-    names = [node.domain.internal]
+    names = [node.domain.internal, node.domain.full]
     if node['dns'] && node.dns['aliases'] && node.dns.aliases.any?
       names += node.dns.aliases
       names.compact!
     end
-    names.delete(node.domain.full) # already set to common name
     return names
   end
 
