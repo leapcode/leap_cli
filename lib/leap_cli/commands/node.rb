@@ -215,7 +215,7 @@ module LeapCli; module Commands
   def format_seed_value(v)
     if v =~ /,/
       v = v.split(',')
-      v.map do |i|
+      v.map! do |i|
         i = i.to_i if i.to_i.to_s == i
         i = i.to_f if i.to_f.to_s == i
         i
