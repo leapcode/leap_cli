@@ -186,9 +186,7 @@ module LeapCli; module Commands
   def seed_node_data(node, args)
     args.each do |seed|
       key, value = seed.split(':')
-      if value =~ /,/
-        value = value.split(',')
-      end
+      value = format_seed_value(value)
       assert! key =~ /^[0-9a-z\._]+$/, "illegal characters used in property '#{key}'"
       if key =~ /\./
         key_parts = key.split('.')
@@ -203,6 +201,30 @@ module LeapCli; module Commands
         node[key] = value
       end
     end
+  end
+
+  #
+  # conversations:
+  #
+  #   "x,y,z" => ["x","y","z"]
+  #
+  #   "22" => 22
+  #
+  #   "5.1" => 5.1
+  #
+  def format_seed_value(v)
+    if v =~ /,/
+      v = v.split(',')
+      v.map do |i|
+        i = i.to_i if i.to_i.to_s == i
+        i = i.to_f if i.to_f.to_s == i
+        i
+      end
+    else
+      v = v.to_i if v.to_i.to_s == v
+      v = v.to_f if v.to_f.to_s == v
+    end
+    return v
   end
 
   def validate_ip_address(node)
