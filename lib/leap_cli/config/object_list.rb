@@ -37,7 +37,12 @@ module LeapCli
           key.each do |field, match_value|
             field = field.is_a?(Symbol) ? field.to_s : field
             match_value = match_value.is_a?(Symbol) ? match_value.to_s : match_value
-            operator = match_value =~ /^!/ ? :not_equal : :equal
+            if match_value.is_a?(String) && match_value =~ /^!/
+              operator = :not_equal
+              match_value = match_value.sub(/^!/, '')
+            else
+              operator = :equal
+            end
             each do |name, config|
               value = config[field]
               if value.is_a? Array
