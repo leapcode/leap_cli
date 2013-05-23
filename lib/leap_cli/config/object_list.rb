@@ -64,6 +64,12 @@ module LeapCli
         end
       end
 
+      def exclude(node)
+        list = self.dup
+        list.delete(node.name)
+        return list
+      end
+
       def each_node(&block)
         self.keys.sort.each do |node_name|
           yield self[node_name]
@@ -105,6 +111,49 @@ module LeapCli
           result << self[name].get(field)
         end
         result
+      end
+
+      #
+      # pick_fields(field1, field2, ...)
+      #
+      # generates a Hash from the object list, but with only the fields that are picked.
+      #
+      # If there are more than one field, then the result is a Hash of Hashes.
+      # If there is just one field, it is a simple map to the value.
+      #
+      # For example:
+      #
+      #   "neighbors" = "= nodes_like_me[:services => :couchdb].pick_fields('domain.full', 'ip_address')"
+      #
+      # generates this:
+      #
+      #   neighbors:
+      #     couch1:
+      #       domain_full: couch1.bitmask.net
+      #       ip_address: "10.5.5.44"
+      #     couch2:
+      #       domain_full: couch2.bitmask.net
+      #       ip_address: "10.5.5.52"
+      #
+      # But this:
+      #
+      #   "neighbors": "= nodes_like_me[:services => :couchdb].pick_fields('domain.full')"
+      #
+      # will generate this:
+      #
+      #   neighbors:
+      #     couch1: couch1.bitmask.net
+      #     couch2: couch2.bitmask.net
+      #
+      def pick_fields(*fields)
+        self.values.inject({}) do |hsh, node|
+          value = self[node.name].pick(*fields)
+          if fields.size == 1
+            value = value.values.first
+          end
+          hsh[node.name] = value
+          hsh
+        end
       end
 
       #
