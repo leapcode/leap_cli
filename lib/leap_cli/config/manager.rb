@@ -47,18 +47,8 @@ module LeapCli
           @nodes[name] = apply_inheritance(node)
         end
 
-        # remove disabled nodes
-        @disabled_nodes = Config::ObjectList.new
         unless options[:include_disabled]
-          @nodes.select! do |name, node|
-            if node.enabled
-              true
-            else
-              log 2, :skipping, "disabled node #{name}."
-              @disabled_nodes[name] = node
-              false
-            end
-          end
+          remove_disabled_nodes
         end
 
         # validate
@@ -292,6 +282,30 @@ module LeapCli
         new_node.deep_merge!(node)
         return new_node
       end
+
+      def remove_disabled_nodes
+        @disabled_nodes = Config::ObjectList.new
+        @nodes.select! do |name, node|
+          if node.enabled
+            true
+          else
+            log 2, :skipping, "disabled node #{name}."
+            @disabled_nodes[name] = node
+            if node['services']
+              node['services'].to_a.each do |node_service|
+                @services[node_service].node_list.delete(node.name)
+              end
+            end
+            if node['tags']
+              node['tags'].to_a.each do |node_tag|
+                @tags[node_tag].node_list.delete(node.name)
+              end
+            end
+            false
+          end
+        end
+      end
+
 
       #
       # returns a set of nodes corresponding to a single name, where name could be a node name, service name, or tag name.
