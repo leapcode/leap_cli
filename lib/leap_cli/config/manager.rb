@@ -17,7 +17,7 @@ module LeapCli
       #
       # load .json configuration files
       #
-      def load
+      def load(options = {})
         @provider_dir = Path.provider
 
         # load base
@@ -45,6 +45,18 @@ module LeapCli
         @nodes.each do |name, node|
           Util::assert! name =~ /^[0-9a-z-]+$/, "Illegal character(s) used in node name '#{name}'"
           @nodes[name] = apply_inheritance(node)
+        end
+
+        # remove disabled nodes
+        unless options[:include_disabled]
+          @nodes.select! do |name, node|
+            if node.enabled
+              true
+            else
+              log 2, :skipping, "disabled node #{name}."
+              false
+            end
+          end
         end
 
         # validate

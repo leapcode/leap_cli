@@ -13,8 +13,12 @@ module LeapCli; module Commands
   arg_name 'FILTER', :optional => true
   command :list do |c|
     c.flag 'print', :desc => 'What attributes to print (optional)'
+    c.switch 'disabled', :desc => 'Include disabled nodes in the list.', :negatable => false
     c.action do |global_options,options,args|
       puts
+      if options['disabled']
+        manager.load(:include_disabled => true) # reload, with disabled nodes
+      end
       if options['print']
         print_node_properties(manager.filter(args), options['print'])
       else
@@ -39,9 +43,9 @@ module LeapCli; module Commands
       node.evaluate
       value = properties.collect{|prop|
         if node[prop].nil?
-          "[null]"
+          "null"
         elsif node[prop] == ""
-          "[empty]"
+          "empty"
         else
           node[prop]
         end
