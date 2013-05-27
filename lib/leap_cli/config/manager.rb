@@ -48,12 +48,14 @@ module LeapCli
         end
 
         # remove disabled nodes
+        @disabled_nodes = Config::ObjectList.new
         unless options[:include_disabled]
           @nodes.select! do |name, node|
             if node.enabled
               true
             else
               log 2, :skipping, "disabled node #{name}."
+              @disabled_nodes[name] = node
               false
             end
           end
@@ -87,6 +89,14 @@ module LeapCli
           Util::write_file!(hierapath, node.dump)
           updated_files << filepath
           updated_hiera << hierapath
+        end
+
+        if @disabled_nodes
+          # make disabled nodes appear as if they are still active
+          @disabled_nodes.each_node do |node|
+            updated_files << Path.named_path([:node_files_dir, node.name], @provider_dir)
+            updated_hiera << Path.named_path([:hiera, node.name], @provider_dir)
+          end
         end
 
         # remove files that are no longer needed
