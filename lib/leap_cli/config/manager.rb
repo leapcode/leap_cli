@@ -251,7 +251,7 @@ module LeapCli
 
         # inherit from services
         if node['services']
-          node['services'].to_a.sort.each do |node_service|
+          node['services'].to_a.each do |node_service|
             service = @services[node_service]
             if service.nil?
               log 0, :error, 'in node "%s": the service "%s" does not exist.' % [node['name'], node_service]
@@ -267,7 +267,7 @@ module LeapCli
           node['tags'] = (node['tags'] || []).to_a + ['local']
         end
         if node['tags']
-          node['tags'].to_a.sort.each do |node_tag|
+          node['tags'].to_a.each do |node_tag|
             tag = @tags[node_tag]
             if tag.nil?
               log 0, :error, 'in node "%s": the tag "%s" does not exist.' % [node['name'], node_tag]
