@@ -28,7 +28,8 @@ module LeapCli; module Commands
     assert_config! 'provider.ca.client_certificates.unlimited_prefix'
     assert_config! 'provider.ca.client_certificates.limited_prefix'
     template = read_file! Path.find_file(:test_client_openvpn_template)
-    ['production', 'testing', 'local', 'development', nil].each do |env|
+    environments = [nil] + manager.tags.collect {|name, tag| tag['environment']}.compact
+    environments.each do |env|
       vpn_nodes = manager.nodes[:environment => env][:services => 'openvpn']['openvpn.allow_limited' => true]
       if vpn_nodes.any?
         generate_test_client_cert(provider.ca.client_certificates.limited_prefix) do |key, cert|
