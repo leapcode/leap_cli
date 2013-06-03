@@ -1,5 +1,7 @@
 module LeapCli; end
 
+require 'leap/platform.rb'
+
 require 'leap_cli/version.rb'
 require 'leap_cli/constants.rb'
 require 'leap_cli/requirements.rb'

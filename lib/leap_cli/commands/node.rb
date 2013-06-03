@@ -75,7 +75,7 @@ module LeapCli; module Commands
         node = get_node_from_args(args)
         new_name = args.last
         ensure_dir [:node_files_dir, new_name]
-        Path::NODE_PATHS.each do |path|
+        Leap::Platform.node_files.each do |path|
           rename_file! [path, node.name], [path, new_name]
         end
         remove_directory! [:node_files_dir, node.name]
@@ -87,7 +87,7 @@ module LeapCli; module Commands
     node.command :rm do |rm|
       rm.action do |global_options,options,args|
         node = get_node_from_args(args)
-        (Path::NODE_PATHS + [:node_files_dir]).each do |path|
+        (Leap::Platform.node_files + [:node_files_dir]).each do |path|
           remove_file! [path, node.name]
         end
         if node.vagrant?

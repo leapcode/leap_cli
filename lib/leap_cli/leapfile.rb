@@ -28,10 +28,25 @@ module LeapCli
       if directory == '/'
         return nil
       else
+        #
+        # set up paths
+        #
         @provider_directory_path = directory
         read_settings(directory + '/Leapfile')
         read_settings(ENV['HOME'] + '/.leaprc')
         @platform_directory_path = File.expand_path(@platform_directory_path || '../leap_platform', @provider_directory_path)
+
+        #
+        # load the platform
+        #
+        require "#{@platform_directory_path}/platform.rb"
+        if !Leap::Platform.compatible_with_cli?(LeapCli::VERSION)
+          Util.bail! "This leap command (version #{LeapCli::VERSION}) is not compatible with the platform #{@platform_directory_path} (which requires #{Platform.compatible_cli.first} to #{Platform.compatible_cli.last})."
+        end
+
+        #
+        # set defaults
+        #
         if @allow_production_deploy.nil?
           # by default, only allow production deploys from 'master' or if not a git repo
           @allow_production_deploy = !LeapCli::Util.is_git_directory?(@provider_directory_path) ||
