@@ -14,7 +14,7 @@ end
 
 task :install_prerequisites, :max_hosts => MAX_HOSTS do
   leap.mkdirs LeapCli::PUPPET_DESTINATION
-  run "locale-gen"
+  run "echo 'en_US.UTF-8 UTF-8' > /etc/locale.gen; locale-gen"
   leap.log :updating, "package list" do
     run "apt-get update"
   end

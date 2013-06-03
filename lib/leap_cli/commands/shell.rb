@@ -35,11 +35,10 @@ module LeapCli; module Commands
     if cmd == :ssh
       command = "#{ssh} #{node.name}"
     elsif cmd == :mosh
-      command = "mosh --ssh \"#{ssh}\" #{node.name}"
+      command = "MOSH_TITLE_NOPREFIX=1 mosh --ssh \"#{ssh}\" #{node.name}"
     end
     log 2, command
-    title = "echo -n \"\\033]0;#{username}@#{node.domain.full}\007\""
-    exec "#{title} && #{command}"
+    exec "#{command}"
   end
 
 end; end
