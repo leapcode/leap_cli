@@ -8,7 +8,15 @@ module LeapCli
     #
     class Manager
 
+      ##
+      ## ATTRIBUTES
+      ##
+
       attr_reader :services, :tags, :nodes, :provider, :common, :secrets
+
+      def facts
+        @facts ||= JSON.parse(Util.read_file(:facts) || {})
+      end
 
       ##
       ## IMPORT EXPORT

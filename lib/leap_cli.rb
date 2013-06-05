@@ -11,6 +11,7 @@ require 'core_ext/hash'
 require 'core_ext/boolean'
 require 'core_ext/nil'
 require 'core_ext/string'
+require 'core_ext/json'
 
 require 'leap_cli/log'
 require 'leap_cli/path'

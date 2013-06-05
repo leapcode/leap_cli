@@ -45,7 +45,7 @@ module LeapCli; module Commands
 
     node.desc 'Bootstraps a node or nodes, setting up SSH keys and installing prerequisite packages'
     node.long_desc "This command prepares a server to be used with the LEAP Platform by saving the server's SSH host key, " +
-                   "copying the authorized_keys file, and installing packages that are required for deploying. " +
+                   "copying the authorized_keys file, installing packages that are required for deploying, and registering important facts. " +
                    "Node init must be run before deploying to a server, and the server must be running and available via the network. " +
                    "This command only needs to be run once, but there is no harm in running it multiple times."
     node.arg_name 'FILTER' #, :optional => false, :multiple => false
@@ -61,6 +61,13 @@ module LeapCli; module Commands
           ssh_connect(node, :bootstrap => true, :echo => options[:echo]) do |ssh|
             ssh.install_authorized_keys
             ssh.install_prerequisites
+            ssh.leap.capture(facter_cmd) do |response|
+              if response[:exitcode] == 0
+                update_node_facts(node.name, response[:data])
+              else
+                log :failed, "to run facter on #{node.name}"
+              end
+            end
           end
           finished << node.name
         end
@@ -79,6 +86,7 @@ module LeapCli; module Commands
           rename_file! [path, node.name], [path, new_name]
         end
         remove_directory! [:node_files_dir, node.name]
+        rename_node_facts(node.name, new_name)
       end
     end
 
@@ -93,6 +101,7 @@ module LeapCli; module Commands
         if node.vagrant?
           vagrant_command("destroy --force", [node.name])
         end
+        remote_node_facts(node.name)
       end
     end
   end

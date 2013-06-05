@@ -203,6 +203,40 @@ module LeapCli
       end
     end
 
+    #
+    # replace contents of a file, with an exclusive lock.
+    #
+    # 1. locks file
+    # 2. reads contents
+    # 3. yields contents
+    # 4. replaces file with return value of the block
+    #
+    def replace_file!(filepath, &block)
+      filepath = Path.named_path(filepath)
+      if !File.exists?(filepath)
+        content = yield(nil)
+        unless content.nil?
+          write_file!(filepath, content)
+          log :created, filepath
+        end
+      else
+        File.open(filepath, File::RDWR|File::CREAT, 0644) do |f|
+          f.flock(File::LOCK_EX)
+          old_content = f.read
+          new_content = yield(old_content)
+          if old_content == new_content
+            log :nochange, filepath, 2
+          else
+            f.rewind
+            f.write(new_content)
+            f.flush
+            f.truncate(f.pos)
+            log :updated, filepath
+          end
+        end
+      end
+    end
+
     def remove_file!(filepath)
       filepath = Path.named_path(filepath)
       if File.exists?(filepath)

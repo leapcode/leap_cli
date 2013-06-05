@@ -25,9 +25,12 @@ task :install_prerequisites, :max_hosts => MAX_HOSTS do
   leap.mark_initialized
 end
 
-#task :apply_puppet, :max_hosts => MAX_HOSTS do
-#  raise "now such directory #{puppet_source}" unless File.directory?(puppet_source)
-#  leap.log :applying, "puppet" do
-#    puppet.apply
-#  end
-#end
+#
+# just dummies, used to capture task options
+#
+
+task :skip_errors_task, :on_error => :continue, :max_hosts => MAX_HOSTS do
+end
+
+task :standard_task, :max_hosts => MAX_HOSTS do
+end
