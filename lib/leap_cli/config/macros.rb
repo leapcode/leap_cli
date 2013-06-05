@@ -153,20 +153,35 @@ module LeapCli; module Config
       nodes.each_node do |node|
         @referenced_nodes[node.name] = node
       end
-      nodes.values.collect {|node| node.domain.name}
+      return nodes.values.collect {|node| node.domain.name}
     end
 
     #
-    # generates entries needed for updating /etc/hosts on a node, but only including the IPs of the
-    # other nodes we have encountered.
+    # Generates entries needed for updating /etc/hosts on a node, but only including the IPs of the
+    # other nodes we have encountered. Also, for virtual machines, use the local address if this
+    # @node is in the same location.
     #
     def hosts_file
-      return nil unless @referenced_nodes
-      entries = []
-      @referenced_nodes.each_node do |node|
-        entries << "#{node.ip_address}    #{node.name} #{node.domain.internal} #{node.domain.full}"
+      if @referenced_nodes && @referenced_nodes.any?
+        hosts = {}
+        my_location = @node['location'] ? @node['location']['name'] : nil
+        @referenced_nodes.each_node do |node|
+          next if node.name == @node.name
+          hosts[node.name] = {'ip_address' => node.ip_address, 'domain_internal' => node.domain.internal, 'domain_full' => node.domain.full}
+          node_location = node['location'] ? node['location']['name'] : nil
+          if my_location == node_location
+            if facts = @node.manager.facts[node.name]
+              if facts['ec2_local_ipv4']
+                hosts[node.name]['ip_address'] = facts['ec2_local_ipv4']
+              end
+            end
+          end
+        end
+        #hosts = @referenced_nodes.pick_fields("ip_address", "domain.internal", "domain.full")
+        return hosts
+      else
+        return nil
       end
-      entries.join("\n")
     end
 
     def known_hosts_file
