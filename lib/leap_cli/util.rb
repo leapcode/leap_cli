@@ -217,7 +217,6 @@ module LeapCli
         content = yield(nil)
         unless content.nil?
           write_file!(filepath, content)
-          log :created, filepath
         end
       else
         File.open(filepath, File::RDWR|File::CREAT, 0644) do |f|
