@@ -187,7 +187,7 @@ module LeapCli; module Commands
 
   def get_public_key_for_ip(address, port=22)
     assert_bin!('ssh-keyscan')
-    output = assert_run! "ssh-keyscan -p #{port} -t rsa #{address}", "Could not get the public host key from #{address}:#{port}. Maybe sshd is not running?"
+    output = assert_run! "ssh-keyscan -p #{port} -t ecdsa #{address}", "Could not get the public host key from #{address}:#{port}. Maybe sshd is not running?"
     line = output.split("\n").grep(/^[^#]/).first
     assert! line, "Got zero host keys back!"
     ip, key_type, public_key = line.split(' ')
