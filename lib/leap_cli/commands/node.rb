@@ -60,7 +60,7 @@ module LeapCli; module Commands
         finished = []
         manager.filter!(args).each_node do |node|
           ping_node(node, options) unless options[:noping]
-          save_public_host_key(node, global, options)
+          save_public_host_key(node, global, options) unless node.vagrant?
           update_compiled_ssh_configs
           ssh_connect_options = connect_options(options).merge({:bootstrap => true, :echo => options[:echo]})
           ssh_connect(node, ssh_connect_options) do |ssh|

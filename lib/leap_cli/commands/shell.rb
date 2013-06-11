@@ -39,11 +39,14 @@ module LeapCli; module Commands
     options = [
       "-o 'HostName=#{node.ip_address}'",
       "-o 'HostKeyAlias=#{node.name}'",
-      "-o 'GlobalKnownHostsFile=#{path(:known_hosts)}'",
-      "-o 'StrictHostKeyChecking=yes'"
+      "-o 'GlobalKnownHostsFile=#{path(:known_hosts)}'"
     ]
     if node.vagrant?
       options << "-i #{vagrant_ssh_key_file}"
+      options << "-o 'StrictHostKeyChecking=no'"      # \ together, these options allow us to just blindly accept
+      options << "-o 'UserKnownHostsFile=/dev/null'"  # / what pub key the vagrant node has. useful, because it is different for everyone.
+    else
+      options << "-o 'StrictHostKeyChecking=yes'"
     end
     username = 'root'
     # the echo sets the terminal title. it would be better to do this on the server

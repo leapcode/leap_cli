@@ -46,6 +46,7 @@ module LeapCli; module Util; module RemoteCommand
     {
       :config => false,
       :global_known_hosts_file => path(:known_hosts),
+      :user_known_hosts_file => '/dev/null',
       :paranoid => true
     }
   end
@@ -95,11 +96,15 @@ module LeapCli; module Util; module RemoteCommand
   end
 
   def contingent_ssh_options_for_node(node)
+    opts = {}
     if node.vagrant?
-      {:keys => [vagrant_ssh_key_file]}
-    else
-      {}
+      opts[:keys] = [vagrant_ssh_key_file]
+      opts[:paranoid] = false # we skip host checking for vagrant nodes, because fingerprint is different for everyone.
+      if LeapCli::log_level <= 1
+        opts[:verbose] = :error # suppress all the warnings about adding host keys to known_hosts, since it is not actually doing that.
+      end
     end
+    return opts
   end
 
 end; end; end
