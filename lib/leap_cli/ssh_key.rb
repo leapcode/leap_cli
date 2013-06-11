@@ -112,7 +112,8 @@ module LeapCli
 
     def ==(other_key)
       return false if other_key.nil?
-      self.params == other_key.params
+      return false if self.class != other_key.class
+      return self.to_text == other_key.to_text
     end
 
     def in_known_hosts?(*identifiers)
