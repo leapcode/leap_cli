@@ -38,18 +38,17 @@ module LeapCli; module Commands
     node = get_node_from_args(args)
     options = [
       "-o 'HostName=#{node.ip_address}'",
-      "-o 'HostKeyAlias=#{node.name}'",
-      "-o 'GlobalKnownHostsFile=#{path(:known_hosts)}'"
+      # "-o 'HostKeyAlias=#{node.name}'", << oddly incompatible with ports in known_hosts file, so we must not use this or non-standard ports break.
+      "-o 'GlobalKnownHostsFile=#{path(:known_hosts)}'",
+      "-o 'UserKnownHostsFile=/dev/null'"
     ]
     if node.vagrant?
       options << "-i #{vagrant_ssh_key_file}"
-      options << "-o 'StrictHostKeyChecking=no'"      # \ together, these options allow us to just blindly accept
-      options << "-o 'UserKnownHostsFile=/dev/null'"  # / what pub key the vagrant node has. useful, because it is different for everyone.
+      options << "-o 'StrictHostKeyChecking=no'" # blindly accept host key and don't save it (since userknownhostsfile is /dev/null)
     else
       options << "-o 'StrictHostKeyChecking=yes'"
     end
     username = 'root'
-    # the echo sets the terminal title. it would be better to do this on the server
     ssh = "ssh -l #{username} -p #{node.ssh.port} #{options.join(' ')}"
     if cmd == :ssh
       command = "#{ssh} #{node.name}"

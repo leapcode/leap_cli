@@ -125,7 +125,13 @@ module LeapCli; module Commands
     buffer = StringIO.new
     manager.nodes.keys.sort.each do |node_name|
       node = manager.nodes[node_name]
-      hostnames = [node.name, node.domain.internal, node.domain.full, node.ip_address].join(',')
+      hostnames = [node.name, node.domain.internal, node.domain.full, node.ip_address].map {|hn|
+        if node.ssh.port == 22
+          hn
+        else
+          "[#{hn}]:#{node.ssh.port}"
+        end
+      }.join(',')
       pub_key = read_file([:node_ssh_pub_key,node.name])
       if pub_key
         buffer << [hostnames, pub_key].join(' ')
@@ -189,6 +195,9 @@ module LeapCli; module Commands
     assert_bin!('ssh-keyscan')
     output = assert_run! "ssh-keyscan -p #{port} -t ecdsa #{address}", "Could not get the public host key from #{address}:#{port}. Maybe sshd is not running?"
     line = output.split("\n").grep(/^[^#]/).first
+    if line =~ /No route to host/
+      bail! :failed, 'ssh-keyscan: no route to %s' % address
+    end
     assert! line, "Got zero host keys back!"
     ip, key_type, public_key = line.split(' ')
     return SshKey.load(public_key, key_type)

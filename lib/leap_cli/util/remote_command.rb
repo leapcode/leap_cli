@@ -64,7 +64,7 @@ module LeapCli; module Util; module RemoteCommand
     ssh_options_override ||= {}
     {
       :ssh_options => {
-        :host_key_alias => node.name,
+        # :host_key_alias => node.name, << incompatible with ports in known_hosts
         :host_name => node.ip_address,
         :port => node.ssh.port
       }.merge(contingent_ssh_options_for_node(node)).merge(ssh_options_override)
