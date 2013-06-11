@@ -51,14 +51,19 @@ module LeapCli; module Commands
     node.arg_name 'FILTER' #, :optional => false, :multiple => false
     node.command :init do |init|
       init.switch 'echo', :desc => 'If set, passwords are visible as you type them (default is hidden)', :negatable => false
+      init.switch 'noping', :desc => 'If set, skip initial ping of node (in case ICMP is being blocked).', :negatable => false
+      init.flag :port, :desc => 'Override the default SSH port.', :arg_name => 'PORT'
+      init.flag :ip,   :desc => 'Override the default SSH IP address.', :arg_name => 'IPADDRESS'
+
       init.action do |global,options,args|
         assert! args.any?, 'You must specify a FILTER'
         finished = []
         manager.filter!(args).each_node do |node|
-          ping_node(node)
-          save_public_host_key(node, global)
+          ping_node(node, options) unless options[:noping]
+          save_public_host_key(node, global, options)
           update_compiled_ssh_configs
-          ssh_connect(node, :bootstrap => true, :echo => options[:echo]) do |ssh|
+          ssh_connect_options = connect_options(options).merge({:bootstrap => true, :echo => options[:echo]})
+          ssh_connect(node, ssh_connect_options) do |ssh|
             ssh.install_authorized_keys
             ssh.install_prerequisites
             ssh.leap.capture(facter_cmd) do |response|
@@ -148,9 +153,11 @@ module LeapCli; module Commands
   #
   # see `man sshd` for the format of known_hosts
   #
-  def save_public_host_key(node, global)
+  def save_public_host_key(node, global, options)
     log :fetching, "public SSH host key for #{node.name}"
-    public_key = get_public_key_for_ip(node.ip_address, node.ssh.port)
+    address = options[:ip] || node.ip_address
+    port = options[:port] || node.ssh.port
+    public_key = get_public_key_for_ip(address, port)
     pub_key_path = Path.named_path([:node_ssh_pub_key, node.name])
     if Path.exists?(pub_key_path)
       if public_key == SshKey.load_from_file(pub_key_path)
@@ -187,9 +194,10 @@ module LeapCli; module Commands
     return SshKey.load(public_key, key_type)
   end
 
-  def ping_node(node)
+  def ping_node(node, options)
+    ip = options[:ip] || node.ip_address
     log :pinging, node.name
-    assert_run!("ping -W 1 -c 1 #{node.ip_address}", "Could not ping #{node.name} (address #{node.ip_address}). Try again, we only send a single ping.")
+    assert_run!("ping -W 1 -c 1 #{ip}", "Could not ping #{node.name} (address #{ip}). Try again, we only send a single ping.")
   end
 
   def seed_node_data(node, args)

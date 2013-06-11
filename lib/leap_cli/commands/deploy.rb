@@ -18,6 +18,12 @@ module LeapCli
       c.flag :tags, :desc => 'Specify tags to pass through to puppet (overriding the default).',
                     :default_value => DEFAULT_TAGS.join(','), :arg_name => 'TAG[,TAG]'
 
+      c.flag :port, :desc => 'Override the default SSH port.',
+                    :arg_name => 'PORT'
+
+      c.flag :ip,   :desc => 'Override the default SSH IP address.',
+                    :arg_name => 'IPADDRESS'
+
       c.action do |global,options,args|
         init_submodules
 
@@ -31,7 +37,7 @@ module LeapCli
 
         compile_hiera_files(nodes)
 
-        ssh_connect(nodes) do |ssh|
+        ssh_connect(nodes, connect_options(options)) do |ssh|
           ssh.leap.log :checking, 'node' do
             ssh.leap.assert_initialized
           end

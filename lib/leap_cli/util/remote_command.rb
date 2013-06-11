@@ -9,6 +9,7 @@ module LeapCli; module Util; module RemoteCommand
   #  Capistrano::Logger::TRACE     = 3
   #
   def ssh_connect(nodes, options={}, &block)
+    options ||= {}
     node_list = parse_node_list(nodes)
 
     cap = new_capistrano
@@ -30,7 +31,7 @@ module LeapCli; module Util; module RemoteCommand
     end
 
     node_list.each do |name, node|
-      cap.server node.name, :dummy_arg, node_options(node)
+      cap.server node.name, :dummy_arg, node_options(node, options[:ssh_options])
     end
 
     yield cap
@@ -58,13 +59,14 @@ module LeapCli; module Util; module RemoteCommand
   #  password_proc = Proc.new {Capistrano::CLI.password_prompt "Root SSH password for #{node.name}"}
   #  return {:password => password_proc}
   #
-  def node_options(node)
+  def node_options(node, ssh_options_override=nil)
+    ssh_options_override ||= {}
     {
       :ssh_options => {
         :host_key_alias => node.name,
         :host_name => node.ip_address,
         :port => node.ssh.port
-      }.merge(contingent_ssh_options_for_node(node))
+      }.merge(contingent_ssh_options_for_node(node)).merge(ssh_options_override)
     }
   end
 

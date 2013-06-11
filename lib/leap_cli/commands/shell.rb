@@ -16,6 +16,22 @@ module LeapCli; module Commands
     end
   end
 
+  protected
+
+  #
+  # allow for ssh overrides of all commands that use ssh_connect
+  #
+  def connect_options(options)
+    connect_options = {:ssh_options=>{}}
+    if options[:port]
+      connect_options[:ssh_options][:port] = options[:port]
+    end
+    if options[:ip]
+      connect_options[:ssh_options][:host_name] = options[:ip]
+    end
+    return connect_options
+  end
+
   private
 
   def exec_ssh(cmd, args)
