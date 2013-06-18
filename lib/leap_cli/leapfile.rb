@@ -23,8 +23,8 @@ module LeapCli
       @vagrant_network = '10.5.5.0/24'
     end
 
-    def load
-      directory = File.expand_path(find_in_directory_tree('Leapfile'))
+    def load(search_directory=nil)
+      directory = File.expand_path(find_in_directory_tree('Leapfile', search_directory))
       if directory == '/'
         return nil
       else
@@ -66,8 +66,8 @@ module LeapCli
       end
     end
 
-    def find_in_directory_tree(filename)
-      search_dir = Dir.pwd
+    def find_in_directory_tree(filename, directory_tree=nil)
+      search_dir = directory_tree || Dir.pwd
       while search_dir != "/"
         Dir.foreach(search_dir) do |f|
           return search_dir if f == filename

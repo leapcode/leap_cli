@@ -9,8 +9,9 @@ class MiniTest::Unit::TestCase
   # Add global extensions to the test case class here
 
   def setup
-    LeapCli::Path.set_platform_path(test_platform_path)
-    LeapCli::Path.set_provider_path(test_provider_path)
+    LeapCli.leapfile.load(test_provider_path)
+    LeapCli::Path.set_platform_path(LeapCli.leapfile.platform_directory_path)
+    LeapCli::Path.set_provider_path(LeapCli.leapfile.provider_directory_path)
   end
 
   def manager
@@ -33,9 +34,9 @@ class MiniTest::Unit::TestCase
     `#{ruby_path} #{base_path}/bin/leap #{args.join ' '}`
   end
 
-  def test_platform_path
-    "#{base_path}/test/leap_platform"
-  end
+  #def test_platform_path
+  #  "#{base_path}/test/leap_platform"
+  #end
 
   def test_provider_path
     "#{base_path}/test/provider"

@@ -26,5 +26,6 @@
     "ca_cert": "= try_file :ca_cert"
   },
   "service_type": "internal_service",
-  "name": "common"
+  "name": "common",
+  "enabled": true
 }
