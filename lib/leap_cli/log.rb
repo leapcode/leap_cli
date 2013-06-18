@@ -97,7 +97,7 @@ module LeapCli
           else [title.to_s, :cyan, :bold]
         end
         if options[:host]
-          clear_prefix = "[%s] %s " % options[:host], prefix_options[0]
+          clear_prefix = "[%s] %s " % [options[:host], prefix_options[0]]
           colored_prefix = "[%s] %s " % [Paint[options[:host], prefix_options[1], prefix_options[2]], prefix_options[0]]
         else
           clear_prefix = "%s " % prefix_options[0]
