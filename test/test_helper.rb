@@ -31,7 +31,7 @@ class MiniTest::Unit::TestCase
   end
 
   def leap_bin(*args)
-    `#{ruby_path} #{base_path}/bin/leap #{args.join ' '}`
+    `cd #{test_provider_path} && #{ruby_path} #{base_path}/bin/leap #{args.join ' '}`
   end
 
   #def test_platform_path
@@ -43,9 +43,14 @@ class MiniTest::Unit::TestCase
   end
 
   def with_multiple_rubies(&block)
-    ['ruby1.8', 'ruby1.9.1'].each do |ruby|
-      self.ruby_path = `which #{ruby}`.strip
-      next unless ruby_path.chars.any?
+    if ENV["RUBY"]
+      ENV["RUBY"].split(',').each do |ruby|
+        self.ruby_path = `which #{ruby}`.strip
+        next unless ruby_path.chars.any?
+        yield
+      end
+    else
+      self.ruby_path = `which ruby`.strip
       yield
     end
     self.ruby_path = ""

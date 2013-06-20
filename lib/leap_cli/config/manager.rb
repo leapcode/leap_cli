@@ -1,5 +1,9 @@
 require 'json/pure'
 
+if $ruby_version < [1,9]
+  require 'iconv'
+end
+
 module LeapCli
   module Config
 
@@ -218,9 +222,18 @@ module LeapCli
           end
         end
 
+        #
+        # force UTF-8
+        #
+        if $ruby_version >= [1,9]
+          string = buffer.string.force_encoding('utf-8')
+        else
+          string = Iconv.conv("UTF-8//IGNORE", "UTF-8", buffer.string)
+        end
+
         # parse json
         begin
-          hash = JSON.parse(buffer.string, :object_class => Hash, :array_class => Array) || {}
+          hash = JSON.parse(string, :object_class => Hash, :array_class => Array) || {}
         rescue SyntaxError, JSON::ParserError => exc
           log 0, :error, 'in file "%s":' % filename
           log 0, exc.to_s, :indent => 1
@@ -293,11 +306,10 @@ module LeapCli
 
       def remove_disabled_nodes
         @disabled_nodes = Config::ObjectList.new
-        @nodes.select! do |name, node|
-          if node.enabled
-            true
-          else
+        @nodes.each do |name, node|
+          unless node.enabled
             log 2, :skipping, "disabled node #{name}."
+            @nodes.delete(name)
             @disabled_nodes[name] = node
             if node['services']
               node['services'].to_a.each do |node_service|
@@ -309,7 +321,6 @@ module LeapCli
                 @tags[node_tag].node_list.delete(node.name)
               end
             end
-            false
           end
         end
       end

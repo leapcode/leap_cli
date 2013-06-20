@@ -1,5 +1,7 @@
 module LeapCli; end
 
+$ruby_version = RUBY_VERSION.split('.').collect{ |i| i.to_i }.extend(Comparable)
+
 require 'leap/platform.rb'
 
 require 'leap_cli/version.rb'

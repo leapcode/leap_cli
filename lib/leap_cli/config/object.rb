@@ -1,7 +1,9 @@
 require 'erb'
 require 'json/pure'  # pure ruby implementation is required for our sorted trick to work.
 
-$KCODE = 'UTF8' unless RUBY_VERSION > "1.9.0"
+if $ruby_version < [1,9]
+  $KCODE = 'UTF8'
+end
 require 'ya2yaml' # pure ruby yaml
 
 require 'leap_cli/config/macros'
