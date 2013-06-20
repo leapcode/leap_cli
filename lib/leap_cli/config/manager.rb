@@ -19,7 +19,7 @@ module LeapCli
       attr_reader :services, :tags, :nodes, :provider, :common, :secrets
 
       def facts
-        @facts ||= JSON.parse(Util.read_file(:facts) || {})
+        @facts ||= JSON.parse(Util.read_file(:facts) || "{}")
       end
 
       ##
