@@ -82,6 +82,7 @@ module LeapCli
     def_delegator :@key, :private_encrypt, :private_encrypt
     def_delegator :@key, :private_decrypt, :private_decrypt
     def_delegator :@key, :params, :params
+    def_delegator :@key, :to_text, :to_text
 
     def public_key
       SshKey.new(@key.public_key)

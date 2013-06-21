@@ -166,7 +166,7 @@ module LeapCli; module Commands
     public_key = get_public_key_for_ip(address, port)
     pub_key_path = Path.named_path([:node_ssh_pub_key, node.name])
     if Path.exists?(pub_key_path)
-      if public_key == SshKey.load_from_file(pub_key_path)
+      if public_key == SshKey.load(pub_key_path)
         log :trusted, "- Public SSH host key for #{node.name} matches previously saved key", :indent => 1
       else
         bail! do
