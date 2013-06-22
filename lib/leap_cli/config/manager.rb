@@ -17,6 +17,7 @@ module LeapCli
       ##
 
       attr_reader :services, :tags, :nodes, :provider, :common, :secrets
+      attr_reader :base_services, :base_tags, :base_provider, :base_common
 
       def facts
         @facts ||= JSON.parse(Util.read_file(:facts) || "{}")
@@ -33,10 +34,10 @@ module LeapCli
         @provider_dir = Path.provider
 
         # load base
-        base_services = load_all_json(Path.named_path([:service_config, '*'], Path.provider_base), Config::Tag)
-        base_tags     = load_all_json(Path.named_path([:tag_config, '*'], Path.provider_base), Config::Tag)
-        base_common   = load_json(Path.named_path(:common_config, Path.provider_base), Config::Object)
-        base_provider = load_json(Path.named_path(:provider_config, Path.provider_base), Config::Object)
+        @base_services = load_all_json(Path.named_path([:service_config, '*'], Path.provider_base), Config::Tag)
+        @base_tags     = load_all_json(Path.named_path([:tag_config, '*'], Path.provider_base), Config::Tag)
+        @base_common   = load_json(Path.named_path(:common_config, Path.provider_base), Config::Object)
+        @base_provider = load_json(Path.named_path(:provider_config, Path.provider_base), Config::Object)
 
         # load provider
         provider_path = Path.named_path(:provider_config, @provider_dir)

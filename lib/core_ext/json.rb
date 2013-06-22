@@ -12,18 +12,21 @@ module JSON
   #
   def self.sorted_generate(obj)
     # modify hash and array
-    Hash.class_eval do
-      alias_method :each_without_sort, :each
-      def each(&block)
-        keys.sort {|a,b| a.to_s <=> b.to_s }.each do |key|
-          yield key, self[key]
-        end
-      end
-    end
     Array.class_eval do
       alias_method :each_without_sort, :each
       def each(&block)
-        sort {|a,b| a.to_s <=> b.to_s }.each_without_sort &block
+        sorted = sort {|a,b| a.to_s <=> b.to_s }
+        for i in 0..(sorted.length-1) do
+          yield sorted[i]
+        end
+      end
+    end
+    Hash.class_eval do
+      alias_method :each_without_sort, :each
+      def each(&block)
+        self.keys.each do |key|
+          yield key, self.fetch(key) # fetch is used so we don't trigger Config::Object auto-eval
+        end
       end
     end
 

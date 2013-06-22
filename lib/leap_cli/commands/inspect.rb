@@ -3,6 +3,7 @@ module LeapCli; module Commands
   desc 'Prints details about a file. Alternately, the argument FILE can be the name of a node, service or tag.'
   arg_name 'FILE'
   command :inspect do |c|
+    c.switch 'base', :desc => 'Inspect the FILE from the provider_base (i.e. without local inheritance).', :negatable => false
     c.action do |global_options,options,args|
       object = args.first
       assert! object, 'A file path or node/service/tag name is required'
@@ -42,6 +43,8 @@ module LeapCli; module Commands
           :inspect_provider
         elsif path_match?(:common_config, full_path)
           :inspect_common
+        else
+          nil
         end
       end
     elsif manager.nodes[object]
@@ -83,33 +86,51 @@ module LeapCli; module Commands
   #end
 
   def inspect_node(arg, options)
-    inspect_json(arg, options) {|name| manager.nodes[name] }
+    inspect_json manager.nodes[name(arg)]
   end
 
   def inspect_service(arg, options)
-    inspect_json(arg, options) {|name| manager.services[name] }
+    if options[:base]
+      inspect_json manager.base_services[name(arg)]
+    else
+      inspect_json manager.services[name(arg)]
+    end
   end
 
   def inspect_tag(arg, options)
-    inspect_json(arg, options) {|name| manager.tags[name] }
+    if options[:base]
+      inspect_json manager.base_tags[name(arg)]
+    else
+      inspect_json manager.tags[name(arg)]
+    end
   end
 
   def inspect_provider(arg, options)
-    inspect_json(arg, options) {|name| manager.provider }
+    if options[:base]
+      inspect_json manager.base_provider
+    else
+      inspect_json manager.provider
+    end
   end
 
   def inspect_common(arg, options)
-    inspect_json(arg, options) {|name| manager.common }
+    if options[:base]
+      inspect_json manager.base_common
+    else
+      inspect_json manager.common
+    end
   end
 
   #
   # helpers
   #
 
-  def inspect_json(arg, options)
-    name = File.basename(arg).sub(/\.json$/, '')
-    config = yield name
-    puts config.dump_json
+  def name(arg)
+    File.basename(arg).sub(/\.json$/, '')
+  end
+
+  def inspect_json(config)
+    puts JSON.sorted_generate(config)
   end
 
   def path_match?(path_symbol, path)

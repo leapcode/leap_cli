@@ -16,21 +16,6 @@ module LeapCli; module Config
     end
 
     #
-    # Make a copy of ourselves, except only including the specified keys.
-    #
-    # Also, the result is flattened to a single hash, so a key of 'a.b' becomes 'a_b'
-    #
-    def pick(*keys)
-      keys.map(&:to_s).inject(self.class.new(@manager)) do |hsh, key|
-        value = self.get(key)
-        if !value.nil?
-          hsh[key.gsub('.','_')] = value
-        end
-        hsh
-      end
-    end
-
-    #
     # returns true if this node has an ip address in the range of the vagrant network
     #
     def vagrant?

@@ -184,6 +184,21 @@ module LeapCli
         self.deep_merge!(object, true)
       end
 
+      #
+      # Make a copy of ourselves, except only including the specified keys.
+      #
+      # Also, the result is flattened to a single hash, so a key of 'a.b' becomes 'a_b'
+      #
+      def pick(*keys)
+        keys.map(&:to_s).inject(self.class.new(@manager)) do |hsh, key|
+          value = self.get(key)
+          if !value.nil?
+            hsh[key.gsub('.','_')] = value
+          end
+          hsh
+        end
+      end
+
       protected
 
       #
