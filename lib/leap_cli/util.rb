@@ -420,6 +420,12 @@ module LeapCli
       end
     end
 
+    def current_git_commit(dir)
+      Dir.chdir(dir) do
+        `git rev-parse HEAD 2>/dev/null`.strip
+      end
+    end
+
   end
 end
 
