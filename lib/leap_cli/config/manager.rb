@@ -207,7 +207,7 @@ module LeapCli
           return object_class.new(self)
         end
 
-        log :loading, filename, 2
+        log :loading, filename, 3
 
         #
         # Read a JSON file, strip out comments.
