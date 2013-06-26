@@ -262,5 +262,21 @@ module LeapCli; module Config
       end
     end
 
+    #
+    # creates a hash from the ssh key info in users directory, for use in updating authorized_keys file
+    #
+    def authorized_keys
+      hash = {}
+      Dir.glob(Path.named_path([:user_ssh, '*'])).sort.each do |keyfile|
+        ssh_type, ssh_key = File.read(keyfile).strip.split(" ")
+        name = File.basename(File.dirname(keyfile))
+        hash[name] = {
+          "type" => ssh_type,
+          "key" => ssh_key
+        }
+      end
+      hash
+    end
+
   end
 end; end

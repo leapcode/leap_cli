@@ -41,7 +41,12 @@ module LeapCli
         #
         require "#{@platform_directory_path}/platform.rb"
         if !Leap::Platform.compatible_with_cli?(LeapCli::VERSION)
-          Util.bail! "This leap command (version #{LeapCli::VERSION}) is not compatible with the platform #{@platform_directory_path} (which requires #{Platform.compatible_cli.first} to #{Platform.compatible_cli.last})."
+          Util.bail! "This leap command (version #{LeapCli::VERSION}) is not compatible with the platform #{@platform_directory_path} " +
+                     "(which requires leap command #{Platform.compatible_cli.first} to #{Platform.compatible_cli.last})."
+        end
+        if !Leap::Platform.version_in_range?(LeapCli::COMPATIBLE_PLATFORM_VERSION)
+          Util.bail! "This leap command (version #{LeapCli::VERSION}) is not compatible with the platform #{@platform_directory_path} " +
+                     "(leap command requires which requires platform #{LeapCli::COMPATIBLE_PLATFORM_VERSION.first} to #{LeapCli::COMPATIBLE_PLATFORM_VERSION.last})."
         end
 
         #
