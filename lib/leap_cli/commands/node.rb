@@ -197,6 +197,8 @@ module LeapCli; module Commands
     line = output.split("\n").grep(/^[^#]/).first
     if line =~ /No route to host/
       bail! :failed, 'ssh-keyscan: no route to %s' % address
+    elsif line =~ /no hostkey alg/
+      bail! :failed, 'ssh-keyscan: no hostkey alg (must be missing an ecdsa public host key)'
     end
     assert! line, "Got zero host keys back!"
     ip, key_type, public_key = line.split(' ')
