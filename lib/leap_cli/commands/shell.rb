@@ -8,7 +8,7 @@ module LeapCli; module Commands
     end
   end
 
-  desc 'Log in to the specified node with an interactive shell using mosh.'
+  desc 'Log in to the specified node with an interactive shell using mosh (requires node to have mosh.enabled set to true).'
   arg_name 'NAME'
   command :mosh do |c|
     c.action do |global_options,options,args|
