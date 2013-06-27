@@ -19,8 +19,19 @@ module LeapCli
       attr_reader :services, :tags, :nodes, :provider, :common, :secrets
       attr_reader :base_services, :base_tags, :base_provider, :base_common
 
+      #
+      # returns the Hash of the contents of facts.json
+      #
       def facts
         @facts ||= JSON.parse(Util.read_file(:facts) || "{}")
+      end
+
+      #
+      # returns an Array of all the environments defined for this provider.
+      # the returned array includes nil (for the default environment)
+      #
+      def environments
+        @environments ||= [nil] + self.tags.collect {|name, tag| tag['environment']}.compact
       end
 
       ##
