@@ -49,6 +49,11 @@ module LeapCli; module Commands
       options << "-o 'StrictHostKeyChecking=yes'"
     end
     username = 'root'
+    if LeapCli.log_level >= 3
+      options << "-vv"
+    elsif LeapCli.log_level >= 2
+      options << "-v"
+    end
     ssh = "ssh -l #{username} -p #{node.ssh.port} #{options.join(' ')}"
     if cmd == :ssh
       command = "#{ssh} #{node.name}"
