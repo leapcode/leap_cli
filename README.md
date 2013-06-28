@@ -99,13 +99,3 @@ other places, it is easier to create the symlink. If you run ``leap`` directly, 
 the command launcher that rubygems installs, leap will run in a mode that simulates
 ``bundle exec leap`` (i.e. only gems included in Gemfile are allowed to be loaded).
 
-Future development
-----------------------------------------------------
-
-(1) remove supply_drop - our use of supply drop no longer makes sense, as our needs diverge and we have more and more patches against upstream. the supply drop code we use should be cherry picked and brought into leap_cli.
-
-  (a) create a separate rsync library independent of capistrano or supply_drop.
-  (b) do our own rsync for the puppet manifests (make sure to include --copy-links)
-  (c) do our own puppet apply, with capture of exit status.
-
-(2) remove capistrano. we don't need it, and it makes it awkward to do what we want (exit codes, different options for different hosts). either use another shell lib, or roll our own. maybe something like 'remotedly(hosts) do |host|....'
