@@ -50,19 +50,31 @@ module LeapCli
     # serial is any number less than 2^32 (4294967296)
     #
     def compile_zone_file
+      hosts_seen = {}
       f = $stdout
-
-      f.puts ZONE_HEADER % [provider.domain, provider.domain, provider.domain]
-
+      f.puts ZONE_HEADER % {:domain => provider.domain, :ns => provider.domain, :contact => provider.contacts.default.sub('@','.')}
       max_width = manager.nodes.values.inject(0) {|max, node| [max, relative_hostname(node.domain.full).length].max }
-      put_line = lambda {|host, line| f.puts("%-#{max_width}s %s" % [host, line])}
+      put_line = lambda do |host, line|
+        host = '@' if host == ''
+        f.puts("%-#{max_width}s %s" % [host, line])
+      end
 
+      f.puts ORIGIN_HEADER
+      # 'A' records for primary domain
+      manager.nodes[:environment => '!local'].each_node do |node|
+        if node.dns['aliases'] && node.dns.aliases.include?(provider.domain)
+          put_line.call "", "IN A      #{node.ip_address}"
+        end
+      end
+
+      # NS records
       if provider['dns'] && provider.dns['nameservers']
         provider.dns.nameservers.each do |ns|
           put_line.call "", "IN NS #{ns}."
         end
       end
 
+      # all other records
       manager.environments.each do |env|
         next if env == 'local'
         nodes = manager.nodes[:environment => env]
@@ -73,9 +85,9 @@ module LeapCli
             hostname = relative_hostname(node.domain.full)
             put_line.call relative_hostname(node.domain.full), "IN A      #{node.ip_address}"
           end
-          if node['dns']['aliases']
-            node['dns']['aliases'].each do |host_alias|
-              if host_alias != node.domain.full
+          if node.dns['aliases']
+            node.dns.aliases.each do |host_alias|
+              if host_alias != node.domain.full && host_alias != provider.domain
                 put_line.call relative_hostname(host_alias), "IN CNAME  #{relative_hostname(node.domain.full)}"
               end
             end
@@ -96,18 +108,26 @@ module LeapCli
 
     ZONE_HEADER = %[
 ;;
-;; BIND data file for %s
+;; BIND data file for %{domain}
 ;;
 
 $TTL 600
+$ORIGIN %{domain}.
 
-@ IN SOA %s. %s. (
+@ IN SOA %{ns}. %{contact}. (
   0000          ; serial
   7200          ; refresh (  24 hours)
   3600          ; retry   (   2 hours)
   1209600       ; expire  (1000 hours)
   600 )         ; minimum (   2 days)
 ;
+]
+
+    ORIGIN_HEADER = %[
+;;
+;; ZONE ORIGIN
+;;
+
 ]
 
   end
