@@ -106,7 +106,7 @@ module LeapCli; module Commands
         if node.vagrant?
           vagrant_command("destroy --force", [node.name])
         end
-        remote_node_facts(node.name)
+        remove_node_facts(node.name)
       end
     end
   end
