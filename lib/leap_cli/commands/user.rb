@@ -14,11 +14,11 @@ require 'gpgme'
 module LeapCli
   module Commands
 
-    desc 'Adds a new trusted sysadmin'
+    desc 'Adds a new trusted sysadmin by adding public keys to the "users" directory.'
     arg_name 'USERNAME' #, :optional => false, :multiple => false
     command :'add-user' do |c|
 
-      c.switch 'self', :desc => 'lets you choose among your public keys', :negatable => false
+      c.switch 'self', :desc => 'Add yourself as a trusted sysadin by choosing among the public keys available for the current user.', :negatable => false
       c.flag 'ssh-pub-key', :desc => 'SSH public key file for this new user'
       c.flag 'pgp-pub-key', :desc => 'OpenPGP public key file for this new user'
 
@@ -120,7 +120,11 @@ module LeapCli
 
     def update_authorized_keys
       buffer = StringIO.new
-      Dir.glob(path([:user_ssh, '*'])).sort.each do |keyfile|
+      keys = Dir.glob(path([:user_ssh, '*']))
+      if keys.empty?
+        bail! "You must have at least one public SSH user key configured in order to proceed. See `leap help add-user`."
+      end
+      keys.sort.each do |keyfile|
         ssh_type, ssh_key = File.read(keyfile).strip.split(" ")
         buffer << ssh_type
         buffer << " "
