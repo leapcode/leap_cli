@@ -129,13 +129,7 @@ module LeapCli; module Commands
     buffer << "#\n"
     manager.nodes.keys.sort.each do |node_name|
       node = manager.nodes[node_name]
-      hostnames = [node.name, node.domain.internal, node.domain.full, node.ip_address].map {|hn|
-        if node.ssh.port == 22
-          hn
-        else
-          "[#{hn}]:#{node.ssh.port}"
-        end
-      }.join(',')
+      hostnames = [node.name, node.domain.internal, node.domain.full, node.ip_address].join(',')
       pub_key = read_file([:node_ssh_pub_key,node.name])
       if pub_key
         buffer << [hostnames, pub_key].join(' ')
