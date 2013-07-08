@@ -111,11 +111,31 @@ module LeapCli; module Commands
 
   def vagrant_setup
     assert_bin! 'vagrant', 'Vagrant is required for running local virtual machines. Run "sudo apt-get install vagrant".'
-    unless assert_run!('vagrant gem which sahara').chars.any?
-      log :installing, "vagrant plugin 'sahara'"
-      assert_run! 'vagrant gem install sahara'
+
+    version = vagrant_version 
+    case version
+      when 0..1
+        unless assert_run!('vagrant gem which sahara').chars.any?
+          log :installing, "vagrant plugin 'sahara'"
+          assert_run! 'vagrant gem install sahara'
+        end
+      when 2
+        unless assert_run!('vagrant plugin list | grep sahara | cat').chars.any?
+          log :installing, "vagrant plugin 'sahara'"
+          assert_run! 'vagrant plugin install sahara'
+        end
     end
     create_vagrant_file
+  end
+
+  def vagrant_version
+    minor_version = `vagrant --version|cut -d' ' -f 3 | cut -d'.' -f 2`.to_i
+    version = case minor_version
+      when 1..9 then 2 
+      when 0    then 1
+      else 0
+    end
+    return version
   end
 
   def execute(cmd)
