@@ -14,7 +14,7 @@ module LeapCli; module Remote; module RsyncPlugin
   #   {:source => '', :dest => '', :flags => '', :includes => [], :excludes => []}
   #
   def update
-    rsync = RsyncCommand.new(:logger => logger, :flags => '-a')
+    rsync = RsyncCommand.new(:logger => logger, :flags => '-rltp --chmod=u+rX,go-rwx')
     rsync.asynchronously(find_servers) do |server|
       options = yield server
       next unless options
