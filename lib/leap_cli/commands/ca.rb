@@ -36,11 +36,11 @@ module LeapCli; module Commands
 
         nodes = manager.filter!(args)
         nodes.each_node do |node|
-          if options[:force] || cert_needs_updating?(node)
-            generate_cert_for_node(node)
-          elsif !node.x509.use
+          if !node.x509.use
             remove_file!([:node_x509_key, node.name])
             remove_file!([:node_x509_cert, node.name])
+          elsif options[:force] || cert_needs_updating?(node)
+            generate_cert_for_node(node)
           end
         end
       end
@@ -203,7 +203,7 @@ module LeapCli; module Commands
             dns_names << $1    if value =~ /^DNS:(.*)$/
           end
           if ips.first != node.ip_address
-            log :updating, "cert for node '#{node.name}' because ip_address has changed (from #{ips} to #{node.ip_address})"
+            log :updating, "cert for node '#{node.name}' because ip_address has changed (from #{ips.first} to #{node.ip_address})"
             return true
           elsif dns_names != dns_names_for_node(node)
             log :updating, "cert for node '#{node.name}' because domain name aliases have changed (from #{dns_names.inspect} to #{dns_names_for_node(node).inspect})"

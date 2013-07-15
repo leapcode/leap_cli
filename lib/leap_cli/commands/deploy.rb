@@ -63,7 +63,11 @@ module LeapCli
         node = manager.node(server.host)
         hiera_file = Path.relative_path([:hiera, node.name])
         ssh.leap.log hiera_file + ' -> ' + node.name + ':' + dest_dir + '/hiera.yaml'
-        {:source => hiera_file, :dest => dest_dir + '/hiera.yaml'}
+        {
+          :source => hiera_file,
+          :dest => dest_dir + '/hiera.yaml',
+          :flags => "-rltp --chmod=u+rX,go-rwx"
+        }
       end
     end
 
@@ -80,7 +84,7 @@ module LeapCli
             :dest => dest_dir,
             :excludes => "*",
             :includes => calculate_includes_from_files(files_to_sync),
-            :flags => "--relative --dirs --delete --delete-excluded --filter='protect hiera.yaml' --copy-links"
+            :flags => "-ltp --chmod=u+rX,go-rwx --relative --dirs --delete --delete-excluded --filter='protect hiera.yaml' --copy-links"
           }
         else
           nil
@@ -97,7 +101,7 @@ module LeapCli
           :chdir => Path.platform,
           :excludes => '*',
           :includes => ['/bin', '/bin/**', '/puppet', '/puppet/**'],
-          :flags => "--relative --dirs --delete --copy-links"
+          :flags => "-rlt --relative --delete --copy-links"
         }
       end
     end
