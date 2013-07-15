@@ -84,7 +84,7 @@ module LeapCli
             :dest => dest_dir,
             :excludes => "*",
             :includes => calculate_includes_from_files(files_to_sync),
-            :flags => "-ltp --chmod=u+rX,go-rwx --relative --dirs --delete --delete-excluded --filter='protect hiera.yaml' --copy-links"
+            :flags => "-rltp --chmod=u+rX,go-rwx --relative --delete --delete-excluded --filter='protect hiera.yaml' --copy-links"
           }
         else
           nil
