@@ -154,6 +154,7 @@ module LeapCli; module Commands
         lines << %[    config.vm.box_url = "http://download.leap.se/leap-debian.box"]
         lines << %[    config.vm.network :hostonly, "#{node.ip_address}", :netmask => "#{netmask}"]
         lines << %[    config.vm.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]]
+        lines << %[    config.vm.customize ["modifyvm", :id, "--name", "#{node.name}"]]
         lines << %[    #{leapfile.custom_vagrant_vm_line}] if leapfile.custom_vagrant_vm_line
         lines << %[  end]
       end
