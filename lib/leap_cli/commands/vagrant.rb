@@ -146,19 +146,41 @@ module LeapCli; module Commands
   def create_vagrant_file
     lines = []
     netmask = IPAddr.new('255.255.255.255').mask(LeapCli.leapfile.vagrant_network.split('/').last).to_s
-    lines << %[Vagrant::Config.run do |config|]
-    manager.each_node do |node|
-      if node.vagrant?
-        lines << %[  config.vm.define :#{node.name} do |config|]
-        lines << %[    config.vm.box = "leap-wheezy"]
-        lines << %[    config.vm.box_url = "http://download.leap.se/leap-debian.box"]
-        lines << %[    config.vm.network :hostonly, "#{node.ip_address}", :netmask => "#{netmask}"]
-        lines << %[    config.vm.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]]
-        lines << %[    config.vm.customize ["modifyvm", :id, "--name", "#{node.name}"]]
-        lines << %[    #{leapfile.custom_vagrant_vm_line}] if leapfile.custom_vagrant_vm_line
-        lines << %[  end]
-      end
-    end
+
+    version = vagrant_version
+    case version
+      when 0..1
+        lines << %[Vagrant::Config.run do |config|]
+        manager.each_node do |node|
+          if node.vagrant?
+            lines << %[  config.vm.define :#{node.name} do |config|]
+            lines << %[    config.vm.box = "leap-wheezy"]
+            lines << %[    config.vm.box_url = "http://download.leap.se/leap-debian.box"]
+            lines << %[    config.vm.network :hostonly, "#{node.ip_address}", :netmask => "#{netmask}"]
+            lines << %[    config.vm.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]]
+            lines << %[    config.vm.customize ["modifyvm", :id, "--name", "#{node.name}"]]
+            lines << %[    #{leapfile.custom_vagrant_vm_line}] if leapfile.custom_vagrant_vm_line
+            lines << %[  end]
+          end
+        end
+      when 2
+        lines << %[Vagrant.configure("2") do |config|]
+        manager.each_node do |node|
+          if node.vagrant?
+            lines << %[  config.vm.define :#{node.name} do |config|]
+            lines << %[    config.vm.box = "leap-wheezy"]
+            lines << %[    config.vm.box_url = "http://download.leap.se/leap-debian.box"]
+            lines << %[    config.vm.network :private_network, ip: "#{node.ip_address}"]
+            lines << %[    config.vm.provider "virtualbox" do |v|]
+            lines << %[      v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]]
+            lines << %[      v.name = "#{node.name}"]
+            lines << %[    end]
+            lines << %[    #{leapfile.custom_vagrant_vm_line}] if leapfile.custom_vagrant_vm_line
+            lines << %[  end]
+          end
+        end
+    end 
+
     lines << %[end]
     lines << ""
     write_file! :vagrantfile, lines.join("\n")
