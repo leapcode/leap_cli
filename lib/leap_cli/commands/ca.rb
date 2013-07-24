@@ -93,22 +93,28 @@ module LeapCli; module Commands
         domain = options[:domain] || provider.domain
         assert_files_missing! [:commercial_key, domain], [:commercial_csr, domain], :msg => 'If you really want to create a new key and CSR, remove these files first.'
 
+        server_certificates = provider.ca.server_certificates
+
         # RSA key
         keypair = CertificateAuthority::MemoryKeyMaterial.new
-        log :generating, "%s bit RSA key" % provider.ca.server_certificates.bit_size do
-          keypair.generate_key(provider.ca.server_certificates.bit_size)
+        log :generating, "%s bit RSA key" % server_certificates.bit_size do
+          keypair.generate_key(server_certificates.bit_size)
           write_file! [:commercial_key, domain], keypair.private_key.to_pem
         end
 
         # CSR
         dn  = CertificateAuthority::DistinguishedName.new
         csr = CertificateAuthority::SigningRequest.new
-        dn.common_name = domain
+        dn.common_name  = domain
         dn.organization = provider.name[provider.default_language]
+        dn.country      = server_certificates['country']   # optional
+        dn.state        = server_certificates['state']     # optional
+        dn.locality     = server_certificates['locality']  # optional
+
         log :generating, "CSR with commonName => '%s', organization => '%s'" % [dn.common_name, dn.organization] do
           csr.distinguished_name = dn
           csr.key_material = keypair
-          csr.digest = provider.ca.server_certificates.digest
+          csr.digest = server_certificates.digest
           request = csr.to_x509_csr
           write_file! [:commercial_csr, domain], csr.to_pem
         end
