@@ -8,4 +8,4 @@ test/provider/files/ssh/
 test/provider/files/users/
 .vagrant
 Vagrantfile
-
+.reviewboardrc
