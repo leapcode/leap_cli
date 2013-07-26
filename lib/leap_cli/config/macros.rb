@@ -151,7 +151,7 @@ module LeapCli; module Config
         nodes = ObjectList.new nodes
       end
       nodes.each_node do |node|
-        @referenced_nodes[node.name] = node
+        @referenced_nodes[node.name] ||= node
       end
       return nodes.values.collect {|node| node.domain.name}
     end
@@ -182,19 +182,6 @@ module LeapCli; module Config
       else
         return nil
       end
-    end
-
-    def known_hosts_file
-      return nil unless @referenced_nodes
-      entries = []
-      @referenced_nodes.each_node do |node|
-        hostnames = [node.name, node.domain.internal, node.domain.full, node.ip_address].join(',')
-        pub_key   = Util::read_file([:node_ssh_pub_key,node.name])
-        if pub_key
-          entries << [hostnames, pub_key].join(' ')
-        end
-      end
-      entries.join("\n")
     end
 
     ##
@@ -229,7 +216,7 @@ module LeapCli; module Config
       hostnames(node_list) # record the hosts
       node_list.values.inject(Config::ObjectList.new) do |hsh, node|
         if node.name != self.name || options[:include_self]
-          hsh["#{node.name}#{port}"] = Config::Object[
+          hsh["#{node.name}_#{port}"] = Config::Object[
             'accept_port', @next_stunnel_port,
             'connect', node.domain.internal,
             'connect_port', stunnel_port(port)
@@ -262,6 +249,63 @@ module LeapCli; module Config
       end
     end
 
+    ##
+    ## HAPROXY
+    ##
+
+    #
+    # creates a hash suitable for configuring haproxy. the key is the node name of the server we are proxying to.
+    #
+    # stunnel_client contains the mappings to local ports for each node.
+    #
+    # 1000 weight is used for nodes in the same location.
+    # 100 otherwise.
+    #
+    def haproxy_servers(node_list, stunnel_clients)
+      default_weight = 10
+      local_weight = 1000
+
+      # record the hosts_file
+      hostnames(node_list)
+
+      # create a simple map for node name -> local stunnel accept port
+      accept_ports = stunnel_clients.inject({}) do |hsh, stunnel_entry|
+        name = stunnel_entry.first.sub /_[0-9]+$/, ''
+        hsh[name] = stunnel_entry.last['accept_port']
+        hsh
+      end
+
+      # create the first pass of the servers hash
+      servers = node_list.values.inject(Config::ObjectList.new) do |hsh, node|
+        weight = default_weight
+        if self['location'] && node['location']
+          if self.location['name'] == node.location['name']
+            weight = local_weight
+          end
+        end
+        hsh[node.name] = Config::Object[
+          'backup', false,
+          'host', 'localhost',
+          'port', accept_ports[node.name] || 0,
+          'weight', weight
+        ]
+        hsh
+      end
+
+      # if there are some local servers, make the others backup
+      if servers.detect{|k,v| v.weight == local_weight}
+        servers.each do |k,server|
+          server['backup'] = server['weight'] == default_weight
+        end
+      end
+
+      return servers
+    end
+
+    ##
+    ## SSH
+    ##
+
     #
     # creates a hash from the ssh key info in users directory, for use in updating authorized_keys file
     #
@@ -276,6 +320,19 @@ module LeapCli; module Config
         }
       end
       hash
+    end
+
+    def known_hosts_file
+      return nil unless @referenced_nodes
+      entries = []
+      @referenced_nodes.each_node do |node|
+        hostnames = [node.name, node.domain.internal, node.domain.full, node.ip_address].join(',')
+        pub_key   = Util::read_file([:node_ssh_pub_key,node.name])
+        if pub_key
+          entries << [hostnames, pub_key].join(' ')
+        end
+      end
+      entries.join("\n")
     end
 
   end
