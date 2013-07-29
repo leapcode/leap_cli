@@ -335,5 +335,27 @@ module LeapCli; module Config
       entries.join("\n")
     end
 
+    ##
+    ## UTILITY
+    ##
+
+    class AssertionFailed < Exception
+      attr_accessor :assertion
+      def initialize(assertion)
+        @assertion = assertion
+      end
+      def to_s
+        @assertion
+      end
+    end
+
+    def assert(assertion)
+      if instance_eval(assertion)
+        true
+      else
+        raise AssertionFailed.new(assertion)
+      end
+    end
+
   end
 end; end

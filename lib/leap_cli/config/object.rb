@@ -282,6 +282,12 @@ module LeapCli
                 Util::log "error message: no file '#{exc}'", :indent => 1
               end
             end
+          rescue AssertionFailed => exc
+            Util.bail! do
+              Util::log :failed, "assertion while evaluating node '#{@node.name}'"
+              Util::log 'assertion: %s' % exc.assertion, :indent => 1
+              Util::log "offending key: #{key}", :indent => 1
+            end
           rescue SyntaxError, StandardError => exc
             Util::bail! do
               Util::log :error, "while evaluating node '#{@node.name}'"
