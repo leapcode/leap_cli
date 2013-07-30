@@ -263,7 +263,7 @@ module LeapCli; module Config
     #
     def haproxy_servers(node_list, stunnel_clients)
       default_weight = 10
-      local_weight = 1000
+      local_weight = 100
 
       # record the hosts_file
       hostnames(node_list)
