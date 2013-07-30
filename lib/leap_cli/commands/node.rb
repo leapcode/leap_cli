@@ -139,9 +139,12 @@ module LeapCli; module Commands
     write_file!(:known_hosts, buffer.string)
   end
 
-  def get_node_from_args(args)
+  def get_node_from_args(args, options={})
     node_name = args.first
     node = manager.node(node_name)
+    if node.nil? && options[:include_disabled]
+      node = manager.disabled_node(node_name)
+    end
     assert!(node, "Node '#{node_name}' not found.")
     node
   end

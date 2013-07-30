@@ -184,7 +184,14 @@ module LeapCli
       # returns a single Config::Object that corresponds to a Node.
       #
       def node(name)
-        nodes[name]
+        @nodes[name]
+      end
+
+      #
+      # returns a single node that is disabled
+      #
+      def disabled_node(name)
+        @disabled_nodes[name]
       end
 
       #

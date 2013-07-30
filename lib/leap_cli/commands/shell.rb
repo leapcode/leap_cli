@@ -35,7 +35,7 @@ module LeapCli; module Commands
   private
 
   def exec_ssh(cmd, args)
-    node = get_node_from_args(args)
+    node = get_node_from_args(args, :include_disabled => true)
     options = [
       "-o 'HostName=#{node.ip_address}'",
       # "-o 'HostKeyAlias=#{node.name}'", << oddly incompatible with ports in known_hosts file, so we must not use this or non-standard ports break.
