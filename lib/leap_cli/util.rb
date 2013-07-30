@@ -162,7 +162,7 @@ module LeapCli
       dir = Path.named_path(dir)
       unless File.directory?(dir)
         assert_files_missing!(dir, :msg => "Cannot create directory #{dir}")
-        FileUtils.mkdir_p(dir)
+        FileUtils.mkdir_p(dir, :mode => 0700)
         unless dir =~ /\/$/
           dir = dir + '/'
         end
@@ -219,7 +219,7 @@ module LeapCli
           write_file!(filepath, content)
         end
       else
-        File.open(filepath, File::RDWR|File::CREAT, 0644) do |f|
+        File.open(filepath, File::RDWR|File::CREAT, 0600) do |f|
           f.flock(File::LOCK_EX)
           old_content = f.read
           new_content = yield(old_content)
@@ -286,7 +286,7 @@ module LeapCli
         end
       end
 
-      File.open(filepath, 'w') do |f|
+      File.open(filepath, 'w', 0600) do |f|
         f.write contents
       end
 

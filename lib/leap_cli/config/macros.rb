@@ -97,8 +97,8 @@ module LeapCli; module Config
           # if file is under Path.provider_base, we must copy the default file to
           # to Path.provider in order for rsync to be able to sync the file.
           local_provider_path = actual_path.sub(/^#{Regexp.escape(Path.provider_base)}/, Path.provider)
-          FileUtils.mkdir_p File.dirname(local_provider_path)
-          FileUtils.cp_r actual_path, local_provider_path
+          FileUtils.mkdir_p File.dirname(local_provider_path), :mode => 0700
+          FileUtils.install actual_path, local_provider_path, :mode => 0600
           Util.log :created, Path.relative_path(local_provider_path)
           actual_path = local_provider_path
         end

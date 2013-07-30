@@ -76,8 +76,7 @@ module LeapCli; module Commands
     Util.assert_files_exist! file_path
     uid = File.new(file_path).stat.uid
     if uid == 0 || uid == Process.euid
-      FileUtils.cp file_path, '/tmp/vagrant.key'
-      FileUtils.chmod 0600, '/tmp/vagrant.key'
+      FileUtils.install file_path, '/tmp/vagrant.key', :mode => 0600
       file_path = '/tmp/vagrant.key'
     end
     return file_path
@@ -112,7 +111,7 @@ module LeapCli; module Commands
   def vagrant_setup
     assert_bin! 'vagrant', 'Vagrant is required for running local virtual machines. Run "sudo apt-get install vagrant".'
 
-    version = vagrant_version 
+    version = vagrant_version
     case version
       when 0..1
         unless assert_run!('vagrant gem which sahara').chars.any?
@@ -131,7 +130,7 @@ module LeapCli; module Commands
   def vagrant_version
     minor_version = `vagrant --version|cut -d' ' -f 3 | cut -d'.' -f 2`.to_i
     version = case minor_version
-      when 1..9 then 2 
+      when 1..9 then 2
       when 0    then 1
       else 0
     end
@@ -179,7 +178,7 @@ module LeapCli; module Commands
             lines << %[  end]
           end
         end
-    end 
+    end
 
     lines << %[end]
     lines << ""
