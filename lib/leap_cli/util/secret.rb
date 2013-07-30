@@ -44,7 +44,8 @@ module LeapCli; module Util
       pid = $$
       if @pid != pid
         now = Time.now
-        OpenSSL::Random.seed( [now.to_i, @pid, pid].join )
+        ary = [now.to_i, now.nsec, @pid, pid]
+        OpenSSL::Random.seed(ary.to_s)
         @pid = pid
       end
     end
