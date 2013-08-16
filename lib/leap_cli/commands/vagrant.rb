@@ -114,9 +114,11 @@ module LeapCli; module Commands
     version = vagrant_version
     case version
       when 0..1
-        unless assert_run!('vagrant gem which sahara').chars.any?
+        gem_path = assert_run!('vagrant gem which sahara')
+        if gem_path.nil? || gem_path.empty? || gem_path =~ /^ERROR/
           log :installing, "vagrant plugin 'sahara'"
-          assert_run! 'vagrant gem install sahara'
+          assert_run! 'vagrant gem install sahara -v 0.0.13'
+          # (sahara versions above 0.0.13 require vagrant > 1.0)
         end
       when 2
         unless assert_run!('vagrant plugin list | grep sahara | cat').chars.any?
