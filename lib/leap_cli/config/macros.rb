@@ -171,8 +171,8 @@ module LeapCli; module Config
           node_location = node['location'] ? node['location']['name'] : nil
           if my_location == node_location
             if facts = @node.manager.facts[node.name]
-              if facts['ec2_local_ipv4']
-                hosts[node.name]['ip_address'] = facts['ec2_local_ipv4']
+              if facts['ec2_public_ipv4']
+                hosts[node.name]['ip_address'] = facts['ec2_public_ipv4']
               end
             end
           end
