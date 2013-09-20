@@ -1,6 +1,6 @@
 module LeapCli
   unless defined?(LeapCli::VERSION)
-    VERSION = '1.2.2'
+    VERSION = '1.2.3'
     COMPATIBLE_PLATFORM_VERSION = '0.2.4'..'1.99'
     SUMMARY = 'Command line interface to the LEAP platform'
     DESCRIPTION = 'The command "leap" can be used to manage a bevy of servers running the LEAP platform from the comfort of your own home.'

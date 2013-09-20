@@ -256,12 +256,14 @@ module LeapCli; module Config
     #
     # creates a hash suitable for configuring haproxy. the key is the node name of the server we are proxying to.
     #
-    # stunnel_client contains the mappings to local ports for each node.
+    # * node_list - a hash of nodes for the haproxy servers
+    # * stunnel_client - contains the mappings to local ports for each server node.
+    # * non_stunnel_port - in case self is included in node_list, the port to connect to.
     #
     # 1000 weight is used for nodes in the same location.
     # 100 otherwise.
     #
-    def haproxy_servers(node_list, stunnel_clients)
+    def haproxy_servers(node_list, stunnel_clients, non_stunnel_port=nil)
       default_weight = 10
       local_weight = 100
 
@@ -273,6 +275,12 @@ module LeapCli; module Config
         name = stunnel_entry.first.sub /_[0-9]+$/, ''
         hsh[name] = stunnel_entry.last['accept_port']
         hsh
+      end
+
+      # if one the nodes in the node list is ourself, then there will not be a stunnel to it,
+      # but we need to include it anyway in the haproxy config.
+      if node_list[self.name] && non_stunnel_port
+        accept_ports[self.name] = non_stunnel_port
       end
 
       # create the first pass of the servers hash
