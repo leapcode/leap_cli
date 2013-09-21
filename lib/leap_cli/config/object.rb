@@ -149,9 +149,9 @@ module LeapCli
 
           # merge arrays when one value is not an array
           elsif old_value.is_a?(Array) && !new_value.is_a?(Array)
-            value = (old_value.dup << new_value).compact.uniq
+            (value = (old_value.dup << new_value).compact.uniq).delete('REQUIRED')
           elsif new_value.is_a?(Array) && !old_value.is_a?(Array)
-            value = (new_value.dup << old_value).compact.uniq
+            (value = (new_value.dup << old_value).compact.uniq).delete('REQUIRED')
 
           # catch errors
           elsif type_mismatch?(old_value, new_value)
@@ -207,7 +207,7 @@ module LeapCli
       def evaluate_everything
         keys.each do |key|
           obj = fetch_value(key)
-          if obj == "REQUIRED"
+          if is_required_value_not_set?(obj)
             Util::log 0, :warning, "required key \"#{key}\" is not set in node \"#{node.name}\"."
           elsif obj.is_a? Config::Object
             obj.evaluate_everything
@@ -222,7 +222,7 @@ module LeapCli
         if @late_eval_list
           @late_eval_list.each do |key, value|
             self[key] = evaluate_now(key, value)
-            if self[key] == "REQUIRED"
+            if is_required_value_not_set?(self[key])
               Util::log 0, :warning, "required key \"#{key}\" is not set in node \"#{node.name}\"."
             end
           end
@@ -317,6 +317,17 @@ module LeapCli
           return false
         else
           return true
+        end
+      end
+
+      #
+      # returns true if the value has not been changed and the default is "REQUIRED"
+      #
+      def is_required_value_not_set?(value)
+        if value.is_a? Array
+          value == ["REQUIRED"]
+        else
+          value == "REQUIRED"
         end
       end
 
