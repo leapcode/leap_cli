@@ -51,7 +51,6 @@ module LeapCli; module Commands
     node.arg_name 'FILTER' #, :optional => false, :multiple => false
     node.command :init do |init|
       init.switch 'echo', :desc => 'If set, passwords are visible as you type them (default is hidden)', :negatable => false
-      init.switch 'noping', :desc => 'If set, skip initial ping of node (in case ICMP is being blocked).', :negatable => false
       init.flag :port, :desc => 'Override the default SSH port.', :arg_name => 'PORT'
       init.flag :ip,   :desc => 'Override the default SSH IP address.', :arg_name => 'IPADDRESS'
 
@@ -59,7 +58,7 @@ module LeapCli; module Commands
         assert! args.any?, 'You must specify a FILTER'
         finished = []
         manager.filter!(args).each_node do |node|
-          ping_node(node, options) unless options[:noping]
+          is_node_alive(node, options)
           save_public_host_key(node, global, options) unless node.vagrant?
           update_compiled_ssh_configs
           ssh_connect_options = connect_options(options).merge({:bootstrap => true, :echo => options[:echo]})
@@ -206,10 +205,12 @@ module LeapCli; module Commands
     return SshKey.load(public_key, key_type)
   end
 
-  def ping_node(node, options)
-    ip = options[:ip] || node.ip_address
-    log :pinging, node.name
-    assert_run!("ping -W 1 -c 1 #{ip}", "Could not ping #{node.name} (address #{ip}). Try again, we only send a single ping.")
+  def is_node_alive(node, options)
+    address = options[:ip] || node.ip_address
+    port = options[:port] || node.ssh.port
+    log :connecting, "to node #{node.name}"
+    assert_run! "nc -zw3 #{address} #{port}",
+      "Failed to reach #{node.name} (address #{address}, port #{port}). You can override the configured IP address and port with --ip or --port."
   end
 
   def seed_node_data(node, args)
