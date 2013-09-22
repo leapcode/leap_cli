@@ -14,13 +14,13 @@ end
 
 task :install_prerequisites, :max_hosts => MAX_HOSTS do
   leap.mkdirs LeapCli::PUPPET_DESTINATION
-  run "echo 'en_US.UTF-8 UTF-8' > /etc/locale.gen; locale-gen"
   leap.log :updating, "package list" do
     run "apt-get update"
   end
   leap.log :installing, "required packages" do
     run "DEBIAN_FRONTEND=noninteractive apt-get -q -y -o DPkg::Options::=--force-confold install #{leap.required_packages}"
   end
+  run "echo 'en_US.UTF-8 UTF-8' > /etc/locale.gen; locale-gen"
   leap.mkdirs("/etc/leap", "/srv/leap")
   leap.mark_initialized
 end
