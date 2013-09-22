@@ -10,20 +10,21 @@ Install prerequisites:
 
     sudo apt-get install git ruby ruby-dev rsync openssh-client openssl rake
 
+NOTE: leap_cli requires ruby 1.9 or later.
+
 Optionally install Vagrant in order to be able to test with local virtual machines (recommended):
 
     sudo apt-get install vagrant virtualbox
 
-NOTE: leap_cli should work with ruby1.8, but has only been tested using ruby1.9.
+NOTE: the packaged virtualbox and vagrant that comes with Debian and Ubuntu are rather ancient. Most people have better luck by downloading these packages from the upstream:
+
+* https://downloads.vagrantup.com/
+* https://www.virtualbox.org/wiki/Downloads
 
 Install the `leap` command:
 
-    sudo gem install leap_cli
-
-Alternately, you can install `leap` from source:
-
     sudo apt-get install rake
-    git clone git://leap.se/leap_cli.git
+    git clone https://leap.se/git/leap_cli.git
     cd leap_cli
     rake build
 
@@ -75,7 +76,7 @@ Install from git
 
 Download the source:
 
-    git clone git://leap.se/leap_cli
+    git clone https://github.com/leapcode/leap_cli.git
     cd leap_cli
 
 Running from the source directory
