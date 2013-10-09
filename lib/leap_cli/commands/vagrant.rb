@@ -130,7 +130,7 @@ module LeapCli; module Commands
   end
 
   def vagrant_version
-    minor_version = `vagrant --version|cut -d' ' -f 3 | cut -d'.' -f 2`.to_i
+    minor_version = `vagrant --version | rev | cut -d'.' -f 2`.to_i
     version = case minor_version
       when 1..9 then 2
       when 0    then 1
