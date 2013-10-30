@@ -52,7 +52,7 @@ module LeapCli
     def compile_zone_file
       hosts_seen = {}
       f = $stdout
-      f.puts ZONE_HEADER % {:domain => provider.domain, :ns => provider.domain, :contact => provider.contacts.default.sub('@','.')}
+      f.puts ZONE_HEADER % {:domain => provider.domain, :ns => provider.domain, :contact => provider.contacts.default.first.sub('@','.')}
       max_width = manager.nodes.values.inject(0) {|max, node| [max, relative_hostname(node.domain.full).length].max }
       put_line = lambda do |host, line|
         host = '@' if host == ''

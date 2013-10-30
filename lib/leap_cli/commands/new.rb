@@ -25,7 +25,7 @@ module LeapCli; module Commands
 
   private
 
-  DEFAULT_REPO = 'git://leap.se/leap_platform' # TODO: use https
+  DEFAULT_REPO = 'https://leap.se/git/leap_platform.git'
 
   #
   # creates a new provider directory
