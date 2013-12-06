@@ -21,6 +21,9 @@ module LeapCli; module Remote; module LeapPlugin
     run dirs.collect{|dir| "mkdir -m 700 -p #{dir}; "}.join
   end
 
+  #
+  # echos "ok" if the node has been initialized and the required packages are installed, bails out otherwise.
+  #
   def assert_initialized
     begin
       test_initialized_file = "test -f #{INITIALIZED_FILE}"
@@ -30,6 +33,24 @@ module LeapCli; module Remote; module LeapPlugin
       LeapCli::Util.bail! do
         exc.hosts.each do |host|
           LeapCli::Util.log :error, "running deploy: node not initialized. Run 'leap node init #{host}'", :host => host
+        end
+      end
+    end
+  end
+
+  #
+  # bails out the deploy if the file /etc/leap/no-deploy exists.
+  # This kind of sucks, because it would be better to skip over nodes that have no-deploy set instead
+  # halting the entire deploy. As far as I know, with capistrano, there is no way to close one of the
+  # ssh connections in the pool and make sure it gets no further commands.
+  #
+  def check_for_no_deploy
+    begin
+      run "test ! -f /etc/leap/no-deploy"
+    rescue Capistrano::CommandError => exc
+      LeapCli::Util.bail! do
+        exc.hosts.each do |host|
+          LeapCli::Util.log "Can't continue because file /etc/leap/no-deploy exists", :host => host
         end
       end
     end

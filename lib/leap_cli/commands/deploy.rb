@@ -39,6 +39,7 @@ module LeapCli
 
         ssh_connect(nodes, connect_options(options)) do |ssh|
           ssh.leap.log :checking, 'node' do
+            ssh.leap.check_for_no_deploy
             ssh.leap.assert_initialized
           end
           ssh.leap.log :synching, "configuration files" do
@@ -94,13 +95,13 @@ module LeapCli
 
     def sync_puppet_files(ssh)
       ssh.rsync.update do |server|
-        ssh.leap.log(Path.platform + '/[bin,puppet] -> ' + server.host + ':' + LeapCli::PUPPET_DESTINATION)
+        ssh.leap.log(Path.platform + '/[bin,tests,puppet] -> ' + server.host + ':' + LeapCli::PUPPET_DESTINATION)
         {
           :dest => LeapCli::PUPPET_DESTINATION,
           :source => '.',
           :chdir => Path.platform,
           :excludes => '*',
-          :includes => ['/bin', '/bin/**', '/puppet', '/puppet/**'],
+          :includes => ['/bin', '/bin/**', '/puppet', '/puppet/**', '/tests', '/tests/**'],
           :flags => "-rlt --relative --delete --copy-links"
         }
       end

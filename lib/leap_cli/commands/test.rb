@@ -12,7 +12,11 @@ module LeapCli; module Commands
     test.desc 'Run tests.'
     test.command :run do |run|
       run.action do |global_options,options,args|
-        log 'not yet implemented'
+        manager.filter!(args).each_node do |node|
+          ssh_connect(node) do |ssh|
+            ssh.run(test_cmd)
+          end
+        end
       end
     end
 
@@ -20,6 +24,10 @@ module LeapCli; module Commands
   end
 
   private
+
+  def test_cmd
+    "#{PUPPET_DESTINATION}/bin/run_tests"
+  end
 
   #
   # generates a whole bunch of openvpn configs that can be used to connect to different openvpn gateways

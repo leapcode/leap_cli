@@ -133,7 +133,13 @@ module LeapCli
       { :match => /^Syntax error/,                 :level => 0, :color => :red, :priority => -1, :exit => 1},
       { :match => /^Cannot reassign variable/,     :level => 0, :color => :red, :priority => -1, :exit => 1},
       { :match => /^Could not find template/,      :level => 0, :color => :red, :priority => -1, :exit => 1},
-      { :match => /^Puppet apply complete.*fail/,  :level => 0, :color => :red, :priority => -1, :exit => 1}
+      { :match => /^Puppet apply complete.*fail/,  :level => 0, :color => :red, :priority => -1, :exit => 1},
+
+      # TESTS
+      { :match => /^PASS: /,                :color => :green,   :priority => -20},
+      { :match => /^(FAIL|ERROR): /,        :color => :red,     :priority => -20},
+      { :match => /^SKIP: /,                :color => :yellow,  :priority => -20}
+
     ]
 
     def self.sorted_formatters
