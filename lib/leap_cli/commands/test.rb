@@ -11,10 +11,11 @@ module LeapCli; module Commands
 
     test.desc 'Run tests.'
     test.command :run do |run|
+      run.switch 'continue', :desc => 'Continue over errors and failures (default is --no-continue).', :negatable => true
       run.action do |global_options,options,args|
         manager.filter!(args).each_node do |node|
           ssh_connect(node) do |ssh|
-            ssh.run(test_cmd)
+            ssh.run(test_cmd(options))
           end
         end
       end
@@ -25,8 +26,12 @@ module LeapCli; module Commands
 
   private
 
-  def test_cmd
-    "#{PUPPET_DESTINATION}/bin/run_tests"
+  def test_cmd(options)
+    if options[:continue]
+      "#{PUPPET_DESTINATION}/bin/run_tests --continue"
+    else
+      "#{PUPPET_DESTINATION}/bin/run_tests"
+    end
   end
 
   #
