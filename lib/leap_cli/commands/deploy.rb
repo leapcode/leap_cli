@@ -11,6 +11,9 @@ module LeapCli
       c.switch :fast, :desc => 'Makes the deploy command faster by skipping some slow steps. A "fast" deploy can be used safely if you recently completed a normal deploy.',
                       :negatable => false
 
+      # --sync
+      c.switch :sync, :desc => "Sync files, but don't actually apply recipes."
+
       # --force
       c.switch :force, :desc => 'Deploy even if there is a lockfile.', :negatable => false
 
@@ -49,8 +52,10 @@ module LeapCli
           ssh.leap.log :synching, "puppet manifests" do
             sync_puppet_files(ssh)
           end
-          ssh.leap.log :applying, "puppet" do
-            ssh.puppet.apply(:verbosity => LeapCli.log_level, :tags => tags(options), :force => options[:force])
+          unless options[:sync]
+            ssh.leap.log :applying, "puppet" do
+              ssh.puppet.apply(:verbosity => LeapCli.log_level, :tags => tags(options), :force => options[:force])
+            end
           end
         end
       end
