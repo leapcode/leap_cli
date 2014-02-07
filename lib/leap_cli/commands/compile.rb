@@ -33,8 +33,58 @@ module LeapCli
     end
 
     def update_compiled_ssh_configs
+      generate_monitor_ssh_keys
       update_authorized_keys
       update_known_hosts
+    end
+
+    ##
+    ## SSH
+    ##
+
+    #
+    # generates a ssh key pair that is used only by remote monitors
+    # to connect to nodes and run certain allowed commands.
+    #
+    # every node has the public monitor key added to their authorized
+    # keys, and every monitor node has a copy of the private monitor key.
+    #
+    def generate_monitor_ssh_keys
+      priv_key_file = :monitor_priv_key
+      pub_key_file  = :monitor_pub_key
+      unless file_exists?(priv_key_file, pub_key_file)
+        cmd = %(ssh-keygen -N '' -C 'monitor' -t ecdsa -b 521 -f '%s') % path(priv_key_file)
+        assert_run! cmd
+        if file_exists?(priv_key_file, pub_key_file)
+          log :created, path(priv_key_file)
+          log :created, path(pub_key_file)
+        else
+          log :failed, 'to create monitor ssh keys'
+        end
+      end
+    end
+
+    #
+    # Compiles the authorized keys file, which gets installed on every during init.
+    # Afterwards, puppet installs an authorized keys file that is generated differently
+    # (see authorized_keys() in macros.rb)
+    #
+    def update_authorized_keys
+      buffer = StringIO.new
+      keys = Dir.glob(path([:user_ssh, '*']))
+      if keys.empty?
+        bail! "You must have at least one public SSH user key configured in order to proceed. See `leap help add-user`."
+      end
+      keys.sort.each do |keyfile|
+        ssh_type, ssh_key = File.read(keyfile).strip.split(" ")
+        buffer << ssh_type
+        buffer << " "
+        buffer << ssh_key
+        buffer << " "
+        buffer << Path.relative_path(keyfile)
+        buffer << "\n"
+      end
+      write_file!(:authorized_keys, buffer.string)
     end
 
     ##

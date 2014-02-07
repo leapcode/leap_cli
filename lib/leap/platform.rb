@@ -13,6 +13,8 @@ module Leap
       attr_accessor :facts
       attr_accessor :paths
       attr_accessor :node_files
+      attr_accessor :monitor_username
+      attr_accessor :reserved_usernames
 
       def define(&block)
         self.instance_eval(&block)

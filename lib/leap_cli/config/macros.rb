@@ -315,11 +315,15 @@ module LeapCli; module Config
     ##
 
     #
-    # creates a hash from the ssh key info in users directory, for use in updating authorized_keys file
+    # Creates a hash from the ssh key info in users directory, for use in
+    # updating authorized_keys file. Additionally, the 'monitor' public key is
+    # included, which is used by the monitor nodes to run particular commands
+    # remotely.
     #
     def authorized_keys
       hash = {}
-      Dir.glob(Path.named_path([:user_ssh, '*'])).sort.each do |keyfile|
+      keys = Dir.glob(Path.named_path([:user_ssh, '*']))
+      keys.sort.each do |keyfile|
         ssh_type, ssh_key = File.read(keyfile).strip.split(" ")
         name = File.basename(File.dirname(keyfile))
         hash[name] = {
@@ -327,6 +331,11 @@ module LeapCli; module Config
           "key" => ssh_key
         }
       end
+      ssh_type, ssh_key = File.read(Path.named_path(:monitor_pub_key)).strip.split(" ")
+      hash[Leap::Platform.monitor_username] = {
+        "type" => ssh_type,
+        "key" => ssh_key
+      }
       hash
     end
 

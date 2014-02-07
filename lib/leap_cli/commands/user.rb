@@ -24,8 +24,15 @@ module LeapCli
 
       c.action do |global_options,options,args|
         username = args.first
-        if !username.any? && !options[:self]
-          help! "Either 'username' or --self is required."
+        if !username.any?
+          if options[:self]
+            username ||= `whoami`.strip
+          else
+            help! "Either USERNAME argument or --self flag is required."
+          end
+        end
+        if Leap::Platform.reserved_usernames.include? username
+          bail! %(The username "#{username}" is reserved. Sorry, pick another.)
         end
 
         ssh_pub_key = nil
@@ -39,7 +46,6 @@ module LeapCli
         end
 
         if options[:self]
-          username ||= `whoami`.strip
           ssh_pub_key ||= pick_ssh_key.to_s
           pgp_pub_key ||= pick_pgp_key
         end
@@ -116,24 +122,6 @@ module LeapCli
 
       # export with signatures removed:
       return `gpg --armor --export-options export-minimal --export #{key_id}`.strip
-    end
-
-    def update_authorized_keys
-      buffer = StringIO.new
-      keys = Dir.glob(path([:user_ssh, '*']))
-      if keys.empty?
-        bail! "You must have at least one public SSH user key configured in order to proceed. See `leap help add-user`."
-      end
-      keys.sort.each do |keyfile|
-        ssh_type, ssh_key = File.read(keyfile).strip.split(" ")
-        buffer << ssh_type
-        buffer << " "
-        buffer << ssh_key
-        buffer << " "
-        buffer << Path.relative_path(keyfile)
-        buffer << "\n"
-      end
-      write_file!(:authorized_keys, buffer.string)
     end
 
   end
