@@ -46,7 +46,9 @@ module LeapCli
             each do |name, config|
               value = config[field]
               if value.is_a? Array
-                if value.include?(match_value)
+                if operator == :equal && value.include?(match_value)
+                  results[name] = config
+                elsif operator == :not_equal && !value.include?(match_value)
                   results[name] = config
                 end
               else

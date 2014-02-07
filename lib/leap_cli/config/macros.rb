@@ -157,15 +157,24 @@ module LeapCli; module Config
     end
 
     #
-    # Generates entries needed for updating /etc/hosts on a node, but only including the IPs of the
-    # other nodes we have encountered. Also, for virtual machines, use the local address if this
-    # @node is in the same location.
+    # Generates entries needed for updating /etc/hosts on a node (as a hash).
     #
-    def hosts_file
-      if @referenced_nodes && @referenced_nodes.any?
+    # Argument `nodes` can be nil or a list of nodes. If nil, only include the
+    # IPs of the other nodes this @node as has encountered.
+    #
+    # Also, for virtual machines, we use the local address if this @node is in
+    # the same location as the node in question.
+    #
+    def hosts_file(nodes=nil)
+      if nodes.nil?
+        if @referenced_nodes && @referenced_nodes.any?
+          nodes = @referenced_nodes
+        end
+      end
+      if nodes
         hosts = {}
         my_location = @node['location'] ? @node['location']['name'] : nil
-        @referenced_nodes.each_node do |node|
+        nodes.each_node do |node|
           next if node.name == @node.name
           hosts[node.name] = {'ip_address' => node.ip_address, 'domain_internal' => node.domain.internal, 'domain_full' => node.domain.full}
           node_location = node['location'] ? node['location']['name'] : nil
@@ -177,7 +186,6 @@ module LeapCli; module Config
             end
           end
         end
-        #hosts = @referenced_nodes.pick_fields("ip_address", "domain.internal", "domain.full")
         return hosts
       else
         return nil
