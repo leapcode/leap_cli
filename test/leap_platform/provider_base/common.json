@@ -15,7 +15,6 @@
   },
   "ssh": {
     "authorized_keys": "= file :authorized_keys",
-    "known_hosts": "=> known_hosts_file",
     "port": 22
   },
   "hosts": "=> hosts_file",
