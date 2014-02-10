@@ -34,23 +34,28 @@ module LeapCli
       end
 
       #
+      # export YAML
+      #
       # We use pure ruby yaml exporter ya2yaml instead of SYCK or PSYCH because it
       # allows us greater compatibility regardless of installed ruby version and
       # greater control over how the yaml is exported (sorted keys, in particular).
       #
-      def dump
-        evaluate
+      def dump_yaml
+        evaluate(@node)
         ya2yaml(:syck_compatible => true)
       end
 
+      #
+      # export JSON
+      #
       def dump_json
-        evaluate
+        evaluate(@node)
         JSON.sorted_generate(self)
       end
 
-      def evaluate
-        evaluate_everything
-        late_evaluate_everything
+      def evaluate(context)
+        evaluate_everything(context)
+        late_evaluate_everything(context)
       end
 
       ##
@@ -204,13 +209,13 @@ module LeapCli
       #
       # walks the object tree, eval'ing all the attributes that are dynamic ruby (e.g. value starts with '= ')
       #
-      def evaluate_everything
+      def evaluate_everything(context)
         keys.each do |key|
-          obj = fetch_value(key)
+          obj = fetch_value(key, context)
           if is_required_value_not_set?(obj)
             Util::log 0, :warning, "required key \"#{key}\" is not set in node \"#{node.name}\"."
           elsif obj.is_a? Config::Object
-            obj.evaluate_everything
+            obj.evaluate_everything(context)
           end
         end
       end
@@ -218,10 +223,10 @@ module LeapCli
       #
       # some keys need to be evaluated 'late', after all the other keys have been evaluated.
       #
-      def late_evaluate_everything
+      def late_evaluate_everything(context)
         if @late_eval_list
           @late_eval_list.each do |key, value|
-            self[key] = evaluate_now(key, value)
+            self[key] = context.evaluate_ruby(key, value)
             if is_required_value_not_set?(self[key])
               Util::log 0, :warning, "required key \"#{key}\" is not set in node \"#{node.name}\"."
             end
@@ -229,9 +234,55 @@ module LeapCli
         end
         values.each do |obj|
           if obj.is_a? Config::Object
-            obj.late_evaluate_everything
+            obj.late_evaluate_everything(context)
           end
         end
+      end
+
+      #
+      # evaluates the string `value` as ruby in the context of self.
+      # (`key` is just passed for debugging purposes)
+      #
+      def evaluate_ruby(key, value)
+        result = nil
+        if LeapCli.log_level >= 2
+          result = self.instance_eval(value)
+        else
+          begin
+            result = self.instance_eval(value)
+          rescue SystemStackError => exc
+            Util::log 0, :error, "while evaluating node '#{self.name}'"
+            Util::log 0, "offending key: #{key}", :indent => 1
+            Util::log 0, "offending string: #{value}", :indent => 1
+            Util::log 0, "STACK OVERFLOW, BAILING OUT. There must be an eval loop of death (variables with circular dependencies).", :indent => 1
+            raise SystemExit.new(1)
+          rescue FileMissing => exc
+            Util::bail! do
+              if exc.options[:missing]
+                Util::log :missing, exc.options[:missing].gsub('$node', self.name)
+              else
+                Util::log :error, "while evaluating node '#{self.name}'"
+                Util::log "offending key: #{key}", :indent => 1
+                Util::log "offending string: #{value}", :indent => 1
+                Util::log "error message: no file '#{exc}'", :indent => 1
+              end
+            end
+          rescue AssertionFailed => exc
+            Util.bail! do
+              Util::log :failed, "assertion while evaluating node '#{self.name}'"
+              Util::log 'assertion: %s' % exc.assertion, :indent => 1
+              Util::log "offending key: #{key}", :indent => 1
+            end
+          rescue SyntaxError, StandardError => exc
+            Util::bail! do
+              Util::log :error, "while evaluating node '#{self.name}'"
+              Util::log "offending key: #{key}", :indent => 1
+              Util::log "offending string: #{value}", :indent => 1
+              Util::log "error message: #{exc.inspect}", :indent => 1
+            end
+          end
+        end
+        return result
       end
 
       private
@@ -239,13 +290,13 @@ module LeapCli
       #
       # fetches the value for the key, evaluating the value as ruby if it begins with '='
       #
-      def fetch_value(key)
+      def fetch_value(key, context=@node)
         value = fetch(key, nil)
         if value.is_a?(String) && value =~ /^=/
           if value =~ /^=> (.*)$/
             value = evaluate_later(key, $1)
           elsif value =~ /^= (.*)$/
-            value = evaluate_now(key, $1)
+            value = context.evaluate_ruby(key, $1)
           end
           self[key] = value
         end
@@ -256,48 +307,6 @@ module LeapCli
         @late_eval_list ||= []
         @late_eval_list << [key, value]
         '<evaluate later>'
-      end
-
-      def evaluate_now(key, value)
-        result = nil
-        if LeapCli.log_level >= 2
-          result = @node.instance_eval(value)
-        else
-          begin
-            result = @node.instance_eval(value)
-          rescue SystemStackError => exc
-            Util::log 0, :error, "while evaluating node '#{@node.name}'"
-            Util::log 0, "offending key: #{key}", :indent => 1
-            Util::log 0, "offending string: #{value}", :indent => 1
-            Util::log 0, "STACK OVERFLOW, BAILING OUT. There must be an eval loop of death (variables with circular dependencies).", :indent => 1
-            raise SystemExit.new(1)
-          rescue FileMissing => exc
-            Util::bail! do
-              if exc.options[:missing]
-                Util::log :missing, exc.options[:missing].gsub('$node', @node.name)
-              else
-                Util::log :error, "while evaluating node '#{@node.name}'"
-                Util::log "offending key: #{key}", :indent => 1
-                Util::log "offending string: #{value}", :indent => 1
-                Util::log "error message: no file '#{exc}'", :indent => 1
-              end
-            end
-          rescue AssertionFailed => exc
-            Util.bail! do
-              Util::log :failed, "assertion while evaluating node '#{@node.name}'"
-              Util::log 'assertion: %s' % exc.assertion, :indent => 1
-              Util::log "offending key: #{key}", :indent => 1
-            end
-          rescue SyntaxError, StandardError => exc
-            Util::bail! do
-              Util::log :error, "while evaluating node '#{@node.name}'"
-              Util::log "offending key: #{key}", :indent => 1
-              Util::log "offending string: #{value}", :indent => 1
-              Util::log "error message: #{exc.inspect}", :indent => 1
-            end
-          end
-        end
-        return result
       end
 
       #

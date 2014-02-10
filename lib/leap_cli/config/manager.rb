@@ -100,7 +100,7 @@ module LeapCli
         node_list.each_node do |node|
           filepath = Path.named_path([:node_files_dir, node.name], @provider_dir)
           hierapath = Path.named_path([:hiera, node.name], @provider_dir)
-          Util::write_file!(hierapath, node.dump)
+          Util::write_file!(hierapath, node.dump_yaml)
           updated_files << filepath
           updated_hiera << hierapath
         end

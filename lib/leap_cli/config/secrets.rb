@@ -1,7 +1,5 @@
 #
-#
 # A class for the secrets.json file
-#
 #
 
 module LeapCli; module Config
@@ -14,10 +12,13 @@ module LeapCli; module Config
       @discovered_keys = {}
     end
 
-    def set(key, value)
+    def set(key, value, environment=nil)
+      environment ||= 'default'
       key = key.to_s
-      @discovered_keys[key] = true
-      self[key] ||= value
+      @discovered_keys[environment] ||= {}
+      @discovered_keys[environment][key] = true
+      self[environment] ||= {}
+      self[environment][key] ||= value
     end
 
     #
@@ -27,12 +28,13 @@ module LeapCli; module Config
     # this should only be triggered when all nodes have been processed, otherwise
     # secrets that are actually in use will get mistakenly removed.
     #
-    #
     def dump_json(only_discovered_keys=false)
       if only_discovered_keys
-        self.each_key do |key|
-          unless @discovered_keys[key]
-            self.delete(key)
+        self.each_key do |environment|
+          self[environment].each_key do |key|
+            unless @discovered_keys[environment][key]
+              self[environment].delete(key)
+            end
           end
         end
       end

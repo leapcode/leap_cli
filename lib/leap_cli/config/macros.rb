@@ -119,7 +119,7 @@ module LeapCli; module Config
     # +length+ is the character length of the generated password.
     #
     def secret(name, length=32)
-      @manager.secrets.set(name, Util::Secret.generate(length))
+      @manager.secrets.set(name, Util::Secret.generate(length), @node[:environment])
     end
 
     #
@@ -128,7 +128,7 @@ module LeapCli; module Config
     # +bit_length+ is the bits in the secret, (ie length of resulting hex string will be bit_length/4)
     #
     def hex_secret(name, bit_length=128)
-      @manager.secrets.set(name, Util::Secret.generate_hex(bit_length))
+      @manager.secrets.set(name, Util::Secret.generate_hex(bit_length), @node[:environment])
     end
 
     #

@@ -20,6 +20,9 @@ module LeapCli; module Commands
   desc 'Skip prompts and assume "yes"'
   switch :yes, :negatable => false
 
+  desc 'Enable debugging library (leap_cli development only)'
+  switch :debug, :negatable => false
+
   pre do |global,command,options,args|
     #
     # set verbosity
