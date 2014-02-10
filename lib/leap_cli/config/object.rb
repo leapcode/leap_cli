@@ -53,7 +53,7 @@ module LeapCli
         JSON.sorted_generate(self)
       end
 
-      def evaluate(context)
+      def evaluate(context=@node)
         evaluate_everything(context)
         late_evaluate_everything(context)
       end
