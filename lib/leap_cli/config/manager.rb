@@ -61,6 +61,14 @@ module LeapCli
         @provider = load_json(provider_path, Config::Object)
         @secrets  = load_json(Path.named_path(:secrets_config,  @provider_dir), Config::Secrets)
 
+        ### BEGIN HACK
+        ### remove this after it is likely that no one has any old-style secrets.json
+        if @secrets['webapp_secret_token']
+          @secrets = Config::Secrets.new
+          Util::log :warning, "Creating all new secrets.json (new version is scoped by environment). Make sure to do a full deploy so that new secrets take effect."
+        end
+        ### END HACK
+
         # inherit
         @services.inherit_from! base_services
         @tags.inherit_from!     base_tags
