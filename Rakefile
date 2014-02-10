@@ -1,4 +1,5 @@
 require "rubygems"
+require 'bundler/setup'
 require "pty"
 require "fileutils"
 require "rake/testtask"
