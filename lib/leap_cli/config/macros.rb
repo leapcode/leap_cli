@@ -178,7 +178,6 @@ module LeapCli; module Config
       hosts = {}
       my_location = @node['location'] ? @node['location']['name'] : nil
       nodes.each_node do |node|
-        next if node.name == @node.name
         hosts[node.name] = {'ip_address' => node.ip_address, 'domain_internal' => node.domain.internal, 'domain_full' => node.domain.full}
         node_location = node['location'] ? node['location']['name'] : nil
         if my_location == node_location
