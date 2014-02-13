@@ -32,9 +32,12 @@ module LeapCli; module Config
       if only_discovered_keys
         self.each_key do |environment|
           self[environment].each_key do |key|
-            unless @discovered_keys[environment][key]
+            unless @discovered_keys[environment] && @discovered_keys[environment][key]
               self[environment].delete(key)
             end
+          end
+          if self[environment].empty?
+            self.delete(environment)
           end
         end
       end
