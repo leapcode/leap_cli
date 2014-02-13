@@ -1,5 +1,6 @@
 require 'rubygems'
 require File.expand_path('../../lib/leap_cli/load_paths', __FILE__)
+require 'bundler/setup'
 require 'minitest/autorun'
 require 'leap_cli'
 
