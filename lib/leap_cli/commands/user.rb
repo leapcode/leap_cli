@@ -40,13 +40,13 @@ module LeapCli
 
         if options['ssh-pub-key']
           key_type = `file -b #{options['ssh-pub-key']}`
-          if not ["OpenSSH RSA public key","OpenSSH DSA public key","OpenSSH ECDSA public key"].include? key_type.strip()
-              bail! %(The "#{options['ssh-pub-key']}" is not a valid ssh public key.)
+          if not ["OpenSSH RSA public key","OpenSSH DSA public key","OpenSSH ECDSA public key"].include? key_type.strip
+              bail! %(The "#{options['ssh-pub-key']}" is not an SSH public key.)
           end
           ssh_pub_key = read_file!(options['ssh-pub-key'])
           key_name = File.basename(options['ssh-pub-key'])
           if not ["id_rsa.pub", "id_dsa.pub", "id_ecdsa.pub"].include? key_name
-              log "You selected an ssh keyfile with non-standard name. Consider adding 'IdentityFile ~/.ssh/#{key_name.sub('.pub','')}' in ~/.ssh/config"
+              log "You selected an SSH keyfile with non-standard name. Consider adding 'IdentityFile ~/.ssh/#{key_name.sub('.pub','')}' in ~/.ssh/config"
           end
         end
         if options['pgp-pub-key']
@@ -100,13 +100,13 @@ module LeapCli
       end
 
       key_type = `file -b #{ssh_keys[key_index].filename}`
-      if not ["OpenSSH RSA public key","OpenSSH DSA public key","OpenSSH ECDSA public key"].include? key_type.strip()
-          bail! %(The "#{ssh_keys[key_index].filename}" is not a valid ssh public key)
+      if not ["OpenSSH RSA public key","OpenSSH DSA public key","OpenSSH ECDSA public key"].include? key_type.strip
+          bail! %(The "#{ssh_keys[key_index].filename}" is not a valid SSH public key)
       end
 
       key_name  = File.basename(ssh_keys[key_index].filename)
       if not ["id_rsa.pub", "id_dsa.pub", "id_ecdsa.pub"].include? key_name
-          log "You selected an ssh keyfile with non-standard name. Consider adding 'IdentityFile ~/.ssh/#{key_name.sub('.pub','')}' in ~/.ssh/config"
+          log "You selected an SSH keyfile with non-standard name. Consider adding 'IdentityFile ~/.ssh/#{key_name.sub('.pub','')}' in ~/.ssh/config"
       end
 
       return ssh_keys[key_index]
