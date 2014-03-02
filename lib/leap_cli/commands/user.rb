@@ -40,6 +40,10 @@ module LeapCli
 
         if options['ssh-pub-key']
           ssh_pub_key = read_file!(options['ssh-pub-key'])
+          key_name = File.basename(options['ssh-pub-key'])
+          if not ["id_rsa.pub", "id_dsa.pub", "id_ecdsa.pub"].include? key_name
+              log "You selected an ssh keyfile with non-standard name. Consider adding 'IdentityFile ~/.ssh/#{key_name.sub('.pub','')}' in ~/.ssh/config"
+          end
         end
         if options['pgp-pub-key']
           pgp_pub_key = read_file!(options['pgp-pub-key'])
@@ -89,6 +93,11 @@ module LeapCli
         end
       else
         key_index = 0
+      end
+
+      key_name  = File.basename(ssh_keys[key_index].filename)
+      if not ["id_rsa.pub", "id_dsa.pub", "id_ecdsa.pub"].include? key_name
+          log "You selected an ssh keyfile with non-standard name. Consider adding 'IdentityFile ~/.ssh/#{key_name.sub('.pub','')}' in ~/.ssh/config"
       end
 
       return ssh_keys[key_index]
