@@ -99,6 +99,7 @@ module LeapCli; module Util; module RemoteCommand
     opts = {}
     if node.vagrant?
       opts[:keys] = [vagrant_ssh_key_file]
+      opts[:keys_only] = true # only use the keys specified above, and ignore whatever keys the ssh-agent is aware of.
       opts[:paranoid] = false # we skip host checking for vagrant nodes, because fingerprint is different for everyone.
       if LeapCli::log_level <= 1
         opts[:verbose] = :error # suppress all the warnings about adding host keys to known_hosts, since it is not actually doing that.
