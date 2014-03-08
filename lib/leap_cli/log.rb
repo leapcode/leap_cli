@@ -9,6 +9,8 @@ require 'paint'
 module LeapCli
   extend self
 
+  attr_accessor :log_in_color
+
   # logging options
   def log_level
     @log_level ||= 1
@@ -112,8 +114,12 @@ module LeapCli
         message = LeapCli::Path.relative_path(message)
       end
 
-      log_raw(:log, nil)                 { [clear_prefix, message].join }
-      log_raw(:stdout, options[:indent]) { [colored_prefix, message].join }
+      log_raw(:log, nil)                   { [clear_prefix, message].join }
+      if LeapCli.log_in_color
+        log_raw(:stdout, options[:indent]) { [colored_prefix, message].join }
+      else
+        log_raw(:stdout, options[:indent]) { [clear_prefix, message].join }
+      end
 
       # run block, if given
       if block_given?

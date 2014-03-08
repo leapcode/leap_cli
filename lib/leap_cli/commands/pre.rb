@@ -23,6 +23,10 @@ module LeapCli; module Commands
   desc 'Enable debugging library (leap_cli development only)'
   switch :debug, :negatable => false
 
+  desc 'Disable colors in output'
+  default_value true
+  switch 'color', :negatable => true
+
   pre do |global,command,options,args|
     #
     # set verbosity
@@ -62,6 +66,7 @@ module LeapCli; module Commands
     LeapCli.log_file = global[:log] || LeapCli.leapfile.log
     LeapCli::Util.log_raw(:log) { $0 + ' ' + ORIGINAL_ARGV.join(' ')}
     log_version
+    LeapCli.log_in_color = global[:color]
 
     #
     # load all the nodes everything
