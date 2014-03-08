@@ -17,6 +17,8 @@ module Leap
       attr_accessor :reserved_usernames
 
       def define(&block)
+        # some sanity defaults:
+        @reserved_usernames = []
         self.instance_eval(&block)
       end
 
