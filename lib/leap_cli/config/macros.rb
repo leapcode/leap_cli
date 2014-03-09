@@ -160,7 +160,7 @@ module LeapCli; module Config
     # Generates entries needed for updating /etc/hosts on a node (as a hash).
     #
     # Argument `nodes` can be nil or a list of nodes. If nil, only include the
-    # IPs of the other nodes this @node as has encountered.
+    # IPs of the other nodes this @node as has encountered (plus all mx nodes).
     #
     # Also, for virtual machines, we use the local address if this @node is in
     # the same location as the node in question.
@@ -172,6 +172,7 @@ module LeapCli; module Config
       if nodes.nil?
         if @referenced_nodes && @referenced_nodes.any?
           nodes = @referenced_nodes
+          nodes = nodes.merge(nodes_like_me[:services => 'mx'])  # all nodes always need to communicate with mx nodes.
         end
       end
       return nil unless nodes
