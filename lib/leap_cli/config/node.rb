@@ -32,6 +32,14 @@ module LeapCli; module Config
       end
       return vagrant_range.include?(ip_address)
     end
+
+    #
+    # can be overridden by the platform.
+    # returns a list of node names that should be tested before this node
+    #
+    def test_dependencies
+      []
+    end
   end
 
 end; end

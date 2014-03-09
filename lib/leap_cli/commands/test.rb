@@ -13,7 +13,12 @@ module LeapCli; module Commands
     test.command :run do |run|
       run.switch 'continue', :desc => 'Continue over errors and failures (default is --no-continue).', :negatable => true
       run.action do |global_options,options,args|
-        manager.filter!(args).each_node do |node|
+        test_order = File.join(Path.platform, 'tests/order.rb')
+        if File.exists?(test_order)
+          require test_order
+        end
+        manager.filter!(args).names_in_test_dependency_order.each do |node_name|
+          node = manager.nodes[node_name]
           ssh_connect(node) do |ssh|
             ssh.run(test_cmd(options))
           end

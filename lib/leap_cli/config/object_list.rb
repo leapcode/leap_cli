@@ -1,9 +1,12 @@
+require 'tsort'
+
 module LeapCli
   module Config
     #
     # A list of Config::Object instances (internally stored as a hash)
     #
     class ObjectList < Hash
+      include TSort
 
       def initialize(config=nil)
         if config
@@ -169,6 +172,21 @@ module LeapCli
             self[name] = object.dup
           end
         end
+      end
+
+      #
+      # topographical sort based on test dependency
+      #
+      def tsort_each_node(&block)
+        self.each_key(&block)
+      end
+
+      def tsort_each_child(node_name, &block)
+        self[node_name].test_dependencies.each(&block)
+      end
+
+      def names_in_test_dependency_order
+        self.tsort
       end
 
     end
