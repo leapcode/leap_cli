@@ -32,19 +32,28 @@ module LeapCli; module Commands
     return connect_options
   end
 
+  def ssh_config_help_message
+    puts ""
+    puts "Are 'too many authentication failures' getting you down?"
+    puts "Then we have the solution for you! Add something like this to your ~/.ssh/config file:"
+    puts "  Host *.#{manager.provider.domain}"
+    puts "  IdentityFile ~/.ssh/id_rsa"
+    puts "  IdentitiesOnly=yes"
+    puts "(replace `id_rsa` with the actual private key filename that you use for this provider)"
+  end
+
   private
 
   def exec_ssh(cmd, args)
     node = get_node_from_args(args, :include_disabled => true)
     options = [
-      "-o 'HostName=#{node.ip_address}'",
+      "-o 'HostName=#{node.domain.full}'",
       # "-o 'HostKeyAlias=#{node.name}'", << oddly incompatible with ports in known_hosts file, so we must not use this or non-standard ports break.
       "-o 'GlobalKnownHostsFile=#{path(:known_hosts)}'",
       "-o 'UserKnownHostsFile=/dev/null'"
     ]
     if node.vagrant?
       options << "-i #{vagrant_ssh_key_file}"    # use the universal vagrant insecure key
-      options << '-o IdentitiesOnly=yes'         # only use explicitly configured keys
       options << "-o 'StrictHostKeyChecking=no'" # blindly accept host key and don't save it (since userknownhostsfile is /dev/null)
     else
       options << "-o 'StrictHostKeyChecking=yes'"
@@ -57,12 +66,23 @@ module LeapCli; module Commands
     end
     ssh = "ssh -l #{username} -p #{node.ssh.port} #{options.join(' ')}"
     if cmd == :ssh
-      command = "#{ssh} #{node.name}"
+      command = "#{ssh} #{node.domain.full}"
     elsif cmd == :mosh
-      command = "MOSH_TITLE_NOPREFIX=1 mosh --ssh \"#{ssh}\" #{node.name}"
+      command = "MOSH_TITLE_NOPREFIX=1 mosh --ssh \"#{ssh}\" #{node.domain.full}"
     end
     log 2, command
-    exec "#{command}"
+
+    # exec the shell command in a subprocess
+    pid = fork { exec "#{command}" }
+
+    # wait for shell to exit so we can grab the exit status
+    _, status = Process.waitpid2(pid)
+
+    if status.exitstatus == 255
+      ssh_config_help_message
+    elsif status.exitstatus != 0
+      exit_now! status.exitstatus, status.exitstatus
+    end
   end
 
 end; end

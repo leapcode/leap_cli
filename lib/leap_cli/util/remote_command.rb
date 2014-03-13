@@ -35,6 +35,12 @@ module LeapCli; module Util; module RemoteCommand
     end
 
     yield cap
+  rescue Capistrano::ConnectionError => exc
+    # not sure if this will work if english is not the locale??
+    if exc.message =~ /Too many authentication failures/
+      at_exit {ssh_config_help_message}
+    end
+    raise exc
   end
 
   private
