@@ -19,6 +19,13 @@ module LeapCli; module Config
     end
 
     #
+    # grab an environment appropriate provider
+    #
+    def provider
+      global.providers[@node.environment] || global.provider
+    end
+
+    #
     # returns a list of nodes that match the same environment
     #
     # if @node.environment is not set, we return other nodes

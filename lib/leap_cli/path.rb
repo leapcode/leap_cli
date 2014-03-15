@@ -72,6 +72,10 @@ module LeapCli; module Path
     File.exists?(named_path(name, provider_dir))
   end
 
+  def self.defined?(name)
+    Leap::Platform.paths[name]
+  end
+
   def self.relative_path(path, provider_dir=Path.provider)
     if provider_dir
       path = named_path(path, provider_dir)

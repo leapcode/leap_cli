@@ -39,7 +39,7 @@ module LeapCli; module Commands
           :inspect_service
         elsif path_match?(:tag_config, full_path)
           :inspect_tag
-        elsif path_match?(:provider_config, full_path)
+        elsif path_match?(:provider_config, full_path) || path_match?(:provider_env_config, full_path)
           :inspect_provider
         elsif path_match?(:common_config, full_path)
           :inspect_common
@@ -108,6 +108,8 @@ module LeapCli; module Commands
   def inspect_provider(arg, options)
     if options[:base]
       inspect_json manager.base_provider
+    elsif arg =~ /provider\.(.*)\.json/
+      inspect_json manager.providers[$1]
     else
       inspect_json manager.provider
     end
@@ -130,7 +132,9 @@ module LeapCli; module Commands
   end
 
   def inspect_json(config)
-    puts JSON.sorted_generate(config)
+    if config
+      puts JSON.sorted_generate(config)
+    end
   end
 
   def path_match?(path_symbol, path)
