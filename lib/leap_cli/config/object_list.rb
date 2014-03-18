@@ -182,7 +182,14 @@ module LeapCli
       end
 
       def tsort_each_child(node_name, &block)
-        self[node_name].test_dependencies.each(&block)
+        if self[node_name]
+          self[node_name].test_dependencies.each do |test_me_first|
+            if self[test_me_first] # TODO: in the future, allow for ability to optionally pull in all dependencies.
+                                   # not just the ones that pass the node filter.
+              yield(test_me_first)
+            end
+          end
+        end
       end
 
       def names_in_test_dependency_order
