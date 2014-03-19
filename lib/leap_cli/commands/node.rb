@@ -64,10 +64,9 @@ module LeapCli; module Commands
           ssh_connect_options = connect_options(options).merge({:bootstrap => true, :echo => options[:echo]})
           ssh_connect(node, ssh_connect_options) do |ssh|
             if node.vagrant?
-              ssh.install_authorized_keys2
-            else
-              ssh.install_authorized_keys
+              ssh.install_insecure_vagrant_key
             end
+            ssh.install_authorized_keys
             ssh.install_prerequisites
             ssh.leap.capture(facter_cmd) do |response|
               if response[:exitcode] == 0

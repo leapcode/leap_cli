@@ -13,26 +13,20 @@ task :install_authorized_keys, :max_hosts => MAX_HOSTS do
 end
 
 #
-# for vagrant nodes, we don't overwrite authorized_keys, because we want to keep the insecure vagrant key.
-# instead we install to authorized_keys2, which is also used by sshd.
+# for vagrant nodes, we install insecure vagrant key to authorized_keys2, since deploy
+# will overwrite authorized_keys.
 #
-# why?
-#   without it, it might be impossible to re-initialize a node.
-#
-# ok, why is that?
-#   when we init a vagrant node, we force it to use the insecure vagrant key, and not the user's keys
-#   (so re-initialization would be impossible if authorized_keys doesn't include insecure key).
-#
-# ok, why force the insecure vagrant key in the first place?
+# why force the insecure vagrant key?
 #   if we don't do this, then first time initialization might fail if the user has many keys
 #   (ssh will bomb out before it gets to the vagrant key).
 #   and it really doesn't make sense to ask users to pin the insecure vagrant key in their
 #   .ssh/config files.
 #
-task :install_authorized_keys2, :max_hosts => MAX_HOSTS do
-  leap.log :updating, "authorized_keys2" do
+task :install_insecure_vagrant_key, :max_hosts => MAX_HOSTS do
+  leap.log :installing, "insecure vagrant key" do
     leap.mkdirs '/root/.ssh'
-    upload LeapCli::Path.named_path(:authorized_keys), '/root/.ssh/authorized_keys2', :mode => '600'
+    key_file = File.expand_path('../../../vendor/vagrant_ssh_keys/vagrant.pub', File.dirname(__FILE__))
+    upload key_file, '/root/.ssh/authorized_keys2', :mode => '600'
   end
 end
 
