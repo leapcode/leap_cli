@@ -96,7 +96,9 @@ module LeapCli
       #
       def get!(key)
         key = key.to_s
-        if key =~ /\./
+        if self.has_key?(key)
+          fetch_value(key)
+        elsif key =~ /\./
           # for keys with with '.' in them, we start from the root object (@node).
           keys = key.split('.')
           value = @node.get!(keys.first)
@@ -105,8 +107,6 @@ module LeapCli
           else
             value
           end
-        elsif self.has_key?(key)
-          fetch_value(key)
         else
           raise NoMethodError.new(key, "No method '#{key}' for #{self.class}")
         end
