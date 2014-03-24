@@ -1,3 +1,5 @@
+# encoding: utf-8
+
 require 'erb'
 require 'json/pure'  # pure ruby implementation is required for our sorted trick to work.
 
@@ -292,6 +294,10 @@ module LeapCli
       #
       def fetch_value(key, context=@node)
         value = fetch(key, nil)
+        if value.is_a?(String) && value.encoding != Encoding::UTF_8
+          p [value, value.encoding]
+        end
+
         if value.is_a?(String) && value =~ /^=/
           if value =~ /^=> (.*)$/
             value = evaluate_later(key, $1)

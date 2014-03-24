@@ -1,3 +1,4 @@
+# encoding: utf-8
 #
 # MACROS
 # these are methods available when eval'ing a value in the .json configuration
@@ -60,9 +61,9 @@ module LeapCli; module Config
       filepath = Path.find_file(filename)
       if filepath
         if filepath =~ /\.erb$/
-          ERB.new(File.read(filepath), nil, '%<>').result(binding)
+          ERB.new(File.read(filepath, :encoding => 'UTF-8'), nil, '%<>').result(binding)
         else
-          File.read(filepath)
+          File.read(filepath, :encoding => 'UTF-8')
         end
       else
         raise FileMissing.new(Path.named_path(filename), options)
@@ -343,14 +344,14 @@ module LeapCli; module Config
       hash = {}
       keys = Dir.glob(Path.named_path([:user_ssh, '*']))
       keys.sort.each do |keyfile|
-        ssh_type, ssh_key = File.read(keyfile).strip.split(" ")
+        ssh_type, ssh_key = File.read(keyfile, :encoding => 'UTF-8').strip.split(" ")
         name = File.basename(File.dirname(keyfile))
         hash[name] = {
           "type" => ssh_type,
           "key" => ssh_key
         }
       end
-      ssh_type, ssh_key = File.read(Path.named_path(:monitor_pub_key)).strip.split(" ")
+      ssh_type, ssh_key = File.read(Path.named_path(:monitor_pub_key), :encoding => 'UTF-8').strip.split(" ")
       hash[Leap::Platform.monitor_username] = {
         "type" => ssh_type,
         "key" => ssh_key

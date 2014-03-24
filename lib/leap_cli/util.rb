@@ -193,13 +193,13 @@ module LeapCli
     def read_file!(filepath)
       filepath = Path.named_path(filepath)
       assert_files_exist!(filepath)
-      File.read(filepath)
+      File.read(filepath, :encoding => 'UTF-8')
     end
 
     def read_file(filepath)
       filepath = Path.named_path(filepath)
       if file_exists?(filepath)
-        File.read(filepath)
+        File.read(filepath, :encoding => 'UTF-8')
       end
     end
 
@@ -219,7 +219,7 @@ module LeapCli
           write_file!(filepath, content)
         end
       else
-        File.open(filepath, File::RDWR|File::CREAT, 0600) do |f|
+        File.open(filepath, File::RDWR|File::CREAT, 0600, :encoding => 'UTF-8') do |f|
           f.flock(File::LOCK_EX)
           old_content = f.read
           new_content = yield(old_content)
@@ -286,7 +286,7 @@ module LeapCli
         end
       end
 
-      File.open(filepath, 'w', 0600) do |f|
+      File.open(filepath, 'w', 0600, :encoding => 'UTF-8') do |f|
         f.write contents
       end
 

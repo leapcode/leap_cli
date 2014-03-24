@@ -1,3 +1,5 @@
+# encoding: utf-8
+
 require 'json/pure'
 
 if $ruby_version < [1,9]
@@ -230,7 +232,7 @@ module LeapCli
         Dir.glob(pattern).each do |filename|
           obj = load_json(filename, object_class)
           if obj
-            name = File.basename(filename).sub(/\.json$/,'')
+            name = File.basename(filename).force_encoding('utf-8').sub(/\.json$/,'')
             obj['name'] ||= name
             results[name] = obj
           end
@@ -252,7 +254,7 @@ module LeapCli
         # https://www.ietf.org/rfc/rfc4627.txt
         #
         buffer = StringIO.new
-        File.open(filename, "rb") do |f|
+        File.open(filename, "rb", :encoding => 'UTF-8') do |f|
           while (line = f.gets)
             next if line =~ /^\s*\/\//
             buffer << line
