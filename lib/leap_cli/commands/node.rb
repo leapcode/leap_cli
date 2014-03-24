@@ -23,7 +23,11 @@ module LeapCli; module Commands
         # argument sanity checks
         name = args.first
         assert! name, 'No <node-name> specified.'
-        assert! name =~ /^[0-9a-z-]+$/, "illegal characters used in node name '#{name}'"
+        if options[:local]
+          assert! name =~ /^[0-9a-z]+$/, "illegal characters used in node name '#{name}' (note: Vagrant does not allow hyphens or underscores)"
+        else
+          assert! name =~ /^[0-9a-z-]+$/, "illegal characters used in node name '#{name}' (note: Linux does not allow underscores)"
+        end
         assert_files_missing! [:node_config, name]
 
         # create and seed new node
