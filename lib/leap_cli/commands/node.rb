@@ -22,12 +22,7 @@ module LeapCli; module Commands
       add.action do |global_options,options,args|
         # argument sanity checks
         name = args.first
-        assert! name, 'No <node-name> specified.'
-        if options[:local]
-          assert! name =~ /^[0-9a-z]+$/, "illegal characters used in node name '#{name}' (note: Vagrant does not allow hyphens or underscores)"
-        else
-          assert! name =~ /^[0-9a-z-]+$/, "illegal characters used in node name '#{name}' (note: Linux does not allow underscores)"
-        end
+        assert_valid_node_name!(name, options[:local])
         assert_files_missing! [:node_config, name]
 
         # create and seed new node
@@ -92,6 +87,7 @@ module LeapCli; module Commands
       mv.action do |global_options,options,args|
         node = get_node_from_args(args)
         new_name = args.last
+        assert_valid_node_name!(new_name, node.vagrant?)
         ensure_dir [:node_files_dir, new_name]
         Leap::Platform.node_files.each do |path|
           rename_file! [path, node.name], [path, new_name]
@@ -273,6 +269,15 @@ module LeapCli; module Commands
       else
         log :missing, "ip_address"
       end
+    end
+  end
+
+  def assert_valid_node_name!(name, local=false)
+    assert! name, 'No <node-name> specified.'
+    if local
+      assert! name =~ /^[0-9a-z]+$/, "illegal characters used in node name '#{name}' (note: Vagrant does not allow hyphens or underscores)"
+    else
+      assert! name =~ /^[0-9a-z-]+$/, "illegal characters used in node name '#{name}' (note: Linux does not allow underscores)"
     end
   end
 
