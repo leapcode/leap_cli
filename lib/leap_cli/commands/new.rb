@@ -14,10 +14,11 @@ module LeapCli; module Commands
     c.action do |global, options, args|
       directory = File.expand_path(args.first)
       create_provider_directory(global, directory)
-      options[:domain]   ||= ask("The primary domain of the provider: ") {|q| q.default = 'example.org'}
-      options[:name]     ||= ask("The name of the provider: ") {|q| q.default = 'Example'}
-      options[:platform] ||= ask("File path of the leap_platform directory: ") {|q| q.default = File.expand_path('../leap_platform', directory)}
-      options[:contacts] ||= ask("Default email address contacts: ") {|q| q.default = 'root@' + options[:domain]}
+      options[:domain]   ||= ask_string("The primary domain of the provider: ") {|q| q.default = 'example.org'}
+      options[:name]     ||= ask_string("The name of the provider: ") {|q| q.default = 'Example'}
+      options[:platform] ||= ask_string("File path of the leap_platform directory: ") {|q| q.default = File.expand_path('../leap_platform', directory)}
+      options[:platform] = "./" + options[:platform] unless options[:platform] =~ /^\//
+      options[:contacts] ||= ask_string("Default email address contacts: ") {|q| q.default = 'root@' + options[:domain]}
       options[:platform] = relative_path(options[:platform])
       create_initial_provider_files(directory, global, options)
     end
@@ -26,6 +27,21 @@ module LeapCli; module Commands
   private
 
   DEFAULT_REPO = 'https://leap.se/git/leap_platform.git'
+
+  #
+  # don't let the user specify any of the following: y, yes, n, no
+  # they must actually input a real string
+  #
+  def ask_string(str, &block)
+    while true
+      value = ask(str, &block)
+      if value =~ /^(y|yes|n|no)$/i
+        say "`#{value}` is not a valid value. Try again"
+      else
+        return value
+      end
+    end
+  end
 
   #
   # creates a new provider directory
@@ -77,7 +93,7 @@ module LeapCli; module Commands
   end
 
   def relative_path(path)
-    Pathname.new(path).relative_path_from(Pathname.new(Path.provider)).to_s
+    Pathname.new(File.expand_path(path)).relative_path_from(Pathname.new(Path.provider)).to_s
   end
 
   def leapfile_content(options)
