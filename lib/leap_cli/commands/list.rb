@@ -65,12 +65,12 @@ module LeapCli; module Commands
       tags = @tag_list.keys.sort
       max_width = [20, (tags+[@heading]).inject(0) {|max,i| [i.size,max].max}].max
       table :border => false do
-        row :header => true, :color => 'cyan'  do
+        row :color => 'cyan'  do
           column @heading, :align => 'right', :width => max_width
           column "NODES", :width => HighLine::SystemExtensions.terminal_size.first - max_width - 2, :padding => 2
         end
         tags.each do |tag|
-          row do
+          row :color => 'white' do
             column tag
             column @tag_list[tag].node_list.keys.sort.join(', ')
           end
