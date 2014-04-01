@@ -1,3 +1,4 @@
+# encoding: utf-8
 #
 # A class for the secrets.json file
 #
