@@ -102,13 +102,13 @@ module LeapCli; module Commands
       max_service_width = (rows.map{|i|i[1]} + ["SERVICES"]).inject(0) {|max,i| [i.size+padding+padding,max].max}
       max_tag_width     = (rows.map{|i|i[2]} + ["TAGS"]    ).inject(0) {|max,i| [i.size,max].max}
       table :border => false do
-        row :header => true, :color => 'cyan'  do
+        row :color => 'cyan'  do
           column "NODES", :align => 'right', :width => max_node_width
           column "SERVICES", :width => max_service_width, :padding => 2
           column "TAGS", :width => max_tag_width
         end
         rows.each do |r|
-          row do
+          row :color => 'white' do
             column r[0]
             column r[1]
             column r[2]
