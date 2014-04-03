@@ -31,14 +31,24 @@ task :install_insecure_vagrant_key, :max_hosts => MAX_HOSTS do
 end
 
 task :install_prerequisites, :max_hosts => MAX_HOSTS do
+  apt_get = "DEBIAN_FRONTEND=noninteractive apt-get -q -y -o DPkg::Options::=--force-confold"
   leap.mkdirs LeapCli::PUPPET_DESTINATION
+  run "echo 'en_US.UTF-8 UTF-8' > /etc/locale.gen"
   leap.log :updating, "package list" do
     run "apt-get update"
   end
-  leap.log :installing, "required packages" do
-    run "DEBIAN_FRONTEND=noninteractive apt-get -q -y -o DPkg::Options::=--force-confold install #{leap.required_packages}"
+  leap.log :updating, "server time" do
+    run 'test -f /etc/init.d/ntp && /etc/init.d/ntp stop'
+    run "test -f /usr/sbin/ntpdate || #{apt_get} install ntpdate"
+    leap.log :running, "ntpdate..." do
+      run "test -f /usr/sbin/ntpdate && ntpdate 0.debian.pool.ntp.org 1.debian.pool.ntp.org 2.debian.pool.ntp.org 3.debian.pool.ntp.org"
+    end
+    run 'test -f /etc/init.d/ntp && /etc/init.d/ntp start'
   end
-  run "echo 'en_US.UTF-8 UTF-8' > /etc/locale.gen; locale-gen"
+  leap.log :installing, "required packages" do
+    run "#{apt_get} install #{leap.required_packages}"
+  end
+  #run "locale-gen"
   leap.mkdirs("/etc/leap", "/srv/leap")
   leap.mark_initialized
 end
