@@ -204,6 +204,11 @@ module LeapCli
       # returns a single Config::Object that corresponds to a Node.
       #
       def node(name)
+        if name =~ /\./
+          # probably got a fqdn, since periods are not allowed in node names.
+          # so, take the part before the first period as the node name
+          name = name.split('.').first
+        end
         @nodes[name]
       end
 
