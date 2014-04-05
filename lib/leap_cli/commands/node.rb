@@ -32,12 +32,14 @@ module LeapCli; module Commands
         end
         seed_node_data(node, args[1..-1])
         validate_ip_address(node)
-
-        # write the file
-        write_file! [:node_config, name], node.dump_json + "\n"
-        node['name'] = name
-        if file_exists? :ca_cert, :ca_key
-          generate_cert_for_node(manager.reload_node(node))
+        begin
+          write_file! [:node_config, name], node.dump_json + "\n"
+          node['name'] = name
+          if file_exists? :ca_cert, :ca_key
+            generate_cert_for_node(manager.reload_node!(node))
+          end
+        rescue LeapCli::ConfigError => exc
+          remove_node_files(name)
         end
       end
     end
@@ -102,9 +104,7 @@ module LeapCli; module Commands
     node.command :rm do |rm|
       rm.action do |global_options,options,args|
         node = get_node_from_args(args)
-        (Leap::Platform.node_files + [:node_files_dir]).each do |path|
-          remove_file! [path, node.name]
-        end
+        remove_node_files(node.name)
         if node.vagrant?
           vagrant_command("destroy --force", [node.name])
         end
@@ -236,8 +236,14 @@ module LeapCli; module Commands
     end
   end
 
+  def remove_node_files(node_name)
+    (Leap::Platform.node_files + [:node_files_dir]).each do |path|
+      remove_file! [path, node_name]
+    end
+  end
+
   #
-  # conversations:
+  # conversions:
   #
   #   "x,y,z" => ["x","y","z"]
   #

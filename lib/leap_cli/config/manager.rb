@@ -226,8 +226,8 @@ module LeapCli
         nodes.each_node &block
       end
 
-      def reload_node(node)
-        @nodes[node.name] = apply_inheritance(node)
+      def reload_node!(node)
+        @nodes[node.name] = apply_inheritance!(node)
       end
 
       private
@@ -307,7 +307,7 @@ module LeapCli
       #
       # makes a node inherit options from appropriate the common, service, and tag json files.
       #
-      def apply_inheritance(node)
+      def apply_inheritance(node, throw_exceptions=false)
         new_node = Config::Node.new(self)
         name = node.name
 
@@ -319,7 +319,9 @@ module LeapCli
           node['services'].to_a.each do |node_service|
             service = @services[node_service]
             if service.nil?
-              log 0, :error, 'in node "%s": the service "%s" does not exist.' % [node['name'], node_service]
+              msg = 'in node "%s": the service "%s" does not exist.' % [node['name'], node_service]
+              log 0, :error, msg
+              raise LeapCli::ConfigError.new(node, "error " + msg) if throw_exceptions
             else
               new_node.deep_merge!(service)
               service.node_list.add(name, new_node)
@@ -335,7 +337,9 @@ module LeapCli
           node['tags'].to_a.each do |node_tag|
             tag = @tags[node_tag]
             if tag.nil?
-              log 0, :error, 'in node "%s": the tag "%s" does not exist.' % [node['name'], node_tag]
+              msg = 'in node "%s": the tag "%s" does not exist.' % [node['name'], node_tag]
+              log 0, :error, msg
+              raise LeapCli::ConfigError.new(node, "error " + msg) if throw_exceptions
             else
               new_node.deep_merge!(tag)
               tag.node_list.add(name, new_node)
@@ -346,6 +350,10 @@ module LeapCli
         # inherit from node
         new_node.deep_merge!(node)
         return new_node
+      end
+
+      def apply_inheritance!(node)
+        apply_inheritance(node, true)
       end
 
       def remove_disabled_nodes

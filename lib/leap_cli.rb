@@ -7,6 +7,7 @@ require 'leap/platform.rb'
 require 'leap_cli/version.rb'
 require 'leap_cli/constants.rb'
 require 'leap_cli/requirements.rb'
+require 'leap_cli/exceptions.rb'
 
 require 'leap_cli/leapfile.rb'
 require 'core_ext/hash'
