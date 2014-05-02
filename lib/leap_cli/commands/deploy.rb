@@ -38,7 +38,7 @@ module LeapCli
           end
         end
 
-        compile_hiera_files(nodes)
+        compile_hiera_files
 
         ssh_connect(nodes, connect_options(options)) do |ssh|
           ssh.leap.log :checking, 'node' do
