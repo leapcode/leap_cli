@@ -38,12 +38,12 @@ task :install_prerequisites, :max_hosts => MAX_HOSTS do
     run "apt-get update"
   end
   leap.log :updating, "server time" do
-    run "test -f /etc/init.d/ntp || #{apt_get} install ntp && /etc/init.d/ntp stop"
+    run "( test -f /etc/init.d/ntp && /etc/init.d/ntp stop ) || true"
     run "test -f /usr/sbin/ntpdate || #{apt_get} install ntpdate"
     leap.log :running, "ntpdate..." do
       run "test -f /usr/sbin/ntpdate && ntpdate 0.debian.pool.ntp.org 1.debian.pool.ntp.org 2.debian.pool.ntp.org 3.debian.pool.ntp.org"
     end
-    run "test -f /etc/init.d/ntp && /etc/init.d/ntp start"
+    run "( test -f /etc/init.d/ntp && /etc/init.d/ntp start ) || true"
   end
   leap.log :installing, "required packages" do
     run "#{apt_get} install #{leap.required_packages}"
