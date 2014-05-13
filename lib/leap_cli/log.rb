@@ -80,6 +80,7 @@ module LeapCli
       if title
         prefix_options = case title
           when :error     then ['error', :red, :bold]
+          when :fatal_error then ['fatal error', :red, :bold]
           when :warning   then ['warning:', :yellow, :bold]
           when :info      then ['info', :cyan, :bold]
           when :updated   then ['updated', :cyan, :bold]

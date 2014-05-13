@@ -30,12 +30,23 @@ task :install_insecure_vagrant_key, :max_hosts => MAX_HOSTS do
   end
 end
 
+BAD_APT_GET_UPDATE = /(BADSIG|NO_PUBKEY|KEYEXPIRED|REVKEYSIG|NODATA)/
+
 task :install_prerequisites, :max_hosts => MAX_HOSTS do
   apt_get = "DEBIAN_FRONTEND=noninteractive apt-get -q -y -o DPkg::Options::=--force-confold"
   leap.mkdirs LeapCli::PUPPET_DESTINATION
   run "echo 'en_US.UTF-8 UTF-8' > /etc/locale.gen"
   leap.log :updating, "package list" do
-    run "apt-get update"
+    run "apt-get update" do |channel, stream, data|
+      # sadly exitcode is unreliable measure if apt-get update hit a failure.
+      if data =~ BAD_APT_GET_UPDATE
+        LeapCli::Util.bail! do
+          LeapCli::Util.log :fatal_error, "in `apt-get update`: #{data}", :host => channel[:host]
+        end
+      else
+        logger.log(1, data, channel[:host])
+      end
+    end
   end
   leap.log :updating, "server time" do
     run "( test -f /etc/init.d/ntp && /etc/init.d/ntp stop ) || true"
