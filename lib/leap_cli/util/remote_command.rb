@@ -50,8 +50,7 @@ module LeapCli; module Util; module RemoteCommand
   #
   def ssh_options
     {
-      :config => false,  # setting config to `false` is odd. however, if we don't do this, net:ssh doesn't use ssh-agent correctly,
-                         # for some unknown reason. also, with config `false`, it seems to still use ~/.ssh/config, so go figure.
+      :config => "~/.ssh/config",
       :global_known_hosts_file => path(:known_hosts),
       :user_known_hosts_file => '/dev/null',
       :paranoid => true
@@ -68,13 +67,12 @@ module LeapCli; module Util; module RemoteCommand
   #  return {:password => password_proc}
   #
   def node_options(node, ssh_options_override=nil)
-    ssh_options_override ||= {}
     {
       :ssh_options => {
         # :host_key_alias => node.name, << incompatible with ports in known_hosts
         :host_name => node.ip_address,
         :port => node.ssh.port
-      }.merge(contingent_ssh_options_for_node(node)).merge(ssh_options_override)
+      }.merge(contingent_ssh_options_for_node(node)).merge(ssh_options_override||{})
     }
   end
 
