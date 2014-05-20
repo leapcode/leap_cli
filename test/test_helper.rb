@@ -32,7 +32,7 @@ class MiniTest::Unit::TestCase
   end
 
   def leap_bin(*args)
-    `cd #{test_provider_path} && #{ruby_path} #{base_path}/bin/leap #{args.join ' '}`
+    `cd #{test_provider_path} && #{ruby_path} #{base_path}/bin/leap --no-color #{args.join ' '}`
   end
 
   #def test_platform_path

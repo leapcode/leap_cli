@@ -15,6 +15,11 @@ module LeapCli; module Commands
     c.flag 'print', :desc => 'What attributes to print (optional)'
     c.switch 'disabled', :desc => 'Include disabled nodes in the list.', :negatable => false
     c.action do |global_options,options,args|
+      if global_options[:color]
+        colors = ['cyan', 'white']
+      else
+        colors = [nil, nil]
+      end
       puts
       if options['disabled']
         manager.load(:include_disabled => true) # reload, with disabled nodes
@@ -23,11 +28,11 @@ module LeapCli; module Commands
         print_node_properties(manager.filter(args), options['print'])
       else
         if args.any?
-          NodeTable.new(manager.filter(args)).run
+          NodeTable.new(manager.filter(args), colors).run
         else
-          TagTable.new('SERVICES', manager.services).run
-          TagTable.new('TAGS', manager.tags).run
-          NodeTable.new(manager.nodes).run
+          TagTable.new('SERVICES', manager.services, colors).run
+          TagTable.new('TAGS', manager.tags, colors).run
+          NodeTable.new(manager.nodes, colors).run
         end
       end
     end
@@ -57,20 +62,21 @@ module LeapCli; module Commands
 
   class TagTable
     include CommandLineReporter
-    def initialize(heading, tag_list)
+    def initialize(heading, tag_list, colors)
       @heading = heading
       @tag_list = tag_list
+      @colors = colors
     end
     def run
       tags = @tag_list.keys.sort
       max_width = [20, (tags+[@heading]).inject(0) {|max,i| [i.size,max].max}].max
       table :border => false do
-        row :color => 'cyan'  do
+        row :color => @colors[0]  do
           column @heading, :align => 'right', :width => max_width
           column "NODES", :width => HighLine::SystemExtensions.terminal_size.first - max_width - 2, :padding => 2
         end
         tags.each do |tag|
-          row :color => 'white' do
+          row :color => @colors[1] do
             column tag
             column @tag_list[tag].node_list.keys.sort.join(', ')
           end
@@ -85,8 +91,9 @@ module LeapCli; module Commands
   #
   class NodeTable
     include CommandLineReporter
-    def initialize(node_list)
+    def initialize(node_list, colors)
       @node_list = node_list
+      @colors = colors
     end
     def run
       rows = @node_list.keys.sort.collect do |node_name|
@@ -102,13 +109,13 @@ module LeapCli; module Commands
       max_service_width = (rows.map{|i|i[1]} + ["SERVICES"]).inject(0) {|max,i| [i.size+padding+padding,max].max}
       max_tag_width     = (rows.map{|i|i[2]} + ["TAGS"]    ).inject(0) {|max,i| [i.size,max].max}
       table :border => false do
-        row :color => 'cyan'  do
+        row :color => @colors[0]  do
           column "NODES", :align => 'right', :width => max_node_width
           column "SERVICES", :width => max_service_width, :padding => 2
           column "TAGS", :width => max_tag_width
         end
         rows.each do |r|
-          row :color => 'white' do
+          row :color => @colors[1] do
             column r[0]
             column r[1]
             column r[2]
