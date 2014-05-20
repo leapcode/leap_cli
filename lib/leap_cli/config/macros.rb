@@ -6,6 +6,8 @@
 # This module is included in Config::Object
 #
 
+require 'base32'
+
 module LeapCli; module Config
   module Macros
     ##
@@ -128,6 +130,16 @@ module LeapCli; module Config
     #
     def secret(name, length=32)
       @manager.secrets.set(name, Util::Secret.generate(length), @node[:environment])
+    end
+
+    # inserts a base32 encoded secret
+    def base32_secret(name, length=20)
+      @manager.secrets.set(name, Base32.encode(Util::Secret.generate(length)), @node[:environment])
+    end
+
+    # Picks a random obfsproxy port from given range
+    def obfs_port(name, range)
+      @manager.secrets.set(name, rand(range), @node[:environment])
     end
 
     #
