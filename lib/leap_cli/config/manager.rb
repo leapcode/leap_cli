@@ -9,16 +9,24 @@ end
 module LeapCli
   module Config
 
+    class Environment
+      attr_accessor :services, :tags, :provider
+    end
+
     #
     # A class to manage all the objects in all the configuration files.
     #
     class Manager
 
+      def initialize
+        @environments = {} # hash of `Environment` objects, keyed by name.
+      end
+
       ##
       ## ATTRIBUTES
       ##
 
-      attr_reader :services, :tags, :nodes, :provider, :providers, :common, :secrets
+      attr_reader :nodes, :common, :secrets
       attr_reader :base_services, :base_tags, :base_provider, :base_common
 
       #
@@ -32,9 +40,23 @@ module LeapCli
       # returns an Array of all the environments defined for this provider.
       # the returned array includes nil (for the default environment)
       #
-      def environments
-        @environments ||= [nil] + self.tags.collect {|name, tag| tag['environment']}.compact
+      def environment_names
+        @environment_names ||= [nil] + env.tags.collect {|name, tag| tag['environment']}.compact
       end
+
+      #
+      # Returns the appropriate environment variable
+      #
+      def env(env=nil)
+        env ||= 'default'
+        e = @environments[env] ||= Environment.new
+        yield e if block_given?
+        e
+      end
+
+      def services; env('default').services; end
+      def tags; env('default').tags; end
+      def provider; env('default').provider; end
 
       ##
       ## IMPORT EXPORT
@@ -48,34 +70,43 @@ module LeapCli
 
         # load base
         @base_services = load_all_json(Path.named_path([:service_config, '*'], Path.provider_base), Config::Tag)
-        @base_tags     = load_all_json(Path.named_path([:tag_config, '*'], Path.provider_base), Config::Tag)
-        @base_common   = load_json(Path.named_path(:common_config, Path.provider_base), Config::Object)
-        @base_provider = load_json(Path.named_path(:provider_config, Path.provider_base), Config::Provider)
+        @base_tags     = load_all_json(Path.named_path([:tag_config, '*'],     Path.provider_base), Config::Tag)
+        @base_common   = load_json(    Path.named_path(:common_config,         Path.provider_base), Config::Object)
+        @base_provider = load_json(    Path.named_path(:provider_config,       Path.provider_base), Config::Provider)
 
         # load provider
-        provider_path = Path.named_path(:provider_config, @provider_dir)
-        common_path = Path.named_path(:common_config, @provider_dir)
-        Util::assert_files_exist!(provider_path, common_path)
-        @services = load_all_json(Path.named_path([:service_config, '*'], @provider_dir), Config::Tag)
-        @tags     = load_all_json(Path.named_path([:tag_config, '*'],     @provider_dir), Config::Tag)
-        @nodes    = load_all_json(Path.named_path([:node_config, '*'],    @provider_dir), Config::Node)
-        @common   = load_json(common_path, Config::Object)
-        @provider = load_json(provider_path, Config::Provider)
-        @secrets  = load_json(Path.named_path(:secrets_config,  @provider_dir), Config::Secrets)
+        @nodes    = load_all_json(Path.named_path([:node_config, '*'],  @provider_dir), Config::Node)
+        @common   = load_json(    Path.named_path(:common_config,       @provider_dir), Config::Object)
+        @secrets  = load_json(    Path.named_path(:secrets_config,      @provider_dir), Config::Secrets)
+        @common.inherit_from! @base_common
 
-        ### BEGIN HACK
-        ### remove this after it is likely that no one has any old-style secrets.json
-        if @secrets['webapp_secret_token']
-          @secrets = Config::Secrets.new
-          Util::log :warning, "Creating all new secrets.json (new version is scoped by environment). Make sure to do a full deploy so that new secrets take effect."
+        # load provider services, tags, and provider.json, DEFAULT environment
+        log 3, :loading, 'default environment.........'
+        env('default') do |e|
+          e.services = load_all_json(Path.named_path([:service_config, '*'], @provider_dir), Config::Tag, :no_dots => true)
+          e.tags     = load_all_json(Path.named_path([:tag_config, '*'],     @provider_dir), Config::Tag, :no_dots => true)
+          e.provider = load_json(    Path.named_path(:provider_config,       @provider_dir), Config::Provider, :assert => true)
+          e.services.inherit_from! @base_services
+          e.tags.inherit_from!     @base_tags
+          e.provider.inherit_from! @base_provider
+          validate_provider(e.provider)
         end
-        ### END HACK
 
-        # inherit
-        @services.inherit_from! base_services
-        @tags.inherit_from!     base_tags
-        @common.inherit_from!   base_common
-        @provider.inherit_from! base_provider
+        # load provider services, tags, and provider.json, OTHER environments
+        environment_names.each do |ename|
+          next unless ename
+          log 3, :loading, '%s environment.........' % ename
+          env(ename) do |e|
+            e.services = load_all_json(Path.named_path([:service_env_config, '*', ename], @provider_dir), Config::Tag)
+            e.tags     = load_all_json(Path.named_path([:tag_env_config, '*', ename],     @provider_dir), Config::Tag)
+            e.provider = load_json(    Path.named_path([:provider_env_config, ename],     @provider_dir), Config::Provider)
+            e.services.inherit_from! env.services
+            e.tags.inherit_from!     env.tags
+            e.provider.inherit_from! env.provider
+            validate_provider(e.provider)
+          end
+        end
+
         @nodes.each do |name, node|
           Util::assert! name =~ /^[0-9a-z-]+$/, "Illegal character(s) used in node name '#{name}'"
           @nodes[name] = apply_inheritance(node)
@@ -84,19 +115,6 @@ module LeapCli
         unless options[:include_disabled]
           remove_disabled_nodes
         end
-
-        # load optional environment specific providers
-        validate_provider(@provider)
-        @providers = {}
-        environments.each do |env|
-          if Path.defined?(:provider_env_config)
-            provider_path = Path.named_path([:provider_env_config, env], @provider_dir)
-            providers[env] = load_json(provider_path, Config::Provider)
-            providers[env].inherit_from! @provider
-            validate_provider(providers[env])
-          end
-        end
-
       end
 
       #
@@ -232,12 +250,13 @@ module LeapCli
 
       private
 
-      def load_all_json(pattern, object_class)
+      def load_all_json(pattern, object_class, options={})
         results = Config::ObjectList.new
         Dir.glob(pattern).each do |filename|
+          next if options[:no_dots] && File.basename(filename) !~ /^[^\.]*\.json$/
           obj = load_json(filename, object_class)
           if obj
-            name = File.basename(filename).force_encoding('utf-8').sub(/\.json$/,'')
+            name = File.basename(filename).force_encoding('utf-8').sub(/^([^\.]+).*\.json$/,'\1')
             obj['name'] ||= name
             results[name] = obj
           end
@@ -245,7 +264,10 @@ module LeapCli
         results
       end
 
-      def load_json(filename, object_class)
+      def load_json(filename, object_class, options={})
+        if options[:assert]
+          Util::assert_files_exist!(filename)
+        end
         if !File.exists?(filename)
           return object_class.new(self)
         end
@@ -311,20 +333,32 @@ module LeapCli
         new_node = Config::Node.new(self)
         name = node.name
 
+        # Guess the environment of the node from the tag names.
+        # (Technically, this is wrong: a tag that sets the environment might not be
+        #  named the same as the environment. This code assumes that it is).
+        node_env = self.env
+        if node['tags']
+          node['tags'].to_a.each do |tag|
+            if self.environment_names.include?(tag)
+              node_env = self.env(tag)
+            end
+          end
+        end
+
         # inherit from common
         new_node.deep_merge!(@common)
 
         # inherit from services
         if node['services']
           node['services'].to_a.each do |node_service|
-            service = @services[node_service]
+            service = node_env.services[node_service]
             if service.nil?
               msg = 'in node "%s": the service "%s" does not exist.' % [node['name'], node_service]
               log 0, :error, msg
               raise LeapCli::ConfigError.new(node, "error " + msg) if throw_exceptions
             else
               new_node.deep_merge!(service)
-              service.node_list.add(name, new_node)
+              self.services[node_service].node_list.add(name, new_node)
             end
           end
         end
@@ -335,14 +369,14 @@ module LeapCli
         end
         if node['tags']
           node['tags'].to_a.each do |node_tag|
-            tag = @tags[node_tag]
+            tag = node_env.tags[node_tag]
             if tag.nil?
               msg = 'in node "%s": the tag "%s" does not exist.' % [node['name'], node_tag]
               log 0, :error, msg
               raise LeapCli::ConfigError.new(node, "error " + msg) if throw_exceptions
             else
               new_node.deep_merge!(tag)
-              tag.node_list.add(name, new_node)
+              self.tags[node_tag].node_list.add(name, new_node)
             end
           end
         end
@@ -365,12 +399,12 @@ module LeapCli
             @disabled_nodes[name] = node
             if node['services']
               node['services'].to_a.each do |node_service|
-                @services[node_service].node_list.delete(node.name)
+                self.services[node_service].node_list.delete(node.name)
               end
             end
             if node['tags']
               node['tags'].to_a.each do |node_tag|
-                @tags[node_tag].node_list.delete(node.name)
+                self.tags[node_tag].node_list.delete(node.name)
               end
             end
           end

@@ -23,7 +23,7 @@ module LeapCli; module Config
     # grab an environment appropriate provider
     #
     def provider
-      global.providers[@node.environment] || global.provider
+      global.env(@node.environment).provider
     end
 
     #

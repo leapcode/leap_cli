@@ -125,7 +125,7 @@ module LeapCli
       end
 
       # all other records
-      manager.environments.each do |env|
+      manager.environment_names.each do |env|
         next if env == 'local'
         nodes = manager.nodes[:environment => env]
         next unless nodes.any?
