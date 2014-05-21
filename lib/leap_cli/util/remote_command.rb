@@ -50,7 +50,6 @@ module LeapCli; module Util; module RemoteCommand
   #
   def ssh_options
     {
-      :config => "~/.ssh/config",
       :global_known_hosts_file => path(:known_hosts),
       :user_known_hosts_file => '/dev/null',
       :paranoid => true
