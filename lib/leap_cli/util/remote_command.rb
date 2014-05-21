@@ -48,9 +48,34 @@ module LeapCli; module Util; module RemoteCommand
   #
   # For available options, see http://net-ssh.github.com/net-ssh/classes/Net/SSH.html#method-c-start
   #
+  # Capistrano has some very evil behavior in it's ssh.rb:
+  #
+  #   ssh_options = Net::SSH.configuration_for(
+  #     server.host, ssh_options.fetch(:config, true)
+  #   ).merge(ssh_options)
+  #   # Once we've loaded the config, we don't need Net::SSH to do it again.
+  #   ssh_options[:config] = false
+  #
+  # Net:SSH is supposed to call Net::SSH.configuration_for, but Capistrano is doing it
+  # in advance and then disabling loading of configs.
+  #
+  # The result of this is the following: if you have IdentityFile in your ~/.ssh/config
+  # file, then the above code will transform the ssh_options by reading ~/.ssh/config
+  # and adding the keys specified via IdentityFile to ssh_options...
+  # AND IT WILL SET :keys_only TO TRUE.
+  #
+  # The problem is that :keys_only will disable Net:SSH's ability to use ssh-agent.
+  # With :keys_only set to true, it will not consult the ssh-agent at all.
+  #
+  # So nice of capistrano to parse ~/.ssh/config for us, but then add flags to the
+  # ssh_options that prevent's these options from being useful.
+  #
+  # The current hackaround is to force :keys_only to be false. This allows the config
+  # to be read and also allows ssh-agent to still be used.
+  #
   def ssh_options
     {
-      :config => "~/.ssh/config",
+      :keys_only => false, # Don't you dare change this.
       :global_known_hosts_file => path(:known_hosts),
       :user_known_hosts_file => '/dev/null',
       :paranoid => true
