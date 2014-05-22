@@ -70,6 +70,7 @@ spec = Gem::Specification.new do |s|
   s.add_runtime_dependency('ya2yaml')    # pure ruby yaml, so we can better control output. see https://github.com/afunai/ya2yaml
   s.add_runtime_dependency('json_pure')  # pure ruby json, so we can better control output.
   s.add_runtime_dependency('versionomy') # compare version strings
+  s.add_runtime_dependency('base32')     # base32 encoding
 
   ##
   ## DEPENDENCIES for VENDORED GEMS

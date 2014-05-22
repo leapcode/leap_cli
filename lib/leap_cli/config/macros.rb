@@ -138,7 +138,7 @@ module LeapCli; module Config
     end
 
     # Picks a random obfsproxy port from given range
-    def obfs_port(name, range)
+    def rand_range(name, range)
       @manager.secrets.set(name, rand(range), @node[:environment])
     end
 
