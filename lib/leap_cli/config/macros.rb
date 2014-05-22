@@ -415,5 +415,16 @@ module LeapCli; module Config
       end
     end
 
+    #
+    # wrap something that might fail in `try`. e.g.
+    #
+    # "= try{ nodes[:services => 'tor'].first.ip_address } "
+    #
+    def try(&block)
+      yield
+    rescue NoMethodError
+      nil
+    end
+
   end
 end; end
