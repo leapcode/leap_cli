@@ -54,7 +54,7 @@ module LeapCli
           end
           unless options[:sync]
             ssh.leap.log :applying, "puppet" do
-              ssh.puppet.apply(:verbosity => LeapCli.log_level, :tags => tags(options), :force => options[:force])
+              ssh.puppet.apply(:verbosity => [LeapCli.log_level,5].min, :tags => tags(options), :force => options[:force])
             end
           end
         end
