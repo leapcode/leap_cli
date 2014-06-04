@@ -182,9 +182,16 @@ module LeapCli
       #
       # if conditions is prefixed with +, then it works like an AND. Otherwise, it works like an OR.
       #
-      def filter(filters)
+      # options:
+      # :local -- if :local is false and the filter is empty, then local nodes are excluded.
+      #
+      def filter(filters, options={})
         if filters.empty?
-          return nodes
+          if options[:local] === false
+            return nodes[:environment => '!local']
+          else
+            return nodes
+          end
         end
         if filters[0] =~ /^\+/
           # don't let the first filter have a + prefix

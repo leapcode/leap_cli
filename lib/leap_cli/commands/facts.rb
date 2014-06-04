@@ -79,7 +79,7 @@ module LeapCli; module Commands
   private
 
   def update_facts(global_options, options, args)
-    nodes = manager.filter(args)
+    nodes = manager.filter(args, :local => false)
     new_facts = {}
     ssh_connect(nodes) do |ssh|
       ssh.leap.run_with_progress(facter_cmd) do |response|
