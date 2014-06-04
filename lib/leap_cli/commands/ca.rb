@@ -208,11 +208,12 @@ module LeapCli; module Commands
             ips << $1          if value =~ /^IP Address:(.*)$/
             dns_names << $1    if value =~ /^DNS:(.*)$/
           end
+          dns_names.sort!
           if ips.first != node.ip_address
             log :updating, "cert for node '#{node.name}' because ip_address has changed (from #{ips.first} to #{node.ip_address})"
             return true
           elsif dns_names != dns_names_for_node(node)
-            log :updating, "cert for node '#{node.name}' because domain name aliases have changed (from #{dns_names.inspect} to #{dns_names_for_node(node).inspect})"
+            log :updating, "cert for node '#{node.name}' because domain name aliases have changed\n    from: #{dns_names.inspect}\n    to: #{dns_names_for_node(node).inspect})"
             return true
           end
         end
@@ -381,8 +382,10 @@ module LeapCli; module Commands
     names = [node.domain.internal, node.domain.full]
     if node['dns'] && node.dns['aliases'] && node.dns.aliases.any?
       names += node.dns.aliases
-      names.compact!
     end
+    names.compact!
+    names.sort!
+    names.uniq!
     return names
   end
 
