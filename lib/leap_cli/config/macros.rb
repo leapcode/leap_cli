@@ -195,7 +195,7 @@ module LeapCli; module Config
           nodes = nodes.merge(nodes_like_me[:services => 'mx'])  # all nodes always need to communicate with mx nodes.
         end
       end
-      return nil unless nodes
+      return {} unless nodes
       hosts = {}
       my_location = @node['location'] ? @node['location']['name'] : nil
       nodes.each_node do |node|
