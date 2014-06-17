@@ -243,20 +243,24 @@ module LeapCli; module Config
     # generates an entry appropriate to be passed directly to
     # create_resources(stunnel::service, hiera('..'), defaults)
     #
+    # local ports are automatically generated, starting at 4000
+    # and incrementing in sorted order (by node name).
+    #
     def stunnel_client(node_list, port, options={})
       @next_stunnel_port ||= 4000
       hostnames(node_list) # record the hosts
-      node_list.values.inject(Config::ObjectList.new) do |hsh, node|
+      result = Config::ObjectList.new
+      node_list.each_node do |node|
         if node.name != self.name || options[:include_self]
-          hsh["#{node.name}_#{port}"] = Config::Object[
+          result["#{node.name}_#{port}"] = Config::Object[
             'accept_port', @next_stunnel_port,
             'connect', node.domain.internal,
             'connect_port', stunnel_port(port)
           ]
           @next_stunnel_port += 1
         end
-        hsh
       end
+      result
     end
 
     #
