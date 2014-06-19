@@ -13,6 +13,11 @@ module LeapCli; module Config
       @discovered_keys = {}
     end
 
+     # we can't use fetch() or get(), since those already have special meanings
+     def retrieve(key, environment=nil)
+       self.fetch(environment||'default', {})[key.to_s]
+     end
+
     def set(key, value, environment=nil)
       environment ||= 'default'
       key = key.to_s

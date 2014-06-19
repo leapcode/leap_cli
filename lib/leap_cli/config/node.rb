@@ -34,6 +34,29 @@ module LeapCli; module Config
     end
 
     #
+    # Return a hash table representation of ourselves, with the key equal to the @node.name,
+    # and the value equal to the fields specified in *keys.
+    #
+    # Also, the result is flattened to a single hash, so a key of 'a.b' becomes 'a_b'
+    #
+    # compare to Object#pick(*keys). This method is the sames as Config::ObjectList#pick_fields,
+    # but works on a single node.
+    #
+    # Example:
+    #
+    #  node.pick('domain.internal') =>
+    #
+    #    {
+    #      'node1': {
+    #        'domain_internal': 'node1.example.i'
+    #      }
+    #    }
+    #
+    def pick_fields(*keys)
+      {@node.name => self.pick(*keys)}
+    end
+
+    #
     # can be overridden by the platform.
     # returns a list of node names that should be tested before this node
     #

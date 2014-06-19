@@ -107,13 +107,22 @@ module LeapCli
           end
         end
 
+        # apply inheritance
         @nodes.each do |name, node|
           Util::assert! name =~ /^[0-9a-z-]+$/, "Illegal character(s) used in node name '#{name}'"
           @nodes[name] = apply_inheritance(node)
         end
 
+        # remove disabled nodes
         unless options[:include_disabled]
           remove_disabled_nodes
+        end
+
+        # apply control files
+        @nodes.each do |name, node|
+          control_files(node).each do |file|
+            node.instance_eval File.read(file), file, 1
+          end
         end
       end
 
@@ -253,6 +262,28 @@ module LeapCli
 
       def reload_node!(node)
         @nodes[node.name] = apply_inheritance!(node)
+      end
+
+      #
+      # returns all the partial data for the specified partial path.
+      # partial path is always relative to provider root, but there must be multiple files
+      # that match because provider root might be the base provider or the local provider.
+      #
+      def partials(partial_path)
+        @partials ||= {}
+        if @partials[partial_path].nil?
+          [Path.provider_base, Path.provider].each do |provider_dir|
+            path = File.join(provider_dir, partial_path)
+            if File.exists?(path)
+              @partials[partial_path] ||= []
+              @partials[partial_path] << load_json(path, Config::Object)
+            end
+          end
+          if @partials[partial_path].nil?
+            raise RuntimeError, 'no such partial path `%s`' % partial_path, caller
+          end
+        end
+        @partials[partial_path]
       end
 
       private
@@ -436,6 +467,28 @@ module LeapCli
 
       def validate_provider(provider)
         # nothing yet.
+      end
+
+      #
+      # returns a list of 'control' files for this node.
+      # a control file is like a service or a tag JSON file, but it contains
+      # raw ruby code that gets evaluated in the context of the node.
+      # Yes, this entirely breaks our functional programming model
+      # for JSON generation.
+      #
+      def control_files(node)
+        files = []
+        [Path.provider_base, @provider_dir].each do |provider_dir|
+          [['services', :service_config], ['tags', :tag_config]].each do |attribute, path_sym|
+            node[attribute].each do |attr_value|
+              path = Path.named_path([path_sym, "#{attr_value}.rb"], provider_dir).sub(/\.json$/,'')
+              if File.exists?(path)
+                files << path
+              end
+            end
+          end
+        end
+        return files
       end
 
     end

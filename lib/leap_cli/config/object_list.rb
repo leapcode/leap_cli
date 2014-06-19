@@ -20,6 +20,8 @@ module LeapCli
       # If the key is a hash, we treat it as a condition and filter all the Config::Objects using the condition.
       # A new ObjectList is returned.
       #
+      # If the key is an array, it is treated as an array of node names
+      #
       # Examples:
       #
       # nodes['vpn1']
@@ -64,6 +66,11 @@ module LeapCli
             end
           end
           results
+        elsif key.is_a? Array
+          key.inject(Config::ObjectList.new) do |list, node_name|
+            list[node_name] = super(node_name.to_s)
+            list
+          end
         else
           super key.to_s
         end
