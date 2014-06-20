@@ -272,6 +272,23 @@ module LeapCli; module Config
     ##
 
     #
+    # About stunnel
+    # --------------------------
+    #
+    # The network looks like this:
+    #
+    #   From the client's perspective:
+    #
+    #   |------- stunnel client --------------|    |---------- stunnel server -----------------------|
+    #    consumer app -> localhost:accept_port  ->  connect:connect_port -> ??
+    #
+    #   From the server's perspective:
+    #
+    #   |------- stunnel client --------------|    |---------- stunnel server -----------------------|
+    #                                       ??  ->  *:accept_port -> localhost:connect_port -> service
+    #
+
+    #
     # stunnel configuration for the client side.
     #
     # +node_list+ is a ObjectList of nodes running stunnel servers.
@@ -279,17 +296,11 @@ module LeapCli; module Config
     # +port+ is the real port of the ultimate service running on the servers
     # that the client wants to connect to.
     #
-    # About ths stunnel puppet names:
-    #
     # * accept_port is the port on localhost to which local clients
     #   can connect. it is auto generated serially.
+    #
     # * connect_port is the port on the stunnel server to connect to.
     #   it is auto generated from the +port+ argument.
-    #
-    #  The network looks like this:
-    #
-    #  |------ stunnel client ---------------| |--------- stunnel server -----------------------|
-    #  consumer app -> localhost:accept_port -> server:connect_port -> server:port -> service app
     #
     # generates an entry appropriate to be passed directly to
     # create_resources(stunnel::service, hiera('..'), defaults)
@@ -307,7 +318,8 @@ module LeapCli; module Config
           result["#{node.name}_#{port}"] = Config::Object[
             'accept_port', @next_stunnel_port,
             'connect', node.domain.internal,
-            'connect_port', stunnel_port(port)
+            'connect_port', stunnel_port(port),
+            'original_port', port
           ]
           @next_stunnel_port += 1
         end
@@ -320,8 +332,14 @@ module LeapCli; module Config
     #
     # +port+ is the real port targeted service.
     #
+    # * `accept_port` is the publicly bound port
+    # * `connect_port` is the port that the local service is running on.
+    #
     def stunnel_server(port)
-      {"accept" => stunnel_port(port), "connect" => "127.0.0.1:#{port}"}
+      {
+        "accept_port" => stunnel_port(port),
+        "connect_port" => port
+      }
     end
 
     #
