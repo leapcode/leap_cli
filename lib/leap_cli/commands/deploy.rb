@@ -17,6 +17,9 @@ module LeapCli
       # --force
       c.switch :force, :desc => 'Deploy even if there is a lockfile.', :negatable => false
 
+      # --dev
+      c.switch :dev, :desc => "Development mode: don't run 'git submodule update' before deploy.", :negatable => false
+
       # --tags
       c.flag :tags, :desc => 'Specify tags to pass through to puppet (overriding the default).',
                     :default_value => DEFAULT_TAGS.join(','), :arg_name => 'TAG[,TAG]'
@@ -28,7 +31,10 @@ module LeapCli
                     :arg_name => 'IPADDRESS'
 
       c.action do |global,options,args|
-        init_submodules
+
+        if options[:dev] != true
+          init_submodules
+        end
 
         nodes = filter_deploy_nodes(args)
         if nodes.size > 1
@@ -58,6 +64,7 @@ module LeapCli
             end
           end
         end
+
       end
     end
 
