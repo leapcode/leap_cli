@@ -1,15 +1,18 @@
-module LeapCli; end
+module LeapCli
+  module Commands; end  # for commands in leap_cli/commands
+  module Macro; end     # for macros in leap_platform/provider_base/lib/macros
+end
 
 $ruby_version = RUBY_VERSION.split('.').collect{ |i| i.to_i }.extend(Comparable)
 
-require 'leap/platform.rb'
+require 'leap/platform'
 
-require 'leap_cli/version.rb'
-require 'leap_cli/constants.rb'
-require 'leap_cli/requirements.rb'
-require 'leap_cli/exceptions.rb'
+require 'leap_cli/version'
+require 'leap_cli/constants'
+require 'leap_cli/requirements'
+require 'leap_cli/exceptions'
 
-require 'leap_cli/leapfile.rb'
+require 'leap_cli/leapfile'
 require 'core_ext/hash'
 require 'core_ext/boolean'
 require 'core_ext/nil'
@@ -34,8 +37,6 @@ require 'leap_cli/config/object_list'
 require 'leap_cli/config/manager'
 
 require 'leap_cli/markdown_document_listener'
-
-module LeapCli::Commands; end
 
 #
 # allow everyone easy access to log() command.

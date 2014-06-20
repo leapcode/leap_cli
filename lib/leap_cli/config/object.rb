@@ -8,8 +8,6 @@ if $ruby_version < [1,9]
 end
 require 'ya2yaml' # pure ruby yaml
 
-require 'leap_cli/config/macros'
-
 module LeapCli
   module Config
     #
@@ -19,8 +17,6 @@ module LeapCli
     # It is called 'object' because it corresponds to an Object in JSON.
     #
     class Object < Hash
-
-      include Config::Macros
 
       attr_reader :node
       attr_reader :manager

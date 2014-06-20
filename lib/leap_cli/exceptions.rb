@@ -8,4 +8,25 @@ module LeapCli
     end
   end
 
+  class FileMissing < StandardError
+    attr_accessor :path, :options
+    def initialize(path, options={})
+      @path = path
+      @options = options
+    end
+    def to_s
+      @path
+    end
+  end
+
+  class AssertionFailed < StandardError
+    attr_accessor :assertion
+    def initialize(assertion)
+      @assertion = assertion
+    end
+    def to_s
+      @assertion
+    end
+  end
+
 end
