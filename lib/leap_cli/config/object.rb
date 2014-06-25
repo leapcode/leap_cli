@@ -261,7 +261,7 @@ module LeapCli
           rescue FileMissing => exc
             Util::bail! do
               if exc.options[:missing]
-                Util::log :missing, exc.options[:missing].gsub('$node', self.name)
+                Util::log :missing, exc.options[:missing].gsub('$node', self.name).gsub('$file', exc.path)
               else
                 Util::log :error, "while evaluating node '#{self.name}'"
                 Util::log "offending key: #{key}", :indent => 1
