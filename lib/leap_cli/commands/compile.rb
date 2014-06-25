@@ -50,14 +50,16 @@ module LeapCli
     # keys, and every monitor node has a copy of the private monitor key.
     #
     def generate_monitor_ssh_keys
-      priv_key_file = :monitor_priv_key
-      pub_key_file  = :monitor_pub_key
+      priv_key_file = path(:monitor_priv_key)
+      pub_key_file  = path(:monitor_pub_key)
       unless file_exists?(priv_key_file, pub_key_file)
-        cmd = %(ssh-keygen -N '' -C 'monitor' -t ecdsa -b 521 -f '%s') % path(priv_key_file)
+        ensure_dir(File.dirname(priv_key_file))
+        ensure_dir(File.dirname(pub_key_file))
+        cmd = %(ssh-keygen -N '' -C 'monitor' -t ecdsa -b 521 -f '%s') % priv_key_file
         assert_run! cmd
         if file_exists?(priv_key_file, pub_key_file)
-          log :created, path(priv_key_file)
-          log :created, path(pub_key_file)
+          log :created, priv_key_file
+          log :created, pub_key_file
         else
           log :failed, 'to create monitor ssh keys'
         end
