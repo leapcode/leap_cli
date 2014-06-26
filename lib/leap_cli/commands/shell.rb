@@ -3,8 +3,10 @@ module LeapCli; module Commands
   desc 'Log in to the specified node with an interactive shell.'
   arg_name 'NAME' #, :optional => false, :multiple => false
   command :ssh do |c|
+    c.flag 'ssh', :desc => "Pass through raw options to ssh (e.g. --ssh '-F ~/sshconfig')"
+    c.flag 'port', :desc => 'Override ssh port for remote host'
     c.action do |global_options,options,args|
-      exec_ssh(:ssh, args)
+      exec_ssh(:ssh, options, args)
     end
   end
 
@@ -12,7 +14,7 @@ module LeapCli; module Commands
   arg_name 'NAME'
   command :mosh do |c|
     c.action do |global_options,options,args|
-      exec_ssh(:mosh, args)
+      exec_ssh(:mosh, options, args)
     end
   end
 
@@ -44,8 +46,9 @@ module LeapCli; module Commands
 
   private
 
-  def exec_ssh(cmd, args)
+  def exec_ssh(cmd, cli_options, args)
     node = get_node_from_args(args, :include_disabled => true)
+    port = node.ssh.port
     options = [
       "-o 'HostName=#{node.ip_address}'",
       # "-o 'HostKeyAlias=#{node.name}'", << oddly incompatible with ports in known_hosts file, so we must not use this or non-standard ports break.
@@ -65,7 +68,13 @@ module LeapCli; module Commands
     elsif LeapCli.log_level >= 2
       options << "-v"
     end
-    ssh = "ssh -l #{username} -p #{node.ssh.port} #{options.join(' ')}"
+    if cli_options[:port]
+      port = cli_options[:port]
+    end
+    if cli_options[:ssh]
+      options << cli_options[:ssh]
+    end
+    ssh = "ssh -l #{username} -p #{port} #{options.join(' ')}"
     if cmd == :ssh
       command = "#{ssh} #{node.domain.full}"
     elsif cmd == :mosh
