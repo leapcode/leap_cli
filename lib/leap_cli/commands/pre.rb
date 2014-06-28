@@ -32,11 +32,6 @@ module LeapCli; module Commands
     # set verbosity
     #
     LeapCli.log_level = global[:verbose].to_i
-    if LeapCli.log_level > 1
-      ENV['GLI_DEBUG'] = "true"
-    else
-      ENV['GLI_DEBUG'] = "false"
-    end
 
     #
     # load Leapfile
@@ -68,18 +63,7 @@ module LeapCli; module Commands
     log_version
     LeapCli.log_in_color = global[:color]
 
-    #
-    # load all the nodes everything
-    #
-    manager
-
-    #
-    # check requirements
-    #
-    REQUIREMENTS.each do |key|
-      assert_config! key
-    end
-
+    true
   end
 
   private

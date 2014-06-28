@@ -6,6 +6,9 @@ module LeapCli
       @node = node
       super(msg)
     end
+    def log
+      Util.log(0, :error, "in node `#{@node.name}`: " + self.message)
+    end
   end
 
   class FileMissing < StandardError

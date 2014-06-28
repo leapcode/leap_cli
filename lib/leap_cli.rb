@@ -9,7 +9,6 @@ require 'leap/platform'
 
 require 'leap_cli/version'
 require 'leap_cli/constants'
-require 'leap_cli/requirements'
 require 'leap_cli/exceptions'
 
 require 'leap_cli/leapfile'

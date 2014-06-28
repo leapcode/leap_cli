@@ -15,15 +15,15 @@ module LeapCli; module Commands
     c.flag 'print', :desc => 'What attributes to print (optional)'
     c.switch 'disabled', :desc => 'Include disabled nodes in the list.', :negatable => false
     c.action do |global_options,options,args|
+      # don't rely on default manager(), because we want to pass custom options to load()
+      manager = LeapCli::Config::Manager.new
       if global_options[:color]
         colors = ['cyan', 'white']
       else
         colors = [nil, nil]
       end
       puts
-      if options['disabled']
-        manager.load(:include_disabled => true) # reload, with disabled nodes
-      end
+      manager.load(:include_disabled => options['disabled'], :continue_on_error => true)
       if options['print']
         print_node_properties(manager.filter(args), options['print'])
       else
@@ -45,7 +45,6 @@ module LeapCli; module Commands
     properties = properties.split(',')
     max_width = nodes.keys.inject(0) {|max,i| [i.size,max].max}
     nodes.each_node do |node|
-      node.evaluate
       value = properties.collect{|prop|
         if node[prop].nil?
           "null"
@@ -68,7 +67,7 @@ module LeapCli; module Commands
       @colors = colors
     end
     def run
-      tags = @tag_list.keys.sort
+      tags = @tag_list.keys.select{|tag| tag !~ /^_/}.sort # sorted list of tags, excluding _partials
       max_width = [20, (tags+[@heading]).inject(0) {|max,i| [i.size,max].max}].max
       table :border => false do
         row :color => @colors[0]  do

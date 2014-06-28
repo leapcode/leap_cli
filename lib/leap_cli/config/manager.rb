@@ -131,7 +131,15 @@ module LeapCli
         # apply control files
         @nodes.each do |name, node|
           control_files(node).each do |file|
-            node.instance_eval File.read(file), file, 1
+            begin
+              node.eval_file file
+            rescue ConfigError => exc
+              if options[:continue_on_error]
+                exc.log
+              else
+                raise exc
+              end
+            end
           end
         end
       end

@@ -78,9 +78,26 @@ module LeapCli::Commands
     exit(0)
   end
 
+  # disable GLI error catching
+  ENV['GLI_DEBUG'] = "true"
+  def error_message(msg)
+  end
+
   # load commands and run
   commands_from('leap_cli/commands')
   ORIGINAL_ARGV = ARGV.dup
-  exit_status = run(ARGV)
-  exit(LeapCli::Util.exit_status || exit_status)
+  begin
+    exit_status = run(ARGV)
+    exit(LeapCli::Util.exit_status || exit_status)
+  rescue StandardError => exc
+    if LeapCli.log_level < 2
+      if exc.respond_to? :log
+        exc.log
+      else
+        puts "%s: %s" % [exc.class, exc.message]
+      end
+    else
+      raise exc
+    end
+  end
 end

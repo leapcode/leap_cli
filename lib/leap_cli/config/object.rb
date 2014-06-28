@@ -202,6 +202,10 @@ module LeapCli
         end
       end
 
+      def eval_file(filename)
+        evaluate_ruby(filename, File.read(filename))
+      end
+
       protected
 
       #
@@ -242,45 +246,42 @@ module LeapCli
       # (`key` is just passed for debugging purposes)
       #
       def evaluate_ruby(key, value)
-        result = nil
-        if LeapCli.log_level >= 2
-          result = self.instance_eval(value)
-        else
-          begin
-            result = self.instance_eval(value)
-          rescue SystemStackError => exc
-            Util::log 0, :error, "while evaluating node '#{self.name}'"
-            Util::log 0, "offending key: #{key}", :indent => 1
-            Util::log 0, "offending string: #{value}", :indent => 1
-            Util::log 0, "STACK OVERFLOW, BAILING OUT. There must be an eval loop of death (variables with circular dependencies).", :indent => 1
-            raise SystemExit.new(1)
-          rescue FileMissing => exc
-            Util::bail! do
-              if exc.options[:missing]
-                Util::log :missing, exc.options[:missing].gsub('$node', self.name).gsub('$file', exc.path)
-              else
-                Util::log :error, "while evaluating node '#{self.name}'"
-                Util::log "offending key: #{key}", :indent => 1
-                Util::log "offending string: #{value}", :indent => 1
-                Util::log "error message: no file '#{exc}'", :indent => 1
-              end
-            end
-          rescue AssertionFailed => exc
-            Util.bail! do
-              Util::log :failed, "assertion while evaluating node '#{self.name}'"
-              Util::log 'assertion: %s' % exc.assertion, :indent => 1
-              Util::log "offending key: #{key}", :indent => 1
-            end
-          rescue SyntaxError, StandardError => exc
-            Util::bail! do
-              Util::log :error, "while evaluating node '#{self.name}'"
-              Util::log "offending key: #{key}", :indent => 1
-              Util::log "offending string: #{value}", :indent => 1
-              Util::log "error message: #{exc.inspect}", :indent => 1
-            end
+        self.instance_eval(value, key, 1)
+      rescue ConfigError => exc
+        raise exc # pass through
+      rescue SystemStackError => exc
+        Util::log 0, :error, "while evaluating node '#{self.name}'"
+        Util::log 0, "offending key: #{key}", :indent => 1
+        Util::log 0, "offending string: #{value}", :indent => 1
+        Util::log 0, "STACK OVERFLOW, BAILING OUT. There must be an eval loop of death (variables with circular dependencies).", :indent => 1
+        raise SystemExit.new(1)
+      rescue FileMissing => exc
+        Util::bail! do
+          if exc.options[:missing]
+            Util::log :missing, exc.options[:missing].gsub('$node', self.name).gsub('$file', exc.path)
+          else
+            Util::log :error, "while evaluating node '#{self.name}'"
+            Util::log "offending key: #{key}", :indent => 1
+            Util::log "offending string: #{value}", :indent => 1
+            Util::log "error message: no file '#{exc}'", :indent => 1
           end
+          raise exc if LeapCli.log_level >= 2
         end
-        return result
+      rescue AssertionFailed => exc
+        Util.bail! do
+          Util::log :failed, "assertion while evaluating node '#{self.name}'"
+          Util::log 'assertion: %s' % exc.assertion, :indent => 1
+          Util::log "offending key: #{key}", :indent => 1
+          raise exc if LeapCli.log_level >= 2
+        end
+      rescue SyntaxError, StandardError => exc
+        Util::bail! do
+          Util::log :error, "while evaluating node '#{self.name}'"
+          Util::log "offending key: #{key}", :indent => 1
+          Util::log "offending string: #{value}", :indent => 1
+          Util::log "error message: #{exc.inspect}", :indent => 1
+          raise exc if LeapCli.log_level >= 2
+        end
       end
 
       private
