@@ -138,7 +138,7 @@ module LeapCli
       # TESTS
       { :match => /^PASS: /,                :color => :green,   :priority => -20},
       { :match => /^(FAIL|ERROR): /,        :color => :red,     :priority => -20},
-      { :match => /^SKIP: /,                :color => :yellow,  :priority => -20}
+      { :match => /^(SKIP|WARN): /,         :color => :yellow,  :priority => -20}
 
     ]
 
