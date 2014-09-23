@@ -5,9 +5,15 @@ module LeapCli
     desc "Compile generated files."
     command :compile do |c|
       c.desc 'Compiles node configuration files into hiera files used for deployment.'
+      c.arg_name 'ENVIRONMENT', :optional => true
       c.command :all do |all|
         all.action do |global_options,options,args|
-          compile_hiera_files
+          environment = args.first
+          if environment && manager.environment_names.include?(environment)
+            compile_hiera_files(manager.filter(args))
+          else
+            compile_hiera_files
+          end
         end
       end
 
