@@ -51,7 +51,6 @@ module LeapCli
         environments.each do |env|
           check_platform_pinning(env)
         end
-        quit!
         compile_hiera_files
 
         ssh_connect(nodes, connect_options(options)) do |ssh|
