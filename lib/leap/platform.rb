@@ -44,6 +44,9 @@ module Leap
       # return true if the platform version is within the specified range.
       #
       def version_in_range?(range)
+        if range.is_a? String
+          range = range.split('..')
+        end
         minimum_platform_version = Versionomy.parse(range.first)
         maximum_platform_version = Versionomy.parse(range.last)
         @version >= minimum_platform_version && @version <= maximum_platform_version
