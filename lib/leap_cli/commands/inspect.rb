@@ -109,7 +109,7 @@ module LeapCli; module Commands
     if options[:base]
       inspect_json manager.base_provider
     elsif arg =~ /provider\.(.*)\.json/
-      inspect_json manager.providers[$1]
+      inspect_json manager.env($1).provider
     else
       inspect_json manager.provider
     end
