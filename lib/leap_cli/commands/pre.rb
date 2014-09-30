@@ -48,13 +48,6 @@ module LeapCli; module Commands
       bail! { log :missing, "platform directory '#{Path.platform}'" }
     end
 
-    if LeapCli.leapfile.platform_branch && LeapCli::Util.is_git_directory?(Path.platform)
-      branch = LeapCli::Util.current_git_branch(Path.platform)
-      if branch != LeapCli.leapfile.platform_branch
-        bail! "Wrong branch for #{Path.platform}. Was '#{branch}', should be '#{LeapCli.leapfile.platform_branch}'. Edit Leapfile to disable this check."
-      end
-    end
-
     #
     # set log file
     #

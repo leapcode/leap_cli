@@ -64,9 +64,24 @@ module LeapCli
         e
       end
 
-      def services; env('default').services; end
-      def tags; env('default').tags; end
-      def provider; env('default').provider; end
+      #
+      # The default accessors for services, tags, and provider.
+      # For these defaults, use 'default' environment, or whatever
+      # environment is pinned.
+      #
+      def services
+        env(default_environment).services
+      end
+      def tags
+        env(default_environment).tags
+      end
+      def provider
+        env(default_environment).provider
+      end
+
+      def default_environment
+        LeapCli.leapfile.environment
+      end
 
       ##
       ## IMPORT EXPORT
@@ -90,8 +105,8 @@ module LeapCli
         @secrets  = load_json(    Path.named_path(:secrets_config,      @provider_dir), Config::Secrets)
         @common.inherit_from! @base_common
 
-        # load provider services, tags, and provider.json, DEFAULT environment
-        log 3, :loading, 'default environment.........'
+        # For the default environment, load provider services, tags, and provider.json
+        log 3, :loading, 'default environment...'
         env('default') do |e|
           e.services = load_all_json(Path.named_path([:service_config, '*'], @provider_dir), Config::Tag, :no_dots => true)
           e.tags     = load_all_json(Path.named_path([:tag_config, '*'],     @provider_dir), Config::Tag, :no_dots => true)
@@ -102,17 +117,28 @@ module LeapCli
           validate_provider(e.provider)
         end
 
-        # load provider services, tags, and provider.json, OTHER environments
+        # create a special '_all_' environment, used for tracking the union
+        # of all the environments
+        env('_all_') do |e|
+          e.services = Config::ObjectList.new
+          e.tags     = Config::ObjectList.new
+          e.provider = Config::Provider.new
+          e.services.inherit_from! env('default').services
+          e.tags.inherit_from!     env('default').tags
+          e.provider.inherit_from! env('default').provider
+        end
+
+        # For each defined environment, load provider services, tags, and provider.json.
         environment_names.each do |ename|
           next unless ename
-          log 3, :loading, '%s environment.........' % ename
+          log 3, :loading, '%s environment...' % ename
           env(ename) do |e|
             e.services = load_all_json(Path.named_path([:service_env_config, '*', ename], @provider_dir), Config::Tag)
             e.tags     = load_all_json(Path.named_path([:tag_env_config, '*', ename],     @provider_dir), Config::Tag)
             e.provider = load_json(    Path.named_path([:provider_env_config, ename],     @provider_dir), Config::Provider)
-            e.services.inherit_from! env.services
-            e.tags.inherit_from!     env.tags
-            e.provider.inherit_from! env.provider
+            e.services.inherit_from! env('default').services
+            e.tags.inherit_from!     env('default').tags
+            e.provider.inherit_from! env('default').provider
             validate_provider(e.provider)
           end
         end
@@ -123,10 +149,8 @@ module LeapCli
           @nodes[name] = apply_inheritance(node)
         end
 
-        # remove disabled nodes
-        unless options[:include_disabled]
-          remove_disabled_nodes
-        end
+        # do some node-list post-processing
+        cleanup_node_lists(options)
 
         # apply control files
         @nodes.each do |name, node|
@@ -209,22 +233,31 @@ module LeapCli
       #
       # if conditions is prefixed with +, then it works like an AND. Otherwise, it works like an OR.
       #
+      # The environment is pinned, then all filters get an automatic +environment_name
+      # applied (whatever the name happens to be).
+      #
       # options:
       # :local -- if :local is false and the filter is empty, then local nodes are excluded.
+      # :nopin -- if true, ignore environment pinning
       #
-      def filter(filters, options={})
-        if filters.empty?
-          if options[:local] === false
-            return nodes[:environment => '!local']
-          else
-            return nodes
+      def filter(filters=nil, options={})
+        # handle empty filter
+        if filters.nil? || filters.empty?
+          node_list = self.nodes
+          if LeapCli.leapfile.environment
+            node_list = node_list[:environment => LeapCli.leapfile.environment_filter]
           end
+          if options[:local] === false
+            node_list = node_list[:environment => '!local']
+          end
+          return node_list
         end
+
+        # handle non-empty filters
         if filters[0] =~ /^\+/
           # don't let the first filter have a + prefix
           filters[0] = filters[0][1..-1]
         end
-
         node_list = Config::ObjectList.new
         filters.each do |filter|
           if filter =~ /^\+/
@@ -240,6 +273,12 @@ module LeapCli
             node_list.merge!(nodes_for_name(filter))
           end
         end
+
+        # optionally apply environment pin
+        if !options[:nopin] && LeapCli.leapfile.environment
+          node_list = node_list[:environment => environment_filter]
+        end
+
         return node_list
       end
 
@@ -414,7 +453,6 @@ module LeapCli
               raise LeapCli::ConfigError.new(node, "error " + msg) if throw_exceptions
             else
               new_node.deep_merge!(service)
-              self.services[node_service].node_list.add(name, new_node)
             end
           end
         end
@@ -432,7 +470,6 @@ module LeapCli
               raise LeapCli::ConfigError.new(node, "error " + msg) if throw_exceptions
             else
               new_node.deep_merge!(tag)
-              self.tags[node_tag].node_list.add(name, new_node)
             end
           end
         end
@@ -446,27 +483,34 @@ module LeapCli
         apply_inheritance(node, true)
       end
 
-      def remove_disabled_nodes
+      #
+      # does some final clean at the end of loading nodes.
+      # this includes removing disabled nodes, and populating
+      # the services[x].node_list and tags[x].node_list
+      #
+      def cleanup_node_lists(options)
         @disabled_nodes = Config::ObjectList.new
         @nodes.each do |name, node|
-          unless node.enabled
-            log 2, :skipping, "disabled node #{name}."
-            @nodes.delete(name)
-            @disabled_nodes[name] = node
+          if node.enabled || options[:include_disabled]
             if node['services']
               node['services'].to_a.each do |node_service|
-                self.services[node_service].node_list.delete(node.name)
+                env(node.environment).services[node_service].node_list.add(node.name, node)
+                env('_all_').services[node_service].node_list.add(node.name, node)
               end
             end
             if node['tags']
               node['tags'].to_a.each do |node_tag|
-                self.tags[node_tag].node_list.delete(node.name)
+                env(node.environment).tags[node_tag].node_list.add(node.name, node)
+                env('_all_').tags[node_tag].node_list.add(node.name, node)
               end
             end
+          elsif !options[:include_disabled]
+            log 2, :skipping, "disabled node #{name}."
+            @nodes.delete(name)
+            @disabled_nodes[name] = node
           end
         end
       end
-
 
       #
       # returns a set of nodes corresponding to a single name, where name could be a node name, service name, or tag name.

@@ -16,11 +16,26 @@ module LeapCli
     attr_accessor :leap_version
     attr_accessor :log
     attr_accessor :vagrant_network
-    attr_accessor :platform_branch
-    attr_accessor :allow_production_deploy
+    attr_accessor :environment
 
     def initialize
       @vagrant_network = '10.5.5.0/24'
+    end
+
+    #
+    # The way the Leapfile handles pinning of environment (self.environment) is a little tricky.
+    # If self.environment is nil, then there is no pin. If self.environment is 'default', then
+    # there is a pin to the default environment. The problem is that an environment of nil
+    # is used to indicate the default environment in node properties.
+    #
+    # This method returns the environment tag as needed when filtering nodes.
+    #
+    def environment_filter
+      if self.environment == 'default'
+        nil
+      else
+        self.environment
+      end
     end
 
     def load(search_directory=nil)
@@ -33,7 +48,7 @@ module LeapCli
         #
         @provider_directory_path = directory
         read_settings(directory + '/Leapfile')
-        read_settings(ENV['HOME'] + '/.leaprc')
+        read_settings(leaprc_path)
         @platform_directory_path = File.expand_path(@platform_directory_path || '../leap_platform', @provider_directory_path)
 
         #
@@ -51,19 +66,54 @@ module LeapCli
                      "You need platform version #{LeapCli::COMPATIBLE_PLATFORM_VERSION.first} to #{LeapCli::COMPATIBLE_PLATFORM_VERSION.last}."
         end
 
-        #
-        # set defaults
-        #
-        if @allow_production_deploy.nil?
-          # by default, only allow production deploys from 'master' or if not a git repo
-          @allow_production_deploy = !LeapCli::Util.is_git_directory?(@provider_directory_path) ||
-            LeapCli::Util.current_git_branch(@provider_directory_path) == 'master'
+        unless @allow_production_deploy.nil?
+          Util::log 0, :warning, "in Leapfile: @allow_production_deploy is no longer supported."
+        end
+        unless @platform_branch.nil?
+          Util::log 0, :warning, "in Leapfile: @platform_branch is no longer supported."
         end
         return true
       end
     end
 
+    def set(property, value)
+      edit_leaprc(property, value)
+    end
+
+    def unset(property)
+      edit_leaprc(property)
+    end
+
     private
+
+    #
+    # adds or removes a line to .leaprc for this particular provider directory.
+    # if value is nil, the line is removed. if not nil, it is added or replaced.
+    #
+    def edit_leaprc(property, value=nil)
+      file_path = leaprc_path
+      lines = []
+      if File.exists?(file_path)
+        regexp = /self\.#{Regexp.escape(property)} = .*? if @provider_directory_path == '#{Regexp.escape(@provider_directory_path)}'/
+        File.readlines(file_path).each do |line|
+          unless line =~ regexp
+            lines << line
+          end
+        end
+      end
+      unless value.nil?
+        lines << "self.#{property} = #{value.inspect} if @provider_directory_path == '#{@provider_directory_path}'\n"
+      end
+      File.open(file_path, 'w') do |f|
+        f.write(lines.join)
+      end
+    rescue Errno::EACCES, IOError => exc
+      Util::bail! :error, "trying to save ~/.leaprc (#{exc})."
+    end
+
+    def leaprc_path
+      File.join(ENV['HOME'], '.leaprc')
+    end
 
     def read_settings(file)
       if File.exists? file

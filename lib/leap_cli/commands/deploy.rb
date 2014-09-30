@@ -36,7 +36,7 @@ module LeapCli
           init_submodules
         end
 
-        nodes = filter_deploy_nodes(args)
+        nodes = manager.filter!(args)
         if nodes.size > 1
           say "Deploying to these nodes: #{nodes.keys.join(', ')}"
           if !global[:yes] && !agree("Continue? ")
@@ -251,18 +251,6 @@ module LeapCli
       end
       tags << 'leap_slow' unless options[:fast]
       tags.join(',')
-    end
-
-    #
-    # for safety, we allow production deploys to be turned off in the Leapfile.
-    #
-    def filter_deploy_nodes(filter)
-      nodes = manager.filter!(filter)
-      if !leapfile.allow_production_deploy
-        nodes = nodes[:environment => "!production"]
-        assert! nodes.any?, "Skipping deploy because @allow_production_deploy is disabled."
-      end
-      nodes
     end
 
   end

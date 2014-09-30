@@ -13,6 +13,13 @@ module LeapCli; module Config
       super(manager)
       @node_list = Config::ObjectList.new
     end
+
+    # don't copy the node list pointer when this object is dup'ed.
+    def initialize_copy(orig)
+      super
+      @node_list = Config::ObjectList.new
+    end
+
   end
 
 end; end

@@ -9,10 +9,13 @@ module LeapCli
       c.command :all do |all|
         all.action do |global_options,options,args|
           environment = args.first
+          if !LeapCli.leapfile.environment.nil? && environment != LeapCli.leapfile.environment
+            bail! "You cannot specify an ENVIRONMENT argument while the environment is pinned."
+          end
           if environment && manager.environment_names.include?(environment)
-            compile_hiera_files(manager.filter(args))
+            compile_hiera_files(manager.filter([environment]))
           else
-            compile_hiera_files
+            compile_hiera_files(manager.filter)
           end
         end
       end

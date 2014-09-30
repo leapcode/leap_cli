@@ -30,9 +30,10 @@ module LeapCli; module Commands
         if args.any?
           NodeTable.new(manager.filter(args), colors).run
         else
-          TagTable.new('SERVICES', manager.services, colors).run
-          TagTable.new('TAGS', manager.tags, colors).run
-          NodeTable.new(manager.nodes, colors).run
+          environment = LeapCli.leapfile.environment || '_all_'
+          TagTable.new('SERVICES', manager.env(environment).services, colors).run
+          TagTable.new('TAGS', manager.env(environment).tags, colors).run
+          NodeTable.new(manager.filter(), colors).run
         end
       end
     end
@@ -41,7 +42,6 @@ module LeapCli; module Commands
   private
 
   def self.print_node_properties(nodes, properties)
-    node_list = manager.nodes
     properties = properties.split(',')
     max_width = nodes.keys.inject(0) {|max,i| [i.size,max].max}
     nodes.each_node do |node|
@@ -75,6 +75,7 @@ module LeapCli; module Commands
           column "NODES", :width => HighLine::SystemExtensions.terminal_size.first - max_width - 2, :padding => 2
         end
         tags.each do |tag|
+          next if @tag_list[tag].node_list.empty?
           row :color => @colors[1] do
             column tag
             column @tag_list[tag].node_list.keys.sort.join(', ')
