@@ -276,7 +276,7 @@ module LeapCli
 
         # optionally apply environment pin
         if !options[:nopin] && LeapCli.leapfile.environment
-          node_list = node_list[:environment => environment_filter]
+          node_list = node_list[:environment => LeapCli.leapfile.environment_filter]
         end
 
         return node_list
