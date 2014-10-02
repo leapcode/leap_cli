@@ -51,7 +51,9 @@ module LeapCli
         environments.each do |env|
           check_platform_pinning(env)
         end
-        compile_hiera_files
+        # compile hiera files for all the nodes in every environment that is
+        # being deployed and only those environments.
+        compile_hiera_files(manager.filter(environments))
 
         ssh_connect(nodes, connect_options(options)) do |ssh|
           ssh.leap.log :checking, 'node' do
