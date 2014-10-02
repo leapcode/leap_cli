@@ -36,6 +36,7 @@ module LeapCli; module Commands
 
         nodes = manager.filter!(args)
         nodes.each_node do |node|
+          warn_if_commercial_cert_will_soon_expire(node)
           if !node.x509.use
             remove_file!([:node_x509_key, node.name])
             remove_file!([:node_x509_cert, node.name])
@@ -191,7 +192,7 @@ module LeapCli; module Commands
       return true
     else
       cert = load_certificate_file([:node_x509_cert, node.name])
-      if cert.not_after < months_from_yesterday(1)
+      if cert.not_after < months_from_yesterday(2)
         log :updating, "cert for node '#{node.name}' because it will expire soon"
         return true
       end
@@ -220,6 +221,18 @@ module LeapCli; module Commands
       end
     end
     return false
+  end
+
+  def warn_if_commercial_cert_will_soon_expire(node)
+    dns_names_for_node(node).each do |domain|
+      if file_exists?([:commercial_cert, domain])
+        cert = load_certificate_file([:commercial_cert, domain])
+        if cert.not_after < months_from_yesterday(2)
+          log :warning, "the commercial certificate '#{Path.relative_path([:commercial_cert, domain])}' will expire soon. "+
+            "You should renew it with `leap cert csr --domain #{domain}`."
+        end
+      end
+    end
   end
 
   def generate_cert_for_node(node)
