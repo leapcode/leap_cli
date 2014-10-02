@@ -9,7 +9,7 @@ module LeapCli
       c.command :all do |all|
         all.action do |global_options,options,args|
           environment = args.first
-          if !LeapCli.leapfile.environment.nil? && environment != LeapCli.leapfile.environment
+          if !LeapCli.leapfile.environment.nil? && !environment.nil? && environment != LeapCli.leapfile.environment
             bail! "You cannot specify an ENVIRONMENT argument while the environment is pinned."
           end
           if environment && manager.environment_names.include?(environment)
