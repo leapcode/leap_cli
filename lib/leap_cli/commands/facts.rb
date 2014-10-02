@@ -91,7 +91,9 @@ module LeapCli; module Commands
         end
       end
     end
-    overwrite_existing = args.empty?
+    # only overwrite the entire facts file if and only if we are gathering facts
+    # for all nodes in all environments.
+    overwrite_existing = args.empty? && LeapCli.leapfile.environment.nil?
     update_facts_file(new_facts, overwrite_existing)
   end
 
