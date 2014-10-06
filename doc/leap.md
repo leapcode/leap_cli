@@ -5,69 +5,83 @@ The command "leap" can be used to manage a bevy of servers running the LEAP plat
 
 # Global Options
 
-* `--log FILE`  
-Override default log file  
-Default Value: None  
+* `--log FILE`
+Override default log file
+Default Value: None
 
-* `-v|--verbose LEVEL`  
-Verbosity level 0..2  
-Default Value: 1  
+* `-v|--verbose LEVEL`
+Verbosity level 0..5
+Default Value: 1
 
-* `--help`  
-Show this message  
+* `--[no-]color`
+Disable colors in output
 
-* `--version`  
-Display version number and exit  
+* `--debug`
+Enable debugging library (leap_cli development only)
 
-* `--yes`  
-Skip prompts and assume "yes"  
+* `--help`
+Show this message
+
+* `--version`
+Display version number and exit
+
+* `--yes`
+Skip prompts and assume "yes"
 
 
 # leap add-user  USERNAME
 
-Adds a new trusted sysadmin
+Adds a new trusted sysadmin by adding public keys to the "users" directory.
 
 
 
 **Options**
 
-* `--pgp-pub-key arg`  
-OpenPGP public key file for this new user  
-Default Value: None  
+* `--pgp-pub-key arg`
+OpenPGP public key file for this new user
+Default Value: None
 
-* `--ssh-pub-key arg`  
-SSH public key file for this new user  
-Default Value: None  
+* `--ssh-pub-key arg`
+SSH public key file for this new user
+Default Value: None
 
-* `--self`  
-lets you choose among your public keys  
+* `--self`
+Add yourself as a trusted sysadin by choosing among the public keys available for the current user.
 
 
-# leap cert 
+# leap cert
 
 Manage X.509 certificates
 
 
 
-## leap cert ca 
+## leap cert ca
 
 Creates two Certificate Authorities (one for validating servers and one for validating clients).
 
 See see what values are used in the generation of the certificates (like name and key size), run `leap inspect provider` and look for the "ca" property. To see the details of the created certs, run `leap inspect <file>`.
 
-## leap cert csr 
+## leap cert csr
 
 Creates a CSR for use in buying a commercial X.509 certificate.
 
-The CSR created is for the for the provider's primary domain. The properties used for this CSR come from `provider.ca.server_certificates`.
+Unless specified, the CSR is created for the provider's primary domain. The properties used for this CSR come from `provider.ca.server_certificates`.
 
-## leap cert dh 
+**Options**
+
+* `--domain DOMAIN`
+Specify what domain to create the CSR for.
+Unless specified, the CSR is created for the provider's primary domain. The properties used for this CSR come from `provider.ca.server_certificates`.
+Default Value: None
+
+
+## leap cert dh
 
 Creates a Diffie-Hellman parameter file.
 
 
 
-## leap cert update  <node-filter>
+## leap cert update  FILTER
 
 Creates or renews a X.509 certificate/key pair for a single node or all nodes, but only if needed.
 
@@ -75,19 +89,44 @@ This command will a generate new certificate for a node if some value in the nod
 
 **Options**
 
-* `--force`  
-Always generate new certificates  
+* `--force`
+Always generate new certificates
 
 
-# leap clean 
+# leap clean
 
 Removes all files generated with the "compile" command.
 
 
 
-# leap compile 
+# leap compile
+
+Compile generated files.
+
+
+
+## leap compile all  [ENVIRONMENT]
 
 Compiles node configuration files into hiera files used for deployment.
+
+
+
+## leap compile zone
+
+Compile a DNS zone file for your provider.
+
+
+Default Command: all
+
+# leap db
+
+Database commands.
+
+
+
+## leap db destroy  [FILTER]
+
+Destroy all the databases. If present, limit to FILTER nodes.
 
 
 
@@ -99,13 +138,67 @@ The FILTER can be the name of a node, service, or tag.
 
 **Options**
 
-* `--tags TAG[,TAG]`  
-Specify tags to pass through to puppet (overriding the default).  
-Default Value: leap_base,leap_service  
+* `--ip IPADDRESS`
+Override the default SSH IP address.
+Default Value: None
 
-* `--fast`  
-Makes the deploy command faster by skipping some slow steps. A "fast" deploy can be used safely if you recently completed a normal deploy.  
+* `--port PORT`
+Override the default SSH port.
+Default Value: None
 
+* `--tags TAG[,TAG]`
+Specify tags to pass through to puppet (overriding the default).
+Default Value: leap_base,leap_service
+
+* `--dev`
+Development mode: don't run 'git submodule update' before deploy.
+
+* `--fast`
+Makes the deploy command faster by skipping some slow steps. A "fast" deploy can be used safely if you recently completed a normal deploy.
+
+* `--force`
+Deploy even if there is a lockfile.
+
+* `--[no-]sync`
+Sync files, but don't actually apply recipes.
+
+
+# leap env
+
+Manipulate and query environment information.
+
+The 'environment' node property can be used to isolate sets of nodes into entirely separate environments. A node in one environment will never interact with a node from another environment. Environment pinning works by modifying your ~/.leaprc file and is dependent on the absolute file path of your provider directory (pins don't apply if you move the directory)
+
+## leap env ls
+
+List the available environments. The pinned environment, if any, will be marked with '*'.
+
+
+
+## leap env pin  ENVIRONMENT
+
+Pin the environment to ENVIRONMENT. All subsequent commands will only apply to nodes in this environment.
+
+
+
+## leap env unpin
+
+Unpin the environment. All subsequent commands will apply to all nodes.
+
+
+Default Command: ls
+
+# leap facts
+
+Gather information on nodes.
+
+
+
+## leap facts update  FILTER
+
+Query servers to update facts.json.
+
+Queries every node included in FILTER and saves the important information to facts.json
 
 # leap help  command
 
@@ -115,14 +208,20 @@ Gets help for the application or its commands. Can also list the commands in a w
 
 **Options**
 
-* `-c`  
-List commands one per line, to assist with shell completion  
+* `-c`
+List commands one per line, to assist with shell completion
 
 
 # leap inspect  FILE
 
 Prints details about a file. Alternately, the argument FILE can be the name of a node, service or tag.
 
+
+
+**Options**
+
+* `--base`
+Inspect the FILE from the provider_base (i.e. without local inheritance).
 
 
 # leap list  [FILTER]
@@ -137,12 +236,15 @@ Prints out a listing of nodes, services, or tags. If present, the FILTER can be 
 
 **Options**
 
-* `--print arg`  
-What attributes to print (optional)  
-Default Value: None  
+* `--print arg`
+What attributes to print (optional)
+Default Value: None
+
+* `--disabled`
+Include disabled nodes in the list.
 
 
-# leap local 
+# leap local
 
 Manage local virtual machines.
 
@@ -184,6 +286,12 @@ Shuts down the virtual machine(s)
 
 
 
+# leap mosh  NAME
+
+Log in to the specified node with an interactive shell using mosh (requires node to have mosh.enabled set to true).
+
+
+
 # leap new  DIRECTORY
 
 Creates a new provider instance in the specified directory, creating it if necessary.
@@ -192,24 +300,24 @@ Creates a new provider instance in the specified directory, creating it if neces
 
 **Options**
 
-* `--contacts arg`  
-Default email address contacts.  
-Default Value: None  
+* `--contacts arg`
+Default email address contacts.
+Default Value: None
 
-* `--domain arg`  
-The primary domain of the provider.  
-Default Value: None  
+* `--domain arg`
+The primary domain of the provider.
+Default Value: None
 
-* `--name arg`  
-The name of the provider.  
-Default Value: None  
+* `--name arg`
+The name of the provider.
+Default Value: None
 
-* `--platform arg`  
-File path of the leap_platform directory.  
-Default Value: None  
+* `--platform arg`
+File path of the leap_platform directory.
+Default Value: None
 
 
-# leap node 
+# leap node
 
 Node management
 
@@ -231,20 +339,28 @@ Separeate multiple values for a single property with a comma, like so: `leap nod
 
 **Options**
 
-* `--local`  
-Make a local testing node (by automatically assigning the next available local IP address). Local nodes are run as virtual machines on your computer.  
+* `--local`
+Make a local testing node (by automatically assigning the next available local IP address). Local nodes are run as virtual machines on your computer.
 
 
 ## leap node init  FILTER
 
 Bootstraps a node or nodes, setting up SSH keys and installing prerequisite packages
 
-This command prepares a server to be used with the LEAP Platform by saving the server's SSH host key, copying the authorized_keys file, and installing packages that are required for deploying. Node init must be run before deploying to a server, and the server must be running and available via the network. This command only needs to be run once, but there is no harm in running it multiple times.
+This command prepares a server to be used with the LEAP Platform by saving the server's SSH host key, copying the authorized_keys file, installing packages that are required for deploying, and registering important facts. Node init must be run before deploying to a server, and the server must be running and available via the network. This command only needs to be run once, but there is no harm in running it multiple times.
 
 **Options**
 
-* `--echo`  
-If set, passwords are visible as you type them (default is hidden)  
+* `--ip IPADDRESS`
+Override the default SSH IP address.
+Default Value: None
+
+* `--port PORT`
+Override the default SSH port.
+Default Value: None
+
+* `--echo`
+If set, passwords are visible as you type them (default is hidden)
 
 
 ## leap node mv  OLD_NAME NEW_NAME
@@ -265,21 +381,38 @@ Log in to the specified node with an interactive shell.
 
 
 
-# leap test 
+**Options**
+
+* `--port arg`
+Override ssh port for remote host
+Default Value: None
+
+* `--ssh arg`
+Pass through raw options to ssh (e.g. --ssh '-F ~/sshconfig')
+Default Value: None
+
+
+# leap test
 
 Run tests.
 
 
 
-## leap test init 
+## leap test init
 
 Creates files needed to run tests.
 
 
 
-## leap test run 
+## leap test run
 
 Run tests.
 
+
+
+**Options**
+
+* `--[no-]continue`
+Continue over errors and failures (default is --no-continue).
 
 Default Command: run

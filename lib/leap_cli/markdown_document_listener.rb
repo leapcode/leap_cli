@@ -11,7 +11,7 @@ require 'gli/commands/help_modules/arg_name_formatter'
 module LeapCli
   class MarkdownDocumentListener
 
-    def initialize(global_options,options,arguments)
+    def initialize(global_options,options,arguments,app)
       @io = File.new(File.basename($0) + ".md",'w')
       @nest = ''
       @commands = [File.basename($0)]
