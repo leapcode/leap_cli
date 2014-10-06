@@ -40,7 +40,7 @@ module LeapCli
       #
       def dump_yaml
         evaluate(@node)
-        ya2yaml(:syck_compatible => true)
+        sorted_ya2yaml(:syck_compatible => true)
       end
 
       #
