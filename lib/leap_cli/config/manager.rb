@@ -229,57 +229,19 @@ module LeapCli
       # returns a node list consisting only of nodes that satisfy the filter criteria.
       #
       # filter: condition [condition] [condition] [+condition]
-      # condition: [node_name | service_name | tag_name]
+      # condition: [node_name | service_name | tag_name | environment_name]
       #
       # if conditions is prefixed with +, then it works like an AND. Otherwise, it works like an OR.
       #
-      # The environment is pinned, then all filters get an automatic +environment_name
-      # applied (whatever the name happens to be).
+      # args:
+      # filter -- array of filter terms, one per item
       #
       # options:
       # :local -- if :local is false and the filter is empty, then local nodes are excluded.
       # :nopin -- if true, ignore environment pinning
       #
       def filter(filters=nil, options={})
-        # handle empty filter
-        if filters.nil? || filters.empty?
-          node_list = self.nodes
-          if LeapCli.leapfile.environment
-            node_list = node_list[:environment => LeapCli.leapfile.environment_filter]
-          end
-          if options[:local] === false
-            node_list = node_list[:environment => '!local']
-          end
-          return node_list
-        end
-
-        # handle non-empty filters
-        if filters[0] =~ /^\+/
-          # don't let the first filter have a + prefix
-          filters[0] = filters[0][1..-1]
-        end
-        node_list = Config::ObjectList.new
-        filters.each do |filter|
-          if filter =~ /^\+/
-            keep_list = nodes_for_name(filter[1..-1])
-            node_list.delete_if do |name, node|
-              if keep_list[name]
-                false
-              else
-                true
-              end
-            end
-          else
-            node_list.merge!(nodes_for_name(filter))
-          end
-        end
-
-        # optionally apply environment pin
-        if !options[:nopin] && LeapCli.leapfile.environment
-          node_list = node_list[:environment => LeapCli.leapfile.environment_filter]
-        end
-
-        return node_list
+        Filter.new(filters, options, self).nodes()
       end
 
       #
@@ -509,21 +471,6 @@ module LeapCli
             @nodes.delete(name)
             @disabled_nodes[name] = node
           end
-        end
-      end
-
-      #
-      # returns a set of nodes corresponding to a single name, where name could be a node name, service name, or tag name.
-      #
-      def nodes_for_name(name)
-        if node = self.nodes[name]
-          Config::ObjectList.new(node)
-        elsif service = self.services[name]
-          service.node_list
-        elsif tag = self.tags[name]
-          tag.node_list
-        else
-          {}
         end
       end
 

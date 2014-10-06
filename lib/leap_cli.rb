@@ -34,6 +34,7 @@ require 'leap_cli/config/tag'
 require 'leap_cli/config/provider'
 require 'leap_cli/config/secrets'
 require 'leap_cli/config/object_list'
+require 'leap_cli/config/filter'
 require 'leap_cli/config/manager'
 
 require 'leap_cli/markdown_document_listener'

@@ -20,8 +20,6 @@ module LeapCli
       # If the key is a hash, we treat it as a condition and filter all the Config::Objects using the condition.
       # A new ObjectList is returned.
       #
-      # If the key is an array, it is treated as an array of node names
-      #
       # Examples:
       #
       # nodes['vpn1']
@@ -30,47 +28,22 @@ module LeapCli
       # nodes[:public_dns => true]
       #   all nodes with public dns
       #
-      # nodes[:services => 'openvpn', :services => 'tor']
+      # nodes[:services => 'openvpn', 'location.country_code' => 'US']
+      #   all nodes with services containing 'openvpn' OR country code of US
+      #
+      # Sometimes, you want to do an OR condition with multiple conditions
+      # for the same field. Since hash keys must be unique, you can use
+      # an array representation instead:
+      #
+      # nodes[[:services, 'openvpn'], [:services, 'tor']]
       #   nodes with openvpn OR tor service
       #
       # nodes[:services => 'openvpn'][:tags => 'production']
       #   nodes with openvpn AND are production
       #
       def [](key)
-        if key.is_a? Hash
-          results = Config::ObjectList.new
-          key.each do |field, match_value|
-            field = field.is_a?(Symbol) ? field.to_s : field
-            match_value = match_value.is_a?(Symbol) ? match_value.to_s : match_value
-            if match_value.is_a?(String) && match_value =~ /^!/
-              operator = :not_equal
-              match_value = match_value.sub(/^!/, '')
-            else
-              operator = :equal
-            end
-            each do |name, config|
-              value = config[field]
-              if value.is_a? Array
-                if operator == :equal && value.include?(match_value)
-                  results[name] = config
-                elsif operator == :not_equal && !value.include?(match_value)
-                  results[name] = config
-                end
-              else
-                if operator == :equal && value == match_value
-                  results[name] = config
-                elsif operator == :not_equal && value != match_value
-                  results[name] = config
-                end
-              end
-            end
-          end
-          results
-        elsif key.is_a? Array
-          key.inject(Config::ObjectList.new) do |list, node_name|
-            list[node_name] = super(node_name.to_s)
-            list
-          end
+        if key.is_a?(Hash) || key.is_a?(Array)
+          filter(key)
         else
           super key.to_s
         end
@@ -88,15 +61,40 @@ module LeapCli
         end
       end
 
-      # def <<(object)
-      #   if object.is_a? Config::ObjectList
-      #     self.merge!(object)
-      #   elsif object['name']
-      #     self[object['name']] = object
-      #   else
-      #     raise ArgumentError.new('argument must be a Config::Object or a Config::ObjectList')
-      #   end
-      # end
+      #
+      # filters this object list, producing a new list.
+      # filter is an array or a hash. see []
+      #
+      def filter(filter)
+        results = Config::ObjectList.new
+        filter.each do |field, match_value|
+          field = field.is_a?(Symbol) ? field.to_s : field
+          match_value = match_value.is_a?(Symbol) ? match_value.to_s : match_value
+          if match_value.is_a?(String) && match_value =~ /^!/
+            operator = :not_equal
+            match_value = match_value.sub(/^!/, '')
+          else
+            operator = :equal
+          end
+          each do |name, config|
+            value = config[field]
+            if value.is_a? Array
+              if operator == :equal && value.include?(match_value)
+                results[name] = config
+              elsif operator == :not_equal && !value.include?(match_value)
+                results[name] = config
+              end
+            else
+              if operator == :equal && value == match_value
+                results[name] = config
+              elsif operator == :not_equal && value != match_value
+                results[name] = config
+              end
+            end
+          end
+        end
+        results
+      end
 
       def add(name, object)
         self[name] = object
