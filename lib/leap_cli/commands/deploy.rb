@@ -110,30 +110,34 @@ module LeapCli
       # check version
       if provider.platform['version']
         if !Leap::Platform.version_in_range?(provider.platform.version)
-          bail!("The platform is pinned to a version range of '#{provider.platform.version}' "+
+          say("The platform is pinned to a version range of '#{provider.platform.version}' "+
             "by the `platform.version` property in #{provider_json}, but the platform "+
             "(#{Path.platform}) has version #{Leap::Platform.version}.")
+          quit!("OK. Bye.") unless agree("Do you really want to deploy from the wrong version? ")
         end
       end
 
       # check branch
       if provider.platform['branch']
         if !is_git_directory?(Path.platform)
-          bail!("The platform is pinned to a particular branch by the `platform.branch` property "+
+          say("The platform is pinned to a particular branch by the `platform.branch` property "+
             "in #{provider_json}, but the platform directory (#{Path.platform}) is not a git repository.")
+          quit!("OK. Bye.") unless agree("Do you really want to deploy anyway? ")
         end
         unless provider.platform.branch == current_git_branch(Path.platform)
-          bail!("The platform is pinned to branch '#{provider.platform.branch}' by the `platform.branch` property "+
+          say("The platform is pinned to branch '#{provider.platform.branch}' by the `platform.branch` property "+
             "in #{provider_json}, but the current branch is '#{current_git_branch(Path.platform)}' " +
             "(for directory '#{Path.platform}')")
+          quit!("OK. Bye.") unless agree("Do you really want to deploy from the wrong branch? ")
         end
       end
 
       # check commit
       if provider.platform['commit']
         if !is_git_directory?(Path.platform)
-          bail!("The platform is pinned to a particular commit range by the `platform.commit` property "+
+          say("The platform is pinned to a particular commit range by the `platform.commit` property "+
             "in #{provider_json}, but the platform directory (#{Path.platform}) is not a git repository.")
+          quit!("OK. Bye.") unless agree("Do you really want to deploy anyway? ")
         end
         current_commit = current_git_commit(Path.platform)
         Dir.chdir(Path.platform) do
@@ -144,9 +148,10 @@ module LeapCli
           commit_range = commit_range.split("\n")
           if !commit_range.include?(current_commit) &&
               provider.platform.commit.split('..').first != current_commit
-            bail!("The platform is pinned via the `platform.commit` property in #{provider_json} " +
+            say("The platform is pinned via the `platform.commit` property in #{provider_json} " +
               "to a commit in the range #{provider.platform.commit}, but the current HEAD " +
               "(#{current_commit}) is not in that range.")
+            quit!("OK. Bye.") unless agree("Do you really want to deploy from the wrong commit? ")
           end
         end
       end
