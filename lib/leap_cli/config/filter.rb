@@ -109,9 +109,12 @@ module LeapCli
           return Config::ObjectList.new(node)
         elsif @environments.empty?
           if @manager.services[name]
-            @manager.env('_all_').services[name].node_list
+            return @manager.env('_all_').services[name].node_list
           elsif @manager.tags[name]
-            @manager.env('_all_').tags[name].node_list
+            return @manager.env('_all_').tags[name].node_list
+          else
+            LeapCli::Util.log :warning, "filter '#{name}' does not match any node names, tags, services, or environments."
+            return Config::ObjectList.new
           end
         else
           node_list = Config::ObjectList.new
@@ -123,6 +126,8 @@ module LeapCli
             @environments.each do |env|
               node_list.merge!(@manager.env(env).tags[name].node_list)
             end
+          else
+            LeapCli::Util.log :warning, "filter '#{name}' does not match any node names, tags, services, or environments."
           end
           return node_list
         end
