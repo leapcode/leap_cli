@@ -82,9 +82,19 @@ module LeapCli; module Commands
     #   http://www.redkestrel.co.uk/Articles/CSR.html
     #
     cert.desc "Creates a CSR for use in buying a commercial X.509 certificate."
-    cert.long_desc "Unless specified, the CSR is created for the provider's primary domain. The properties used for this CSR come from `provider.ca.server_certificates`."
+    cert.long_desc "Unless specified, the CSR is created for the provider's primary domain. "+
+      "The properties used for this CSR come from `provider.ca.server_certificates`, "+
+      "but may be overridden here."
     cert.command :csr do |csr|
       csr.flag 'domain', :arg_name => 'DOMAIN', :desc => 'Specify what domain to create the CSR for.'
+      csr.flag ['organization', 'O'], :arg_name => 'ORGANIZATION', :desc => "Override default O in distinguished name."
+      csr.flag ['unit', 'OU'], :arg_name => 'UNIT', :desc => "Set OU in distinguished name."
+      csr.flag 'email', :arg_name => 'EMAIL', :desc => "Set emailAddress in distinguished name."
+      csr.flag ['locality', 'L'], :arg_name => 'LOCALITY', :desc => "Set L in distinguished name."
+      csr.flag ['state', 'ST'], :arg_name => 'STATE', :desc => "Set ST in distinguished name."
+      csr.flag ['country', 'C'], :arg_name => 'COUNTRY', :desc => "Set C in distinguished name."
+      csr.flag :bits, :arg_name => 'BITS', :desc => "Override default certificate bit length"
+      csr.flag :digest, :arg_name => 'DIGEST', :desc => "Override default signature digest"
       csr.action do |global_options,options,args|
         assert_config! 'provider.domain'
         assert_config! 'provider.name'
@@ -98,24 +108,28 @@ module LeapCli; module Commands
 
         # RSA key
         keypair = CertificateAuthority::MemoryKeyMaterial.new
-        log :generating, "%s bit RSA key" % server_certificates.bit_size do
-          keypair.generate_key(server_certificates.bit_size)
+        bit_size = (options[:bits] || server_certificates.bit_size).to_i
+        log :generating, "%s bit RSA key" % bit_size do
+          keypair.generate_key(bit_size)
           write_file! [:commercial_key, domain], keypair.private_key.to_pem
         end
 
         # CSR
         dn  = CertificateAuthority::DistinguishedName.new
         csr = CertificateAuthority::SigningRequest.new
-        dn.common_name  = domain
-        dn.organization = provider.name[provider.default_language]
-        dn.country      = server_certificates['country']   # optional
-        dn.state        = server_certificates['state']     # optional
-        dn.locality     = server_certificates['locality']  # optional
+        dn.common_name   = domain
+        dn.organization  = options[:organization] || provider.name[provider.default_language]
+        dn.ou            = options[:organizational_unit] # optional
+        dn.email_address = options[:email] # optional
+        dn.country       = options[:country] || server_certificates['country']   # optional
+        dn.state         = options[:state] || server_certificates['state']       # optional
+        dn.locality      = options[:locality] || server_certificates['locality'] # optional
 
-        log :generating, "CSR with commonName => '%s', organization => '%s'" % [dn.common_name, dn.organization] do
+        digest = options[:digest] || server_certificates.digest
+        log :generating, "CSR with #{digest} digest and #{print_dn(dn)}" do
           csr.distinguished_name = dn
           csr.key_material = keypair
-          csr.digest = server_certificates.digest
+          csr.digest = digest
           request = csr.to_x509_csr
           write_file! [:commercial_csr, domain], csr.to_pem
         end
@@ -417,6 +431,15 @@ module LeapCli; module Commands
   #
   def random_common_name(domain_name)
     cert_serial_number(domain_name).to_s(36)
+  end
+
+  # prints CertificateAuthority::DistinguishedName fields
+  def print_dn(dn)
+    fields = {}
+    [:common_name, :locality, :state, :country, :organization, :organizational_unit, :email_address].each do |attr|
+      fields[attr] = dn.send(attr) if dn.send(attr)
+    end
+    fields.inspect
   end
 
   ##
