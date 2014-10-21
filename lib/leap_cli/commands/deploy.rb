@@ -22,7 +22,7 @@ module LeapCli
 
       # --tags
       c.flag :tags, :desc => 'Specify tags to pass through to puppet (overriding the default).',
-                    :default_value => DEFAULT_TAGS.join(','), :arg_name => 'TAG[,TAG]'
+                    :default_value => "see platform.rb", :arg_name => 'TAG[,TAG]'
 
       c.flag :port, :desc => 'Override the default SSH port.',
                     :arg_name => 'PORT'
@@ -158,14 +158,13 @@ module LeapCli
     end
 
     def sync_hiera_config(ssh)
-      dest_dir = provider.hiera_sync_destination
       ssh.rsync.update do |server|
         node = manager.node(server.host)
         hiera_file = Path.relative_path([:hiera, node.name])
-        ssh.leap.log hiera_file + ' -> ' + node.name + ':' + dest_dir + '/hiera.yaml'
+        ssh.leap.log hiera_file + ' -> ' + node.name + ':' + Leap::Platform.hiera_path
         {
           :source => hiera_file,
-          :dest => dest_dir + '/hiera.yaml',
+          :dest => Leap::Platform.hiera_path,
           :flags => "-rltp --chmod=u+rX,go-rwx"
         }
       end
@@ -173,40 +172,14 @@ module LeapCli
 
     #
     # sync various support files.
-    # TODO: move everything into /srv/leap instead of /etc/leap
     #
     def sync_support_files(ssh)
-      # sync files to /etc/leap
-      # TODO: remove this
-      dest_dir = provider.hiera_sync_destination
-      ssh.rsync.update do |server|
-        node = manager.node(server.host)
-        files_to_sync = node.file_paths.collect {|path| Path.relative_path(path, Path.provider) }
-        if files_to_sync.any?
-          ssh.leap.log(files_to_sync.join(', ') + ' -> ' + node.name + ':' + dest_dir)
-          {
-            :chdir => Path.provider,
-            :source => ".",
-            :dest => dest_dir,
-            :excludes => "*",
-            :includes => calculate_includes_from_files(files_to_sync),
-            :flags => "-rltp --chmod=u+rX,go-rwx --relative --delete --delete-excluded --filter='protect hiera.yaml' --copy-links"
-          }
-        else
-          nil
-        end
-      end
-
-      # sync files to /srv/leap/files
-      dest_dir = File.join(LeapCli::PUPPET_DESTINATION, "files")
+      dest_dir = Leap::Platform.files_dir
       source_files = []
-      if file_exists?(:custom_puppet_dir)
+      if Path.defined?(:custom_puppet_dir) && file_exists?(:custom_puppet_dir)
         source_files += [:custom_puppet_dir, :custom_puppet_modules_dir, :custom_puppet_manifests_dir].collect{|path|
           Path.relative_path(path, Path.provider) + '/' # rsync needs trailing slash
         }
-        if !file_exists?(:custom_puppet_site)
-          write_file!(:custom_puppet_site, "# custom puppet configuration" + "\n" + "tag 'leap_base'" + "\n")
-        end
         ensure_dir :custom_puppet_modules_dir
       end
       ssh.rsync.update do |server|
@@ -231,9 +204,9 @@ module LeapCli
 
     def sync_puppet_files(ssh)
       ssh.rsync.update do |server|
-        ssh.leap.log(Path.platform + '/[bin,tests,puppet] -> ' + server.host + ':' + LeapCli::PUPPET_DESTINATION)
+        ssh.leap.log(Path.platform + '/[bin,tests,puppet] -> ' + server.host + ':' + Leap::Platform.leap_dir)
         {
-          :dest => LeapCli::PUPPET_DESTINATION,
+          :dest => Leap::Platform.leap_dir,
           :source => '.',
           :chdir => Path.platform,
           :excludes => '*',
@@ -301,7 +274,7 @@ module LeapCli
       if options[:tags]
         tags = options[:tags].split(',')
       else
-        tags = LeapCli::DEFAULT_TAGS.dup
+        tags = Leap::Platform.default_puppet_tags.dup
       end
       tags << 'leap_slow' unless options[:fast]
       tags.join(',')

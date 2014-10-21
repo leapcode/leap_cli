@@ -6,7 +6,7 @@
 module LeapCli; module Remote; module PuppetPlugin
 
   def apply(options)
-    run "#{PUPPET_DESTINATION}/bin/puppet_command set_hostname apply #{flagize(options)}"
+    run "#{Leap::Platform.leap_dir}/bin/puppet_command set_hostname apply #{flagize(options)}"
   end
 
   private

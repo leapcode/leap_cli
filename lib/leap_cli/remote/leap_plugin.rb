@@ -26,7 +26,7 @@ module LeapCli; module Remote; module LeapPlugin
   #
   def assert_initialized
     begin
-      test_initialized_file = "test -f #{INITIALIZED_FILE}"
+      test_initialized_file = "test -f #{Leap::Platform.init_path}"
       check_required_packages = "! dpkg-query -W --showformat='${Status}\n' #{required_packages} 2>&1 | grep -q -E '(deinstall|no packages)'"
       run "#{test_initialized_file} && #{check_required_packages} && echo ok"
     rescue Capistrano::CommandError => exc
@@ -57,7 +57,7 @@ module LeapCli; module Remote; module LeapPlugin
   end
 
   def mark_initialized
-    run "touch #{INITIALIZED_FILE}"
+    run "touch #{Leap::Platform.init_path}"
   end
 
   #

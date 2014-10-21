@@ -33,9 +33,9 @@ module LeapCli; module Commands
 
   def test_cmd(options)
     if options[:continue]
-      "#{PUPPET_DESTINATION}/bin/run_tests --continue"
+      "#{Leap::Platform.leap_dir}/bin/run_tests --continue"
     else
-      "#{PUPPET_DESTINATION}/bin/run_tests"
+      "#{Leap::Platform.leap_dir}/bin/run_tests"
     end
   end
 

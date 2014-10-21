@@ -16,9 +16,22 @@ module Leap
       attr_accessor :monitor_username
       attr_accessor :reserved_usernames
 
+      attr_accessor :hiera_path
+      attr_accessor :files_dir
+      attr_accessor :leap_dir
+      attr_accessor :init_path
+
+      attr_accessor :default_puppet_tags
+
       def define(&block)
-        # some sanity defaults:
+        # some defaults:
         @reserved_usernames = []
+        @hiera_path = '/etc/leap/hiera.yaml'
+        @leap_dir   = '/srv/leap'
+        @files_dir  = '/srv/leap/files'
+        @init_path  = '/srv/leap/initialized'
+        @default_puppet_tags = []
+
         self.instance_eval(&block)
       end
 
@@ -51,6 +64,7 @@ module Leap
         maximum_platform_version = Versionomy.parse(range.last)
         @version >= minimum_platform_version && @version <= maximum_platform_version
       end
+
     end
 
   end
