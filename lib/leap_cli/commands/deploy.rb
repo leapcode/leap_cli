@@ -204,6 +204,21 @@ module LeapCli
           :flags => "-rlt --relative --delete --copy-links"
         }
       end
+      ssh.rsync.update do |server|
+        custom_site = Path.provider + LeapCli::CUSTOM_PUPPET_SITE
+        custom_modules = Path.provider + LeapCli::CUSTOM_PUPPET_MODULES
+        if !file_exists?(custom_site)
+          write_file!(custom_site, "# custom puppet configuration" + "\n" + "tag 'leap_base'" + "\n")
+        end
+        ensure_dir custom_modules
+        ssh.leap.log(Path.provider + LeapCli::CUSTOM_PUPPET_SOURCE + ' -> ' + server.host + ':' + LeapCli::CUSTOM_PUPPET_DESTINATION)
+        {
+          :dest => LeapCli::CUSTOM_PUPPET_DESTINATION,
+          :source => Path.provider + LeapCli::CUSTOM_PUPPET_SOURCE,
+          :chdir => Path.platform,
+          :flags => "-rlt --delete --copy-links"
+        }
+      end
     end
 
     #
