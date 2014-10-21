@@ -31,7 +31,7 @@ module LeapCli
           if environment == 'default' ||
               (environment && manager.environment_names.include?(environment))
             LeapCli.leapfile.set('environment', environment)
-            log 0, :saved, "Leapfile with environment set to #{environment}."
+            log 0, :saved, "~/.leaprc with environment set to #{environment}."
           end
         end
       end
@@ -40,7 +40,7 @@ module LeapCli
       c.command :unpin do |unpin|
         unpin.action do |global_options, options, args|
           LeapCli.leapfile.unset('environment')
-          log 0, :saved, "Leapfile, removing environment property."
+          log 0, :saved, "~/.leaprc, removing environment property."
         end
       end
 
