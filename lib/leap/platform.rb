@@ -33,6 +33,8 @@ module Leap
         @default_puppet_tags = []
 
         self.instance_eval(&block)
+
+        @version ||= Versionomy.parse("0.0")
       end
 
       def version=(version)
@@ -63,6 +65,14 @@ module Leap
         minimum_platform_version = Versionomy.parse(range.first)
         maximum_platform_version = Versionomy.parse(range.last)
         @version >= minimum_platform_version && @version <= maximum_platform_version
+      end
+
+      def major_version
+        if @version.major == 0
+          "#{@version.major}.#{@version.minor}"
+        else
+          @version.major
+        end
       end
 
     end

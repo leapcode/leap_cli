@@ -8,7 +8,6 @@ $ruby_version = RUBY_VERSION.split('.').collect{ |i| i.to_i }.extend(Comparable)
 require 'leap/platform'
 
 require 'leap_cli/version'
-require 'leap_cli/constants'
 require 'leap_cli/exceptions'
 
 require 'leap_cli/leapfile'
