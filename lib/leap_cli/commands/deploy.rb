@@ -171,7 +171,13 @@ module LeapCli
       end
     end
 
+    #
+    # sync various support files.
+    # TODO: move everything into /srv/leap instead of /etc/leap
+    #
     def sync_support_files(ssh)
+      # sync files to /etc/leap
+      # TODO: remove this
       dest_dir = provider.hiera_sync_destination
       ssh.rsync.update do |server|
         node = manager.node(server.host)
@@ -190,6 +196,37 @@ module LeapCli
           nil
         end
       end
+
+      # sync files to /srv/leap/files
+      dest_dir = File.join(LeapCli::PUPPET_DESTINATION, "files")
+      source_files = []
+      if file_exists?(:custom_puppet_dir)
+        source_files += [:custom_puppet_dir, :custom_puppet_modules_dir, :custom_puppet_manifests_dir].collect{|path|
+          Path.relative_path(path, Path.provider) + '/' # rsync needs trailing slash
+        }
+        if !file_exists?(:custom_puppet_site)
+          write_file!(:custom_puppet_site, "# custom puppet configuration" + "\n" + "tag 'leap_base'" + "\n")
+        end
+        ensure_dir :custom_puppet_modules_dir
+      end
+      ssh.rsync.update do |server|
+        node = manager.node(server.host)
+        files_to_sync = node.file_paths.collect {|path| Path.relative_path(path, Path.provider) }
+        files_to_sync += source_files
+        if files_to_sync.any?
+          ssh.leap.log(files_to_sync.join(', ') + ' -> ' + node.name + ':' + dest_dir)
+          {
+            :chdir => Path.named_path(:files_dir),
+            :source => ".",
+            :dest => dest_dir,
+            :excludes => "*",
+            :includes => calculate_includes_from_files(files_to_sync, '/files'),
+            :flags => "-rltp --chmod=u+rX,go-rwx --relative --delete --delete-excluded --copy-links"
+          }
+        else
+          nil
+        end
+      end
     end
 
     def sync_puppet_files(ssh)
@@ -202,21 +239,6 @@ module LeapCli
           :excludes => '*',
           :includes => ['/bin', '/bin/**', '/puppet', '/puppet/**', '/tests', '/tests/**'],
           :flags => "-rlt --relative --delete --copy-links"
-        }
-      end
-      ssh.rsync.update do |server|
-        custom_site = Path.provider + LeapCli::CUSTOM_PUPPET_SITE
-        custom_modules = Path.provider + LeapCli::CUSTOM_PUPPET_MODULES
-        if !file_exists?(custom_site)
-          write_file!(custom_site, "# custom puppet configuration" + "\n" + "tag 'leap_base'" + "\n")
-        end
-        ensure_dir custom_modules
-        ssh.leap.log(Path.provider + LeapCli::CUSTOM_PUPPET_SOURCE + ' -> ' + server.host + ':' + LeapCli::CUSTOM_PUPPET_DESTINATION)
-        {
-          :dest => LeapCli::CUSTOM_PUPPET_DESTINATION,
-          :source => Path.provider + LeapCli::CUSTOM_PUPPET_SOURCE,
-          :chdir => Path.platform,
-          :flags => "-rlt --delete --copy-links"
         }
       end
     end
@@ -240,11 +262,17 @@ module LeapCli
       end
     end
 
-    def calculate_includes_from_files(files)
+    #
+    # converts an array of file paths into an array
+    # suitable for --include of rsync
+    #
+    # if set, `prefix` is stripped off.
+    #
+    def calculate_includes_from_files(files, prefix=nil)
       return nil unless files and files.any?
 
       # prepend '/' (kind of like ^ for rsync)
-      includes = files.collect {|file| '/' + file}
+      includes = files.collect {|file| file =~ /^\// ? file : '/' + file }
 
       # include all sub files of specified directories
       includes.size.times do |i|
@@ -260,6 +288,10 @@ module LeapCli
           includes << path unless includes.include?(path)
           path = File.dirname(path)
         end
+      end
+
+      if prefix
+        includes.map! {|path| path.sub(/^#{Regexp.escape(prefix)}/, '')}
       end
 
       return includes
