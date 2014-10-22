@@ -116,7 +116,6 @@ module LeapCli; module Commands
 
         # CSR
         dn  = CertificateAuthority::DistinguishedName.new
-        csr = CertificateAuthority::SigningRequest.new
         dn.common_name   = domain
         dn.organization  = options[:organization] || provider.name[provider.default_language]
         dn.ou            = options[:organizational_unit] # optional
@@ -127,9 +126,7 @@ module LeapCli; module Commands
 
         digest = options[:digest] || server_certificates.digest
         log :generating, "CSR with #{digest} digest and #{print_dn(dn)}" do
-          csr.distinguished_name = dn
-          csr.key_material = keypair
-          csr.digest = digest
+          csr = create_csr(dn, keypair, digest)
           request = csr.to_x509_csr
           write_file! [:commercial_csr, domain], csr.to_pem
         end
@@ -287,6 +284,44 @@ module LeapCli; module Commands
     cert.parent = client_ca_root
     cert.sign! client_test_signing_profile
     yield cert.key_material.private_key.to_pem, cert.to_pem
+  end
+
+  #
+  # creates a CSR and returns it.
+  # with the correct extReq attribute so that the CA
+  # doens't generate certs with extensions we don't want.
+  #
+  def create_csr(dn, keypair, digest)
+    csr = CertificateAuthority::SigningRequest.new
+    csr.distinguished_name = dn
+    csr.key_material = keypair
+    csr.digest = digest
+
+    # define extensions manually (library doesn't support setting these on CSRs)
+    extensions = []
+    extensions << CertificateAuthority::Extensions::BasicConstraints.new.tap {|basic|
+      basic.ca = false
+    }
+    extensions << CertificateAuthority::Extensions::KeyUsage.new.tap {|keyusage|
+      keyusage.usage = ["digitalSignature", "nonRepudiation"]
+    }
+    extensions << CertificateAuthority::Extensions::ExtendedKeyUsage.new.tap {|extkeyusage|
+      extkeyusage.usage = [ "serverAuth"]
+    }
+
+    # convert extensions to attribute 'extReq'
+    # aka "Requested Extensions"
+    factory = OpenSSL::X509::ExtensionFactory.new
+    attrval = OpenSSL::ASN1::Set([OpenSSL::ASN1::Sequence(
+      extensions.map{|e| factory.create_ext(e.openssl_identifier, e.to_s, e.critical)}
+    )])
+    attrs = [
+      OpenSSL::X509::Attribute.new("extReq", attrval),
+      OpenSSL::X509::Attribute.new("msExtReq", attrval)
+    ]
+    csr.attributes = attrs
+
+    return csr
   end
 
   def ca_root

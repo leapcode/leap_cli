@@ -1,3 +1,5 @@
+require 'active_support/all'
+
 module CertificateAuthority
   class Certificate
     include ActiveModel::Validations
@@ -32,8 +34,8 @@ module CertificateAuthority
       self.distinguished_name = DistinguishedName.new
       self.serial_number = SerialNumber.new
       self.key_material = MemoryKeyMaterial.new
-      self.not_before = Time.now
-      self.not_after = Time.now + 60 * 60 * 24 * 365 #One year
+      self.not_before = Time.now.change(:min => 0).utc
+      self.not_after = Time.now.change(:min => 0).utc + 1.year
       self.parent = self
       self.extensions = load_extensions()
 
@@ -41,12 +43,31 @@ module CertificateAuthority
 
     end
 
+=begin
+    def self.from_openssl openssl_cert
+      unless openssl_cert.is_a? OpenSSL::X509::Certificate
+        raise "Can only construct from an OpenSSL::X509::Certificate"
+      end
+
+      certificate = Certificate.new
+      # Only subject, key_material, and body are used for signing
+      certificate.distinguished_name = DistinguishedName.from_openssl openssl_cert.subject
+      certificate.key_material.public_key = openssl_cert.public_key
+      certificate.openssl_body = openssl_cert
+      certificate.serial_number.number = openssl_cert.serial.to_i
+      certificate.not_before = openssl_cert.not_before
+      certificate.not_after = openssl_cert.not_after
+      # TODO extensions
+      certificate
+    end
+=end
+
     def sign!(signing_profile={})
       raise "Invalid certificate #{self.errors.full_messages}" unless valid?
       merge_profile_with_extensions(signing_profile)
 
       openssl_cert = OpenSSL::X509::Certificate.new
-      openssl_cert.version    = 2
+      openssl_cert.version = 2
       openssl_cert.not_before = self.not_before
       openssl_cert.not_after = self.not_after
       openssl_cert.public_key = self.key_material.public_key
@@ -58,7 +79,6 @@ module CertificateAuthority
 
       require 'tempfile'
       t = Tempfile.new("bullshit_conf")
-      # t = File.new("/tmp/openssl.cnf")
       ## The config requires a file even though we won't use it
       openssl_config = OpenSSL::Config.new(t.path)
 
@@ -85,7 +105,7 @@ module CertificateAuthority
       self.extensions.keys.sort{|a,b| b<=>a}.each do |k|
         e = extensions[k]
         next if e.to_s.nil? or e.to_s == "" ## If the extension returns an empty string we won't include it
-        ext = factory.create_ext(e.openssl_identifier, e.to_s)
+        ext = factory.create_ext(e.openssl_identifier, e.to_s, e.critical)
         openssl_cert.add_extension(ext)
       end
 
@@ -94,9 +114,10 @@ module CertificateAuthority
       else
         digest = OpenSSL::Digest::Digest.new(signing_profile["digest"])
       end
-      self.openssl_body = openssl_cert.sign(parent.key_material.private_key,digest)
-      t.close! if t.is_a?(Tempfile)# We can get rid of the ridiculous temp file
-      self.openssl_body
+
+      self.openssl_body = openssl_cert.sign(parent.key_material.private_key, digest)
+    ensure
+      t.close! if t # We can get rid of the ridiculous temp file
     end
 
     def is_signing_entity?
@@ -114,6 +135,34 @@ module CertificateAuthority
     def to_pem
       raise "Certificate has no signed body" if self.openssl_body.nil?
       self.openssl_body.to_pem
+    end
+
+    def to_csr
+      csr = SigningRequest.new
+      csr.distinguished_name = self.distinguished_name
+      csr.key_material = self.key_material
+      factory = OpenSSL::X509::ExtensionFactory.new
+      exts = []
+      self.extensions.keys.each do |k|
+        ## Don't copy over key identifiers for CSRs
+        next if k == "subjectKeyIdentifier" || k == "authorityKeyIdentifier"
+        e = extensions[k]
+        ## If the extension returns an empty string we won't include it
+        next if e.to_s.nil? or e.to_s == ""
+        exts << factory.create_ext(e.openssl_identifier, e.to_s, e.critical)
+      end
+      attrval = OpenSSL::ASN1::Set([OpenSSL::ASN1::Sequence(exts)])
+      attrs = [
+        OpenSSL::X509::Attribute.new("extReq", attrval),
+        OpenSSL::X509::Attribute.new("msExtReq", attrval)
+      ]
+      csr.attributes = attrs
+      csr
+    end
+
+    def self.from_x509_cert(raw_cert)
+      openssl_cert = OpenSSL::X509::Certificate.new(raw_cert)
+      Certificate.from_openssl(openssl_cert)
     end
 
     def is_root_entity?
@@ -134,6 +183,16 @@ module CertificateAuthority
         items = signing_config[k]
         items.keys.each do |profile_item_key|
           if extension.respond_to?("#{profile_item_key}=".to_sym)
+            if k == 'subjectAltName' && profile_item_key == 'emails'
+              items[profile_item_key].map do |email|
+                if email == 'email:copy'
+                  fail "no email address provided for subject: #{subject.to_x509_name}" unless subject.email_address
+                  "email:#{subject.email_address}"
+                else
+                  email
+                end
+              end
+            end
             extension.send("#{profile_item_key}=".to_sym, items[profile_item_key] )
           else
             p "Tried applying '#{profile_item_key}' to #{extension.class} but it doesn't respond!"
@@ -142,30 +201,25 @@ module CertificateAuthority
       end
     end
 
+    # Enumeration of the extensions. Not the worst option since
+    # the likelihood of these needing to be updated is low at best.
+    EXTENSIONS = [
+        CertificateAuthority::Extensions::BasicConstraints,
+        CertificateAuthority::Extensions::CrlDistributionPoints,
+        CertificateAuthority::Extensions::SubjectKeyIdentifier,
+        CertificateAuthority::Extensions::AuthorityKeyIdentifier,
+        CertificateAuthority::Extensions::AuthorityInfoAccess,
+        CertificateAuthority::Extensions::KeyUsage,
+        CertificateAuthority::Extensions::ExtendedKeyUsage,
+        CertificateAuthority::Extensions::SubjectAlternativeName,
+        CertificateAuthority::Extensions::CertificatePolicies
+    ]
+
     def load_extensions
       extension_hash = {}
 
-      temp_extensions = []
-      basic_constraints = CertificateAuthority::Extensions::BasicConstraints.new
-      temp_extensions << basic_constraints
-      crl_distribution_points = CertificateAuthority::Extensions::CrlDistributionPoints.new
-      temp_extensions << crl_distribution_points
-      subject_key_identifier = CertificateAuthority::Extensions::SubjectKeyIdentifier.new
-      temp_extensions << subject_key_identifier
-      authority_key_identifier = CertificateAuthority::Extensions::AuthorityKeyIdentifier.new
-      temp_extensions << authority_key_identifier
-      authority_info_access = CertificateAuthority::Extensions::AuthorityInfoAccess.new
-      temp_extensions << authority_info_access
-      key_usage = CertificateAuthority::Extensions::KeyUsage.new
-      temp_extensions << key_usage
-      extended_key_usage = CertificateAuthority::Extensions::ExtendedKeyUsage.new
-      temp_extensions << extended_key_usage
-      subject_alternative_name = CertificateAuthority::Extensions::SubjectAlternativeName.new
-      temp_extensions << subject_alternative_name
-      certificate_policies = CertificateAuthority::Extensions::CertificatePolicies.new
-      temp_extensions << certificate_policies
-
-      temp_extensions.each do |extension|
+      EXTENSIONS.each do |klass|
+        extension = klass.new
         extension_hash[extension.openssl_identifier] = extension
       end
 
@@ -192,7 +246,11 @@ module CertificateAuthority
       certificate.serial_number.number = openssl_cert.serial.to_i
       certificate.not_before = openssl_cert.not_before
       certificate.not_after = openssl_cert.not_after
-      # TODO extensions
+      EXTENSIONS.each do |klass|
+        _,v,c = (openssl_cert.extensions.detect { |e| e.to_a.first == klass::OPENSSL_IDENTIFIER } || []).to_a
+        certificate.extensions[klass::OPENSSL_IDENTIFIER] = klass.parse(v, c) if v
+      end
+
       certificate
     end
 
