@@ -22,7 +22,7 @@ module LeapCli
 
       # --tags
       c.flag :tags, :desc => 'Specify tags to pass through to puppet (overriding the default).',
-                    :default_value => "see platform.rb", :arg_name => 'TAG[,TAG]'
+                    :arg_name => 'TAG[,TAG]'
 
       c.flag :port, :desc => 'Override the default SSH port.',
                     :arg_name => 'PORT'
