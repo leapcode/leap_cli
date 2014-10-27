@@ -303,7 +303,7 @@ module LeapCli; module Commands
       basic.ca = false
     }
     extensions << CertificateAuthority::Extensions::KeyUsage.new.tap {|keyusage|
-      keyusage.usage = ["digitalSignature", "nonRepudiation"]
+      keyusage.usage = ["digitalSignature", "keyEncipherment"]
     }
     extensions << CertificateAuthority::Extensions::ExtendedKeyUsage.new.tap {|extkeyusage|
       extkeyusage.usage = [ "serverAuth"]
@@ -317,7 +317,6 @@ module LeapCli; module Commands
     )])
     attrs = [
       OpenSSL::X509::Attribute.new("extReq", attrval),
-      OpenSSL::X509::Attribute.new("msExtReq", attrval)
     ]
     csr.attributes = attrs
 
