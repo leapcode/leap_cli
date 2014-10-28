@@ -78,5 +78,4 @@ spec = Gem::Specification.new do |s|
 
   # certificate_authority
   s.add_runtime_dependency("activemodel", ">= 3.0.6")
-  s.add_runtime_dependency("activesupport", ">= 3.0.6")
 end

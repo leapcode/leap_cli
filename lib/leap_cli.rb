@@ -6,7 +6,6 @@ end
 $ruby_version = RUBY_VERSION.split('.').collect{ |i| i.to_i }.extend(Comparable)
 
 # ensure leap_cli/lib/overrides has the highest priority
-# (these files override bad behavior in gems that overrides JSON)
 $:.unshift(File.expand_path('../override',__FILE__))
 
 require 'leap/platform'
