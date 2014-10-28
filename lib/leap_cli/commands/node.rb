@@ -192,18 +192,40 @@ module LeapCli; module Commands
     end
   end
 
+  #
+  # get the public host key for a host.
+  # return SshKey object representation of the key.
+  #
+  # Only supports ecdsa or rsa host keys. ecdsa is preferred if both are available.
+  #
   def get_public_key_for_ip(address, port=22)
     assert_bin!('ssh-keyscan')
-    output = assert_run! "ssh-keyscan -p #{port} -t ecdsa #{address}", "Could not get the public host key from #{address}:#{port}. Maybe sshd is not running?"
-    line = output.split("\n").grep(/^[^#]/).first
-    if line =~ /No route to host/
-      bail! :failed, 'ssh-keyscan: no route to %s' % address
-    elsif line =~ /no hostkey alg/
-      bail! :failed, 'ssh-keyscan: no hostkey alg (must be missing an ecdsa public host key)'
+    output = assert_run! "ssh-keyscan -p #{port} #{address}", "Could not get the public host key from #{address}:#{port}. Maybe sshd is not running?"
+    if output.empty?
+      bail! :failed, "ssh-keyscan returned empty output."
     end
-    assert! line, "Got zero host keys back!"
-    ip, key_type, public_key = line.split(' ')
-    return SshKey.load(public_key, key_type)
+
+    # key arrays [ip, key_type, public_key]
+    rsa_key = nil
+    ecdsa_key = nil
+
+    lines = output.split("\n").grep(/^[^#]/)
+    lines.each do |line|
+      if line =~ /No route to host/
+        bail! :failed, 'ssh-keyscan: no route to %s' % address
+      elsif line =~ / ssh-rsa /
+        rsa_key = line.split(' ')
+      elsif line =~ / ecdsa-sha2-nistp256 /
+        ecdsa_key = line.split(' ')
+      end
+    end
+
+    if rsa_key.nil? && ecdsa_key.nil?
+      bail! "ssh-keyscan got zero host keys back! Output was: #{output}"
+    else
+      key = ecdsa_key || rsa_key
+      return SshKey.load(key[2], key[1])
+    end
   end
 
   def is_node_alive(node, options)
