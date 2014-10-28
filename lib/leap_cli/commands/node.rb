@@ -1,6 +1,4 @@
-require 'net/ssh/known_hosts'
-require 'tempfile'
-require 'ipaddr'
+autoload :IPAddr, 'ipaddr'
 
 module LeapCli; module Commands
 

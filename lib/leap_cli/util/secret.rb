@@ -4,7 +4,7 @@
 #
 # Uses OpenSSL random number generator instead of Ruby's rand function
 #
-require 'openssl'
+autoload :OpenSSL, 'openssl'
 
 module LeapCli; module Util
   class Secret

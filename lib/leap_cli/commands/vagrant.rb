@@ -1,4 +1,4 @@
-require 'ipaddr'
+autoload :IPAddr, 'ipaddr'
 require 'fileutils'
 
 module LeapCli; module Commands

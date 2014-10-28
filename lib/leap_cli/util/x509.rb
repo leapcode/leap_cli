@@ -1,5 +1,6 @@
-require 'openssl'
-require 'certificate_authority'
+autoload :OpenSSL, 'openssl'
+autoload :CertificateAuthority, 'certificate_authority'
+
 require 'digest'
 require 'digest/md5'
 require 'digest/sha1'

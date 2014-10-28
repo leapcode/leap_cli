@@ -1,4 +1,4 @@
-require 'gpgme'
+autoload :GPGME, 'gpgme'
 
 #
 # perhaps we want to verify that the key files are actually the key files we expect.

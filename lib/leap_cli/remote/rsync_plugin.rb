@@ -3,7 +3,7 @@
 # (see RemoteCommand::new_capistrano)
 #
 
-require 'rsync_command'
+autoload :RsyncCommand, 'rsync_command'
 
 module LeapCli; module Remote; module RsyncPlugin
 

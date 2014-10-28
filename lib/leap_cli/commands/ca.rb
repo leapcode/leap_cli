@@ -1,6 +1,6 @@
-require 'openssl'
-require 'certificate_authority'
-require 'date'
+autoload :OpenSSL, 'openssl'
+autoload :CertificateAuthority, 'certificate_authority'
+autoload :Date, 'date'
 require 'digest/md5'
 
 module LeapCli; module Commands
