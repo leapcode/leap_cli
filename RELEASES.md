@@ -1,3 +1,12 @@
+Version 1.6.1
+  - add environment pinning, see `leap help env`
+  - support both rsa and ecdsa host keys
+  - custom puppet modules: drop modules in files/puppet/modules
+  - all json macros are now moved to the platform
+  - bugfix: better CSR creation
+  - bugfix: always sort arrays in exported json.
+  - bugfix: improved cert updating
+
 Version 1.5.6
 
 - Added try{} macro function that quietly swallows exceptions.
@@ -19,7 +28,7 @@ Version 1.5.3
 Version 1.5.0
 
 - Added ability to scope provider.json by environment
- 
+
 Version 1.2.5
 
 - Added initial support for remote tests.
