@@ -1,0 +1,112 @@
+# LEAP CLI BASH COMPLETION
+#
+# Usage: Add the following line to your ~/.bashrc file.
+#
+#		source /path/to/leap.bash-completion
+# 
+
+# Config
+# Where are your leap-cli gems stored?
+versions="/var/lib/gems/2.1.0/gems/"
+
+_leap_complete_nodes () {
+	nodes="${nodes/}"
+	suffix=".json"
+
+	local items=($(compgen -f $nodes$cur))
+	for item in ${items[@]}; do
+		item="${item%$suffix}"
+		COMPREPLY+=("${item#$nodes}")
+	done
+}
+
+_leap_complete_tags () {
+	tags="${tags/}"
+	suffix=".json"
+	local items=($(compgen plusdirs -f $tags$cur))
+	for item in ${items[@]}; do
+		item="${item%$suffix}"
+		COMPREPLY+=("${item#$tags}")
+	done
+}
+
+_leap_global_options() {
+	COMPREPLY+=($(compgen -W "--color --no-color --debug --help --log= --verbose= -v1 -v2 -v3 -v4 -v5 --version" -- ${cur}))
+}
+
+_leap_complete_versions () {
+	prefix="leap_cli-"
+
+	local items=($(compgen -d $versions$prefix))
+	for item in ${items[@]}; do
+		item="${item#$versions}"
+		# COMPREPLY+=("_${item#$prefix}_")
+		COMPREPLY+=($(compgen -W "_${item#$prefix}_" -- ${cur}))
+	done
+}
+
+_leap()
+{
+	COMPREPLY=()
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	local commands="add-user clean deploy help inspect list mosh new ssh cert compile db facts local node test"
+
+	if [[ $COMP_CWORD -gt 1 ]] && [[ "$cur" != -* ]] && [[ "$cur" != _* ]]; then
+		local lastarg="${COMP_WORDS[$COMP_CWORD-1]}"
+
+		case "${COMP_WORDS[$COMP_CWORD-1]}" in
+			deploy)
+				_leap_complete_nodes
+				_leap_complete_tags
+				;;
+			mosh)
+				_leap_complete_nodes
+				;;
+			ssh)
+				_leap_complete_nodes
+				;;
+			cert)
+				COMPREPLY+=($(compgen -W "ca csr dh update" -- ${cur}))
+				;;
+			compile)
+				COMPREPLY+=($(compgen -W "all zone" -- ${cur}))
+				;;
+			facts)
+				COMPREPLY+=($(compgen -W "update" -- ${cur}))
+				;;
+			local)
+				COMPREPLY+=($(compgen -W "start stop status save" -- ${cur}))
+				;;
+			start|stop|status|save)
+				_leap_complete_nodes
+				;;
+			node)
+				COMPREPLY+=($(compgen -W "add init rm mv" -- ${cur}))
+				;;
+			add|rm|mv)
+				_leap_complete_nodes
+				;;
+			test)
+				COMPREPLY+=($(compgen -W "init run" -- ${cur}))
+				;;
+			init|run)
+				_leap_complete_nodes
+				;;
+			*)
+				COMPREPLY+=($(compgen -W "${commands}" -- ${cur}))
+				;;
+		esac
+
+	else
+		if [[ "$cur" == -* ]]; then
+			_leap_global_options
+		elif [[ "$cur" == _* ]]; then
+			_leap_complete_versions
+		else 
+			COMPREPLY+=($(compgen -W "${commands}" -- ${cur}))
+		fi
+
+	fi
+}
+
+complete -F _leap leap
