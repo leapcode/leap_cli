@@ -130,7 +130,18 @@ module LeapCli
       #
       def deep_merge!(object, prefer_self=false)
         object.each do |key,new_value|
-          old_value = self.fetch key, nil
+          if self.has_key?('+'+key)
+            mode = :add
+            old_value = self.fetch '+'+key, nil
+            self.delete('+'+key)
+          elsif self.has_key?('-'+key)
+            mode = :subtract
+            old_value = self.fetch '-'+key, nil
+            self.delete('-'+key)
+          else
+            mode = :normal
+            old_value = self.fetch key, nil
+          end
 
           # clean up boolean
           new_value = true  if new_value == "true"
@@ -156,6 +167,18 @@ module LeapCli
           elsif new_value.is_a?(Array) && !old_value.is_a?(Array)
             (value = (new_value.dup << old_value).compact.uniq).delete('REQUIRED')
 
+          # merge two arrays
+          elsif old_value.is_a?(Array) && new_value.is_a?(Array)
+            if mode == :add
+              value = (old_value + new_value).sort.uniq
+            elsif mode == :subtract
+              value = new_value - old_value
+            elsif prefer_self
+              value = old_value
+            else
+              value = new_value
+            end
+
           # catch errors
           elsif type_mismatch?(old_value, new_value)
             raise 'Type mismatch. Cannot merge %s (%s) with %s (%s). Key is "%s", name is "%s".' % [
@@ -164,7 +187,7 @@ module LeapCli
               key, self.class
             ]
 
-          # merge strings, numbers, and sometimes arrays
+          # merge simple strings & numbers
           else
             if prefer_self
               value = old_value
