@@ -56,14 +56,14 @@ spec = Gem::Specification.new do |s|
   s.add_runtime_dependency('tee')
 
   # network gems
+  s.add_runtime_dependency('net-ssh', '~> 2.7.0')
+  # ^^ we can upgrade once we get off broken capistrano
+  # https://github.com/net-ssh/net-ssh/issues/145
   s.add_runtime_dependency('capistrano', '~> 2.15.5')
-  #s.add_runtime_dependency('supply_drop')
-  # ^^ currently vendored
 
   # crypto gems
   #s.add_runtime_dependency('certificate_authority', '>= 0.2.0')
   # ^^ currently vendored
-  s.add_runtime_dependency('net-ssh')
   s.add_runtime_dependency('gpgme')     # not essential, but used for some minor stuff in adding sysadmins
 
   # misc gems

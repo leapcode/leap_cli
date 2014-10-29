@@ -18,7 +18,6 @@ rescue LoadError
   # This allows you to run the command directly while developing the gem, and also lets you
   # run from anywhere (I like to link 'bin/leap' to /usr/local/bin/leap).
   #
-  require 'rubygems'
   base_dir = File.expand_path('..', File.dirname(File.symlink?(__FILE__) ? File.readlink(__FILE__) : __FILE__))
   require File.join(base_dir, 'lib','leap_cli','load_paths')
   require 'leap_cli'

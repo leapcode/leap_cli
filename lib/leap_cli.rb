@@ -8,6 +8,9 @@ $ruby_version = RUBY_VERSION.split('.').collect{ |i| i.to_i }.extend(Comparable)
 # ensure leap_cli/lib/overrides has the highest priority
 $:.unshift(File.expand_path('../override',__FILE__))
 
+require 'rubygems'
+gem 'net-ssh', '~> 2.7.0'
+
 require 'leap/platform'
 
 require 'leap_cli/version'
