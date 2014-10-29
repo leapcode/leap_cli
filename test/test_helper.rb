@@ -4,7 +4,7 @@ require 'bundler/setup'
 require 'minitest/autorun'
 require 'leap_cli'
 
-class MiniTest::Unit::TestCase
+class Minitest::Test
   attr_accessor :ruby_path
 
   # Add global extensions to the test case class here

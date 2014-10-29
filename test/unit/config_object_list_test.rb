@@ -1,6 +1,6 @@
 require File.expand_path('../test_helper', __FILE__)
 
-class ConfigObjectListTest < MiniTest::Unit::TestCase
+class ConfigObjectListTest < Minitest::Test
 
   def test_node_search
     nodes = manager.nodes['name' => 'vpn1']

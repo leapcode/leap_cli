@@ -1,6 +1,6 @@
 require File.expand_path('../test_helper', __FILE__)
 
-class CommandLineTest < MiniTest::Unit::TestCase
+class CommandLineTest < Minitest::Test
 
   def test_help
     with_multiple_rubies do

@@ -1,6 +1,6 @@
 require File.expand_path('../test_helper', __FILE__)
 
-class ConfigObjectTest < MiniTest::Unit::TestCase
+class ConfigObjectTest < Minitest::Test
 
   def test_bracket_lookup
     domain = provider.domain
