@@ -2,11 +2,7 @@ $:.unshift(File.dirname(__FILE__)) unless $:.include?(File.dirname(__FILE__)) ||
 
 #Exterior requirements
 require 'openssl'
-require 'active_model/callbacks'
-require 'active_model/naming'
-require 'active_model/translation'
-require 'active_model/validations'
-require 'active_model/serialization'
+require 'active_model'
 
 #Internal modules
 require 'certificate_authority/signing_entity'
