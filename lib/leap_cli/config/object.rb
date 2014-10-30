@@ -288,23 +288,23 @@ module LeapCli
             Util::log "offending string: #{value}", :indent => 1
             Util::log "error message: no file '#{exc}'", :indent => 1
           end
-          raise exc if LeapCli.log_level >= 2
         end
+        raise exc if LeapCli.log_level >= 2
       rescue AssertionFailed => exc
         Util.bail! do
           Util::log :failed, "assertion while evaluating node '#{self.name}'"
           Util::log 'assertion: %s' % exc.assertion, :indent => 1
           Util::log "offending key: #{key}", :indent => 1
-          raise exc if LeapCli.log_level >= 2
         end
+        raise exc if LeapCli.log_level >= 2
       rescue SyntaxError, StandardError => exc
         Util::bail! do
           Util::log :error, "while evaluating node '#{self.name}'"
           Util::log "offending key: #{key}", :indent => 1
           Util::log "offending string: #{value}", :indent => 1
           Util::log "error message: #{exc.inspect}", :indent => 1
-          raise exc if LeapCli.log_level >= 2
         end
+        raise exc if LeapCli.log_level >= 2
       end
 
       private

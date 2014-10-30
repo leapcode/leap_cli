@@ -31,7 +31,7 @@ module LeapCli; module Commands
     #
     # set verbosity
     #
-    LeapCli.log_level = global[:verbose].to_i
+    LeapCli.set_log_level(global[:verbose].to_i)
 
     #
     # load Leapfile

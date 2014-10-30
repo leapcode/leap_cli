@@ -15,7 +15,7 @@ module LeapCli
   def log_level
     @log_level ||= 1
   end
-  def log_level=(value)
+  def set_log_level(value)
     @log_level = value
   end
 

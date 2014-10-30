@@ -30,8 +30,10 @@ module LeapCli
     #
     def bail!(*message)
       if block_given?
-        LeapCli.log_level = 3
+        level = LeapCli.log_level
+        LeapCli.set_log_level(3)
         yield
+        LeapCli.set_log_level(level)
       elsif message
         log 0, *message
       end
