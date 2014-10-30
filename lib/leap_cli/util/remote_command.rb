@@ -85,9 +85,9 @@ module LeapCli; module Util; module RemoteCommand
 
   def net_ssh_log_level
     case LeapCli.log_level
-      when 0 then 3
-      when 1 then 2
-      when 2 then 1
+      when 1 then 3
+      when 2 then 2
+      when 3 then 1
       else 0
     end
   end
