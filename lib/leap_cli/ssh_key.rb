@@ -33,6 +33,7 @@ module LeapCli
         end
       end
       return key
+    rescue StandardError => exc
     end
 
     def self.load_from_file(filename)
