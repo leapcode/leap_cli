@@ -1,4 +1,3 @@
-autoload :GPGME, 'gpgme'
 
 #
 # perhaps we want to verify that the key files are actually the key files we expect.
@@ -75,8 +74,10 @@ module LeapCli
       if `which ssh-add`.strip.any?
         `ssh-add -L 2> /dev/null`.split("\n").compact.each do |line|
           key = SshKey.load(line)
-          key.comment = 'ssh-agent'
-          ssh_keys << key unless ssh_keys.include?(key)
+          if key
+            key.comment = 'ssh-agent'
+            ssh_keys << key unless ssh_keys.include?(key)
+          end
         end
       end
       ssh_keys.compact!
@@ -98,13 +99,20 @@ module LeapCli
     # let the the user choose among the gpg public keys that we encounter, or just pick the key if there is only one.
     #
     def pick_pgp_key
+      begin
+        return unless `which gpg`.strip.any?
+        require 'gpgme'
+      rescue LoadError
+        return
+      end
+
       secret_keys = GPGME::Key.find(:secret)
       if secret_keys.empty?
         log "Skipping OpenPGP setup because I could not find any OpenPGP keys for you"
         return nil
       end
 
-      assert_bin! 'gpg'
+      secret_keys.select!{|key| !key.expired}
 
       if secret_keys.length > 1
         key_index = numbered_choice_menu('Choose your OpenPGP public key', secret_keys) do |key, i|
