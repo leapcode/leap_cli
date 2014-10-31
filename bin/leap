@@ -1,7 +1,10 @@
 #!/usr/bin/env ruby
 
-if ARGV.include?('--debug')
+if ARGV.include?('--debug') || ARGV.include?('-d')
+  DEBUG=true
   require 'debugger'
+else
+  DEBUG=false
 end
 
 begin
@@ -89,13 +92,14 @@ module LeapCli::Commands
     exit_status = run(ARGV)
     exit(LeapCli::Util.exit_status || exit_status)
   rescue StandardError => exc
-    if LeapCli.log_level < 2
-      if exc.respond_to? :log
-        exc.log
-      else
-        puts "%s: %s" % [exc.class, exc.message]
-      end
+    if exc.respond_to? :log
+      exc.log
     else
+      puts
+      LeapCli.log :error, "%s: %s" % [exc.class, exc.message]
+      puts
+    end
+    if DEBUG
       raise exc
     end
   end

@@ -21,7 +21,7 @@ module LeapCli; module Commands
   switch :yes, :negatable => false
 
   desc 'Enable debugging library (leap_cli development only)'
-  switch :debug, :negatable => false
+  switch [:d, :debug], :negatable => false
 
   desc 'Disable colors in output'
   default_value true
