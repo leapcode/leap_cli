@@ -3,6 +3,8 @@ Version 1.6.1
   - support both rsa and ecdsa host keys
   - custom puppet modules: drop modules in files/puppet/modules
   - all json macros are now moved to the platform
+  - allow "+key" and "-key" json properties for adding and subtracting
+    arrays during inheritence
   - bugfix: better CSR creation
   - bugfix: always sort arrays in exported json.
   - bugfix: improved cert updating
