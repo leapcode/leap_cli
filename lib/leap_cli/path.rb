@@ -26,15 +26,29 @@ module LeapCli; module Path
   end
 
   #
-  # tries to find a file somewhere
+  # Tries to find a file somewhere.
+  # Path can be a named path or a relative path.
+  #
+  # relative paths are checked against
+  # provider/<path>
+  # provider/files/<path>
+  # provider_base/<path>
+  # provider_base/files/<path>
+  #
   #
   def self.find_file(arg)
     [Path.provider, Path.provider_base].each do |base|
-      file_path = named_path(arg, base)
-      return file_path if File.exists?(file_path)
-      if arg.is_a? String
-        file_path = base + '/files/' + arg
-        return file_path if File.exists?(file_path)
+      if arg.is_a?(Symbol) || arg.is_a?(Array)
+        named_path(arg, base).tap {|path|
+          return path if File.exists?(path)
+        }
+      else
+        File.join(base, arg).tap {|path|
+          return path if File.exists?(path)
+        }
+        File.join(base, 'files', arg).tap {|path|
+          return path if File.exists?(path)
+        }
       end
     end
     return nil

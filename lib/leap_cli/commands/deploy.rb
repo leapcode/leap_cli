@@ -264,7 +264,7 @@ module LeapCli
       end
 
       if prefix
-        includes.map! {|path| path.sub(/^#{Regexp.escape(prefix)}/, '')}
+        includes.map! {|path| path.sub(/^#{Regexp.escape(prefix)}\//, '/')}
       end
 
       return includes
