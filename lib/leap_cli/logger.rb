@@ -84,6 +84,19 @@ module LeapCli
     ## FORMATTING
     ##
 
+    #
+    # options for formatters:
+    #
+    # :match       =>  regexp for matching a log line
+    # :color       => what color the line should be
+    # :style       => what style the line should be
+    # :priority    => what order the formatters are applied in. higher numbers first.
+    # :match_level => only apply filter at the specified log level
+    # :level       => make this line visible at this log level or higher
+    # :replace     => replace the matched text
+    # :exit        => force the exit code to be this (does not interrupt program, just
+    #                 ensures a specific exit code when the program eventually exits)
+    #
     @formatters = [
       # TRACE
       { :match => /command finished/,          :color => :white,   :style => :dim, :match_level => 3, :priority => -10 },
@@ -138,8 +151,10 @@ module LeapCli
       # TESTS
       { :match => /^PASS: /,                :color => :green,   :priority => -20},
       { :match => /^(FAIL|ERROR): /,        :color => :red,     :priority => -20},
-      { :match => /^(SKIP|WARN): /,         :color => :yellow,  :priority => -20}
+      { :match => /^(SKIP|WARN): /,         :color => :yellow,  :priority => -20},
 
+      # LOG SUPPRESSION
+      { :match => /^warning: You cannot collect without storeconfigs being set/, :level => 2, :priority => 10}
     ]
 
     def self.sorted_formatters
