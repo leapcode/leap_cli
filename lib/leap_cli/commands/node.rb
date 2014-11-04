@@ -196,7 +196,7 @@ module LeapCli; module Commands
   # get the public host key for a host.
   # return SshKey object representation of the key.
   #
-  # Only supports ecdsa or rsa host keys. ecdsa is preferred if both are available.
+  # Only supports ecdsa or rsa host keys. rsa is preferred if both are available.
   #
   def get_public_key_for_ip(address, port=22)
     assert_bin!('ssh-keyscan')
@@ -223,7 +223,7 @@ module LeapCli; module Commands
     if rsa_key.nil? && ecdsa_key.nil?
       bail! "ssh-keyscan got zero host keys back! Output was: #{output}"
     else
-      key = ecdsa_key || rsa_key
+      key = rsa_key || ecdsa_key
       return SshKey.load(key[2], key[1])
     end
   end
