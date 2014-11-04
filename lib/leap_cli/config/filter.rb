@@ -4,7 +4,22 @@
 #
 # Classes other than Manager should not use this class.
 #
-
+# Filter rules:
+#
+# * A filter consists of a list of tokens
+# * A token may be a service name, tag name, environment name, or node name.
+# * Each token may be optionally prefixed with a plus sign.
+# * Multiple tokens with a plus are treated as an OR condition,
+#   but treated as an AND condition with the plus sign.
+#
+# For example
+#
+# * openvpn +development => all nodes with service 'openvpn' AND environment 'development'
+# * openvpn seattle => all nodes with service 'openvpn' OR tag 'seattle'.
+#
+# There can only be one environment specified. Typically, there are also tags
+# for each environment name. These name are treated as environments, not tags.
+#
 module LeapCli
   module Config
     class Filter
@@ -14,6 +29,10 @@ module LeapCli
       # options -- hash, possible keys include
       #   :nopin -- disregard environment pinning
       #   :local -- if false, disallow local nodes
+      #
+      # A nil value in the filters array indicates
+      # the default environment. This is in order to support
+      # calls like `manager.filter(environments)`
       #
       def initialize(filters, options, manager)
         @filters = filters.nil? ? [] : filters.dup
@@ -29,22 +48,27 @@ module LeapCli
           @environments = [LeapCli.leapfile.environment]
         end
         @filters.select! do |filter|
-          filter_text = filter.sub(/^\+/,'')
-          if is_environment?(filter_text)
-            if filter_text == LeapCli.leapfile.environment
-              # silently ignore already pinned environments
-            elsif (filter =~ /^\+/ || @filters.first == filter) && !@environments.empty?
-              LeapCli::Util.bail! do
-                LeapCli::Util.log "Environments are exclusive: no node is in two environments." do
-                  LeapCli::Util.log "Tried to filter on '#{@environments.join('\' AND \'')}' AND '#{filter_text}'"
-                end
-              end
-            else
-              @environments << filter_text
-            end
+          if filter.nil?
+            @environments << nil unless @environments.include?(nil)
             false
           else
-            true
+            filter_text = filter.sub(/^\+/,'')
+            if is_environment?(filter_text)
+              if filter_text == LeapCli.leapfile.environment
+                # silently ignore already pinned environments
+              elsif (filter =~ /^\+/ || @filters.first == filter) && !@environments.empty?
+                LeapCli::Util.bail! do
+                  LeapCli::Util.log "Environments are exclusive: no node is in two environments." do
+                    LeapCli::Util.log "Tried to filter on '#{@environments.join('\' AND \'')}' AND '#{filter_text}'"
+                  end
+                end
+              else
+                @environments << filter_text
+              end
+              false
+            else
+              true
+            end
           end
         end
 
