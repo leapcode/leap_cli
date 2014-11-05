@@ -1,6 +1,7 @@
 #
 # A wrapper around OpenSSL::PKey::RSA instances to provide a better api for dealing with SSH keys.
 #
+# cipher 'ssh-ed25519' not supported yet because we are waiting for support in Net::SSH
 #
 
 require 'net/ssh'
@@ -12,6 +13,10 @@ module LeapCli
 
     attr_accessor :filename
     attr_accessor :comment
+
+    # supported ssh key types, in order of preference
+    SUPPORTED_TYPES = ['ssh-rsa', 'ecdsa-sha2-nistp256']
+    SUPPORTED_TYPES_RE = /(#{SUPPORTED_TYPES.join('|')})/
 
     ##
     ## CLASS METHODS
@@ -64,6 +69,44 @@ module LeapCli
       public_key || private_key
     end
 
+    #
+    # Picks one key out of an array of keys that we think is the "best",
+    # based on the order of preference in SUPPORTED_TYPES
+    #
+    # Currently, this does not take bitsize into account.
+    #
+    def self.pick_best_key(keys)
+      keys.select {|k|
+        SUPPORTED_TYPES.include?(k.type)
+      }.sort {|a,b|
+        SUPPORTED_TYPES.index(a.type) <=> SUPPORTED_TYPES.index(b.type)
+      }.first
+    end
+
+    #
+    # takes a string with one or more ssh keys, one key per line,
+    # and returns an array of SshKey objects.
+    #
+    # the lines should be in one of these formats:
+    #
+    # 1. <hostname> <key-type> <key>
+    # 2. <key-type> <key>
+    #
+    def self.parse_keys(string)
+      keys = []
+      lines = string.split("\n").grep(/^[^#]/)
+      lines.each do |line|
+        if line =~ / #{SshKey::SUPPORTED_TYPES_RE} /
+          # <hostname> <key-type> <key>
+          keys << line.split(' ')[1..2]
+        elsif line =~ /^#{SshKey::SUPPORTED_TYPES_RE} /
+          # <key-type> <key>
+          keys << line.split(' ')
+        end
+      end
+      return keys.map{|k| SshKey.load(k[1], k[0])}
+    end
+
     ##
     ## INSTANCE METHODS
     ##
@@ -101,7 +144,8 @@ module LeapCli
     end
 
     def summary
-      "%s %s %s (%s)" % [self.type, self.bits, self.fingerprint, self.filename || self.comment || '']
+      #"%s %s %s (%s)" % [self.type, self.bits, self.fingerprint, self.filename || self.comment || '']
+      "%s %s %s" % [self.type, self.bits, self.fingerprint]
     end
 
     def to_s
