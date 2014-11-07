@@ -32,9 +32,11 @@ module LeapCli; module Commands
             end
             ssh.install_authorized_keys
             ssh.install_prerequisites
-            ssh.leap.log(:checking, "SSH host keys") do
-              ssh.leap.capture(get_ssh_keys_cmd) do |response|
-                update_local_ssh_host_keys(node, response[:data]) if response[:exitcode] == 0
+            unless node.vagrant?
+              ssh.leap.log(:checking, "SSH host keys") do
+                ssh.leap.capture(get_ssh_keys_cmd) do |response|
+                  update_local_ssh_host_keys(node, response[:data]) if response[:exitcode] == 0
+                end
               end
             end
             ssh.leap.log(:updating, "facts") do
@@ -151,7 +153,7 @@ module LeapCli; module Commands
     return unless remote_keys.any?
     current_key = SshKey.load(Path.named_path([:node_ssh_pub_key, node.name]))
     best_key = SshKey.pick_best_key(remote_keys)
-    return unless best_key
+    return unless best_key && current_key
     if current_key != best_key
       say("   One of the SSH host keys for node '#{node.name}' is better than what you currently have trusted.")
       say("     Current key: #{current_key.summary}")
