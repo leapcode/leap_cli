@@ -149,6 +149,9 @@ module LeapCli; module Util; module RemoteCommand
         opts[:verbose] = :error # suppress all the warnings about adding host keys to known_hosts, since it is not actually doing that.
       end
     end
+    if !node.supported_ssh_host_key_algorithms.empty?
+      opts[:host_key] = node.supported_ssh_host_key_algorithms
+    end
     return opts
   end
 

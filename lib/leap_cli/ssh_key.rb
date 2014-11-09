@@ -107,6 +107,23 @@ module LeapCli
       return keys.map{|k| SshKey.load(k[1], k[0])}
     end
 
+    #
+    # takes a string with one or more ssh keys, one key per line,
+    # and returns a string that specified the ssh key algorithms
+    # that are supported by the keys, in order of preference.
+    #
+    # eg: ecdsa-sha2-nistp256,ssh-rsa,ssh-ed25519
+    #
+    def self.supported_host_key_algorithms(string)
+      if string
+        self.parse_keys(string).map {|key|
+          key.type
+        }.join(',')
+      else
+        ""
+      end
+    end
+
     ##
     ## INSTANCE METHODS
     ##

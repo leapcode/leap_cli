@@ -62,6 +62,9 @@ module LeapCli; module Commands
     else
       options << "-o 'StrictHostKeyChecking=yes'"
     end
+    if !node.supported_ssh_host_key_algorithms.empty?
+      options << "-o 'HostKeyAlgorithms=#{node.supported_ssh_host_key_algorithms}'"
+    end
     username = 'root'
     if LeapCli.log_level >= 3
       options << "-vv"
