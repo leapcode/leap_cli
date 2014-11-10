@@ -8,8 +8,11 @@ $ruby_version = RUBY_VERSION.split('.').collect{ |i| i.to_i }.extend(Comparable)
 # ensure leap_cli/lib/overrides has the highest priority
 $:.unshift(File.expand_path('../override',__FILE__))
 
+# for a few gems, things will break if using earlier versions.
+# enforce the compatible versions here:
 require 'rubygems'
 gem 'net-ssh', '~> 2.7.0'
+gem 'gli', '~> 2.12.0'
 
 require 'leap/platform'
 
