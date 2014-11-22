@@ -75,6 +75,14 @@ module Leap
         end
       end
 
+      def method_missing(method, *args)
+        puts
+        puts "WARNING:"
+        puts "  leap_cli is out of date and does not understand `#{method}`."
+        puts "  called from: #{caller.first}"
+        puts "  please upgrade to a newer leap_cli"
+      end
+
     end
 
   end
