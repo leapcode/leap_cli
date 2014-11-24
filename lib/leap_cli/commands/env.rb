@@ -7,19 +7,16 @@ module LeapCli
       "Environment pinning works by modifying your ~/.leaprc file and is dependent on the "+
       "absolute file path of your provider directory (pins don't apply if you move the directory)"
     command :env do |c|
-      c.desc "List the available environments. The pinned environment, if any, will be marked with '*'."
+      c.desc "List the available environments. The pinned environment, if any, will be marked with '*'. Will also set the pin if run with an environment argument."
+      c.arg_name 'ENVIRONMENT', :optional => true
       c.command :ls do |ls|
         ls.action do |global_options, options, args|
-          envs = ["default"] + manager.environment_names.compact.sort
-          envs.each do |env|
-            if env
-              if LeapCli.leapfile.environment == env
-                puts "* #{env}"
-              else
-                puts "  #{env}"
-              end
-            end
+          environment = get_env_from_args(args)
+          if environment
+            pin(environment)
+            LeapCli.leapfile.load
           end
+          print_envs
         end
       end
 
@@ -27,11 +24,9 @@ module LeapCli
       c.arg_name 'ENVIRONMENT'
       c.command :pin do |pin|
         pin.action do |global_options,options,args|
-          environment = args.first
-          if environment == 'default' ||
-              (environment && manager.environment_names.include?(environment))
-            LeapCli.leapfile.set('environment', environment)
-            log 0, :saved, "~/.leaprc with environment set to #{environment}."
+          environment = get_env_from_args(args)
+          if environment
+            pin(environment)
           else
             bail! "There is no environment `#{environment}`"
           end
@@ -51,5 +46,31 @@ module LeapCli
 
     protected
 
+    def get_env_from_args(args)
+      environment = args.first
+      if environment == 'default' || (environment && manager.environment_names.include?(environment))
+        return environment
+      else
+        return nil
+      end
+    end
+
+    def pin(environment)
+      LeapCli.leapfile.set('environment', environment)
+      log 0, :saved, "~/.leaprc with environment set to #{environment}."
+    end
+
+    def print_envs
+      envs = ["default"] + manager.environment_names.compact.sort
+      envs.each do |env|
+        if env
+          if LeapCli.leapfile.environment == env
+            puts "* #{env}"
+          else
+            puts "  #{env}"
+          end
+        end
+      end
+    end
   end
 end
