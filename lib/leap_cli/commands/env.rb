@@ -32,6 +32,8 @@ module LeapCli
               (environment && manager.environment_names.include?(environment))
             LeapCli.leapfile.set('environment', environment)
             log 0, :saved, "~/.leaprc with environment set to #{environment}."
+          else
+            bail! "There is no environment `#{environment}`"
           end
         end
       end
