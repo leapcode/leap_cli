@@ -5,8 +5,8 @@ end
 
 $ruby_version = RUBY_VERSION.split('.').collect{ |i| i.to_i }.extend(Comparable)
 
-# ensure leap_cli/lib/overrides has the highest priority
-$:.unshift(File.expand_path('../override',__FILE__))
+# ensure lib/leap_cli/overrides has the highest priority
+$:.unshift(File.expand_path('../leap_cli/override',__FILE__))
 
 # for a few gems, things will break if using earlier versions.
 # enforce the compatible versions here:
@@ -20,12 +20,12 @@ require 'leap_cli/version'
 require 'leap_cli/exceptions'
 
 require 'leap_cli/leapfile'
-require 'core_ext/hash'
-require 'core_ext/boolean'
-require 'core_ext/nil'
-require 'core_ext/string'
-require 'core_ext/json'
-require 'core_ext/yaml'
+require 'leap_cli/core_ext/hash'
+require 'leap_cli/core_ext/boolean'
+require 'leap_cli/core_ext/nil'
+require 'leap_cli/core_ext/string'
+require 'leap_cli/core_ext/json'
+require 'leap_cli/core_ext/yaml'
 
 require 'leap_cli/log'
 require 'leap_cli/path'

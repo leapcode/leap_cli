@@ -73,7 +73,9 @@ module LeapCli
             end
           end
         end
-
+        if !Util.exit_status.nil? && Util.exit_status != 0
+          log :warning, "puppet did not finish successfully."
+        end
       end
     end
 
