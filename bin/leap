@@ -2,7 +2,10 @@
 
 if ARGV.include?('--debug') || ARGV.include?('-d')
   DEBUG=true
-  require 'debugger'
+  begin
+    require 'debugger'
+  rescue LoadError
+  end
 else
   DEBUG=false
 end

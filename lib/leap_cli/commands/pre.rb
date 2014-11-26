@@ -20,7 +20,7 @@ module LeapCli; module Commands
   desc 'Skip prompts and assume "yes"'
   switch :yes, :negatable => false
 
-  desc 'Enable debugging library (leap_cli development only)'
+  desc 'Print full stack trace for exceptions and load `debugger` gem if installed.'
   switch [:d, :debug], :negatable => false
 
   desc 'Disable colors in output'
