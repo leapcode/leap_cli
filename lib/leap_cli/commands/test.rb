@@ -2,14 +2,8 @@ module LeapCli; module Commands
 
   desc 'Run tests.'
   command :test do |test|
-    test.desc 'Creates files needed to run tests.'
-    test.command :init do |init|
-      init.action do |global_options,options,args|
-        generate_test_client_openvpn_configs
-      end
-    end
-
-    test.desc 'Run tests.'
+    test.desc 'Run the test suit on FILTER nodes.'
+    test.arg_name 'FILTER', :optional => true
     test.command :run do |run|
       run.switch 'continue', :desc => 'Continue over errors and failures (default is --no-continue).', :negatable => true
       run.action do |global_options,options,args|
@@ -23,6 +17,13 @@ module LeapCli; module Commands
             ssh.run(test_cmd(options))
           end
         end
+      end
+    end
+
+    test.desc 'Creates files needed to run tests.'
+    test.command :init do |init|
+      init.action do |global_options,options,args|
+        generate_test_client_openvpn_configs
       end
     end
 
