@@ -6,7 +6,7 @@ module LeapCli
       "A node in one environment will never interact with a node from another environment. "+
       "Environment pinning works by modifying your ~/.leaprc file and is dependent on the "+
       "absolute file path of your provider directory (pins don't apply if you move the directory)"
-    command :env do |c|
+    command [:env, :e] do |c|
       c.desc "List the available environments. The pinned environment, if any, will be marked with '*'. Will also set the pin if run with an environment argument."
       c.arg_name 'ENVIRONMENT', :optional => true
       c.command :ls do |ls|

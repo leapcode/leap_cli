@@ -3,7 +3,7 @@ module LeapCli
   module Commands
 
     desc "Compile generated files."
-    command :compile do |c|
+    command [:compile, :c] do |c|
       c.desc 'Compiles node configuration files into hiera files used for deployment.'
       c.arg_name 'ENVIRONMENT', :optional => true
       c.command :all do |all|

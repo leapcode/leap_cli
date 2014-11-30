@@ -5,7 +5,7 @@ module LeapCli
     desc 'Apply recipes to a node or set of nodes.'
     long_desc 'The FILTER can be the name of a node, service, or tag.'
     arg_name 'FILTER'
-    command :deploy do |c|
+    command [:deploy, :d] do |c|
 
       # --fast
       c.switch :fast, :desc => 'Makes the deploy command faster by skipping some slow steps. A "fast" deploy can be used safely if you recently completed a normal deploy.',

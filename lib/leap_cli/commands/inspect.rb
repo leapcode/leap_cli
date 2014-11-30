@@ -2,7 +2,7 @@ module LeapCli; module Commands
 
   desc 'Prints details about a file. Alternately, the argument FILE can be the name of a node, service or tag.'
   arg_name 'FILE'
-  command :inspect do |c|
+  command [:inspect, :i] do |c|
     c.switch 'base', :desc => 'Inspect the FILE from the provider_base (i.e. without local inheritance).', :negatable => false
     c.action do |global_options,options,args|
       object = args.first

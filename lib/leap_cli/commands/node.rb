@@ -12,7 +12,7 @@ module LeapCli; module Commands
   ##
 
   desc 'Node management'
-  command :node do |node|
+  command [:node, :n] do |node|
     node.desc 'Create a new configuration file for a node named NAME.'
     node.long_desc ["If specified, the optional argument SEED can be used to seed values in the node configuration file.",
                     "The format is property_name:value.",

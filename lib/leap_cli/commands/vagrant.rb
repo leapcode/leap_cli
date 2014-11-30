@@ -5,7 +5,7 @@ module LeapCli; module Commands
 
   desc "Manage local virtual machines."
   long_desc "This command provides a convient way to manage Vagrant-based virtual machines. If FILTER argument is missing, the command runs on all local virtual machines. The Vagrantfile is automatically generated in 'test/Vagrantfile'. If you want to run vagrant commands manually, cd to 'test'."
-  command :local do |local|
+  command [:local, :l] do |local|
     local.desc 'Starts up the virtual machine(s)'
     local.arg_name 'FILTER', :optional => true #, :multiple => false
     local.command :start do |start|

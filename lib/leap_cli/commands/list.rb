@@ -11,7 +11,7 @@ module LeapCli; module Commands
             "`leap list openvpn +local` matches all nodes with service \"openvpn\" AND tag \"local\""
 
   arg_name 'FILTER', :optional => true
-  command :list do |c|
+  command [:list,:ls] do |c|
     c.flag 'print', :desc => 'What attributes to print (optional)'
     c.switch 'disabled', :desc => 'Include disabled nodes in the list.', :negatable => false
     c.action do |global_options,options,args|

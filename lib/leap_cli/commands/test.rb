@@ -1,7 +1,7 @@
 module LeapCli; module Commands
 
   desc 'Run tests.'
-  command :test do |test|
+  command [:test, :t] do |test|
     test.desc 'Run the test suit on FILTER nodes.'
     test.arg_name 'FILTER', :optional => true
     test.command :run do |run|
