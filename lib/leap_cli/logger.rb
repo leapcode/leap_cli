@@ -154,7 +154,8 @@ module LeapCli
       { :match => /^(SKIP|WARN): /,         :color => :yellow,  :priority => -20},
 
       # LOG SUPPRESSION
-      { :match => /^warning: You cannot collect without storeconfigs being set/, :level => 2, :priority => 10}
+      { :match => /^warning: You cannot collect without storeconfigs being set/, :level => 2, :priority => 10},
+      { :match => /^warning: You cannot collect exported resources without storeconfigs being set/, :level => 2, :priority => 10}
     ]
 
     def self.sorted_formatters
