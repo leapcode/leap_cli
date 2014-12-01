@@ -86,7 +86,9 @@ module LeapCli
       if keys.empty?
         bail! "You must have at least one public SSH user key configured in order to proceed. See `leap help add-user`."
       end
-      keys << path(:monitor_pub_key)
+      if file_exists?(path(:monitor_pub_key))
+        keys << path(:monitor_pub_key)
+      end
       keys.sort.each do |keyfile|
         ssh_type, ssh_key = File.read(keyfile).strip.split(" ")
         buffer << ssh_type
