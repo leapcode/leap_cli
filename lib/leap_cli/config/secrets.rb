@@ -28,22 +28,29 @@ module LeapCli; module Config
     end
 
     #
-    # if only_discovered_keys is true, then we will only export
-    # those secrets that have been discovered and the prior ones will be cleaned out.
+    # if clean is true, then only secrets that have been discovered
+    # during this run will be exported.
     #
-    # this should only be triggered when all nodes have been processed, otherwise
-    # secrets that are actually in use will get mistakenly removed.
+    # if environment is also pinned, then we will clean those secrets
+    # just for that environment.
     #
-    def dump_json(only_discovered_keys=false)
-      if only_discovered_keys
+    # the clean argument should only be used when all nodes have
+    # been processed, otherwise secrets that are actually in use will
+    # get mistakenly removed.
+    #
+    def dump_json(clean=false)
+      pinned_env = LeapCli.leapfile.environment
+      if clean
         self.each_key do |environment|
-          self[environment].each_key do |key|
-            unless @discovered_keys[environment] && @discovered_keys[environment][key]
-              self[environment].delete(key)
+          if pinned_env.nil? || pinned_env == environment
+            self[environment].each_key do |key|
+              unless @discovered_keys[environment] && @discovered_keys[environment][key]
+                self[environment].delete(key)
+              end
             end
-          end
-          if self[environment].empty?
-            self.delete(environment)
+            if self[environment].empty?
+              self.delete(environment)
+            end
           end
         end
       end
