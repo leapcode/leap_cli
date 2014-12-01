@@ -152,6 +152,7 @@ module LeapCli
       { :match => /^PASS: /,                :color => :green,   :priority => -20},
       { :match => /^(FAIL|ERROR): /,        :color => :red,     :priority => -20},
       { :match => /^(SKIP|WARN): /,         :color => :yellow,  :priority => -20},
+      { :match => /\d+ tests: \d+ passes, \d+ skips, 0 warnings, 0 failures, 0 errors/, :color => :blue, :priority => -20},
 
       # LOG SUPPRESSION
       { :match => /^warning: You cannot collect without storeconfigs being set/, :level => 2, :priority => 10},
