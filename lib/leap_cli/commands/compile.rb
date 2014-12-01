@@ -64,7 +64,7 @@ module LeapCli
       unless file_exists?(priv_key_file, pub_key_file)
         ensure_dir(File.dirname(priv_key_file))
         ensure_dir(File.dirname(pub_key_file))
-        cmd = %(ssh-keygen -N '' -C 'monitor' -t ecdsa -b 521 -f '%s') % priv_key_file
+        cmd = %(ssh-keygen -N '' -C 'monitor' -t rsa -b 4096 -f '%s') % priv_key_file
         assert_run! cmd
         if file_exists?(priv_key_file, pub_key_file)
           log :created, priv_key_file
@@ -86,6 +86,7 @@ module LeapCli
       if keys.empty?
         bail! "You must have at least one public SSH user key configured in order to proceed. See `leap help add-user`."
       end
+      keys << path(:monitor_pub_key)
       keys.sort.each do |keyfile|
         ssh_type, ssh_key = File.read(keyfile).strip.split(" ")
         buffer << ssh_type
