@@ -238,8 +238,12 @@ module LeapCli; module Commands
     dns_names_for_node(node).each do |domain|
       if file_exists?([:commercial_cert, domain])
         cert = load_certificate_file([:commercial_cert, domain])
-        if cert.not_after < months_from_yesterday(2)
-          log :warning, "the commercial certificate '#{Path.relative_path([:commercial_cert, domain])}' will expire soon. "+
+        path = Path.relative_path([:commercial_cert, domain])
+        if cert.not_after < Time.now.utc
+          log :error, "the commercial certificate '#{path}' has EXPIRED! " +
+            "You should renew it with `leap cert csr --domain #{domain}`."
+        elsif cert.not_after < months_from_yesterday(2)
+          log :warning, "the commercial certificate '#{path}' will expire soon. "+
             "You should renew it with `leap cert csr --domain #{domain}`."
         end
       end
