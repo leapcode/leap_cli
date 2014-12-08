@@ -13,8 +13,12 @@ module LeapCli; module Commands
         end
         manager.filter!(args).names_in_test_dependency_order.each do |node_name|
           node = manager.nodes[node_name]
-          ssh_connect(node) do |ssh|
-            ssh.run(test_cmd(options))
+          begin
+            ssh_connect(node) do |ssh|
+              ssh.run(test_cmd(options))
+            end
+          rescue Capistrano::CommandError => exc
+            bail! unless options[:continue]
           end
         end
       end
