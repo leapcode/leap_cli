@@ -15,6 +15,7 @@ module LeapCli; module Commands
         if nodes.any?
           ssh_connect(nodes, connect_options(options)) do |ssh|
             ssh.run('/etc/init.d/bigcouch stop && test ! -z "$(ls /opt/bigcouch/var/lib/ 2> /dev/null)" && rm -r /opt/bigcouch/var/lib/* && echo "db destroyed" || echo "db already destroyed"')
+            ssh.run('grep ^seq_file /etc/leap/tapicero.yaml | cut -f2 -d\" | xargs rm -v')
           end
         else
           say 'No nodes'
