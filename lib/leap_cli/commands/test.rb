@@ -18,7 +18,11 @@ module LeapCli; module Commands
               ssh.run(test_cmd(options))
             end
           rescue Capistrano::CommandError => exc
-            bail! unless options[:continue]
+            if options[:continue]
+              exit_status(1)
+            else
+              bail!
+            end
           end
         end
       end

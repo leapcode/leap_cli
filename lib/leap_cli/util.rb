@@ -13,8 +13,14 @@ module LeapCli
     ##
 
     def exit_status(code=nil)
-      @exit_status = code if code
-      @exit_status
+      if !code.nil?
+        if code == 0 && @@exit_status.nil?
+          @@exit_status = 0
+        else
+          @@exit_status = code
+        end
+      end
+      @@exit_status
     end
 
     #
