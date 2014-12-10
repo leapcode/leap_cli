@@ -8,6 +8,8 @@ module LeapCli
   module Util
     extend self
 
+    @@exit_status = nil
+
     ##
     ## QUITTING
     ##
