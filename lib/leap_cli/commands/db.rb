@@ -17,6 +17,7 @@ module LeapCli; module Commands
             ssh.run('/etc/init.d/bigcouch stop && test ! -z "$(ls /opt/bigcouch/var/lib/ 2> /dev/null)" && rm -r /opt/bigcouch/var/lib/* && echo "db destroyed" || echo "db already destroyed"')
             ssh.run('grep ^seq_file /etc/leap/tapicero.yaml | cut -f2 -d\" | xargs rm -v')
           end
+          say 'You must run `leap deploy` in order to create the databases again.'
         else
           say 'No nodes'
         end
