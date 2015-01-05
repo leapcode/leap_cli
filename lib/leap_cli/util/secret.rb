@@ -8,7 +8,7 @@ autoload :OpenSSL, 'openssl'
 
 module LeapCli; module Util
   class Secret
-    CHARS = ('A'..'Z').to_a + ('a'..'z').to_a + ('0'..'9').to_a + "_".split(//u) - "io01lO".split(//u)
+    CHARS = (('A'..'Z').to_a + ('a'..'z').to_a + ('0'..'9').to_a) - "i1loO06G".split(//u)
     HEX = (0..9).to_a + ('a'..'f').to_a
 
     #
