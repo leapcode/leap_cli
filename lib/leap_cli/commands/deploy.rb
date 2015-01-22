@@ -177,17 +177,11 @@ module LeapCli
     #
     def sync_support_files(ssh)
       dest_dir = Leap::Platform.files_dir
-      source_files = []
-      if Path.defined?(:custom_puppet_dir) && file_exists?(:custom_puppet_dir)
-        source_files += [:custom_puppet_dir, :custom_puppet_modules_dir, :custom_puppet_manifests_dir].collect{|path|
-          Path.relative_path(path, Path.provider) + '/' # rsync needs trailing slash
-        }
-        ensure_dir :custom_puppet_modules_dir
-      end
+      custom_files = build_custom_file_list
       ssh.rsync.update do |server|
         node = manager.node(server.host)
         files_to_sync = node.file_paths.collect {|path| Path.relative_path(path, Path.provider) }
-        files_to_sync += source_files
+        files_to_sync += custom_files
         if files_to_sync.any?
           ssh.leap.log(files_to_sync.join(', ') + ' -> ' + node.name + ':' + dest_dir)
           {
@@ -280,6 +274,25 @@ module LeapCli
       end
       tags << 'leap_slow' unless options[:fast]
       tags.join(',')
+    end
+
+    #
+    # a provider might have various customization files that should be sync'ed to the server.
+    # this method builds that list of files to sync.
+    #
+    def build_custom_file_list
+      custom_files = []
+      Leap::Platform.paths.keys.grep(/^custom_/).each do |path|
+        if file_exists?(path)
+          relative_path = Path.relative_path(path, Path.provider)
+          if dir_exists?(path)
+            custom_files << relative_path + '/' # rsync needs trailing slash
+          else
+            custom_files << relative_path
+          end
+        end
+      end
+      return custom_files
     end
 
   end
