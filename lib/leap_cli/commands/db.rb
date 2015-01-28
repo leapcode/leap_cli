@@ -6,8 +6,10 @@ module LeapCli; module Commands
     db.arg_name 'FILTER', :optional => true
     db.command :destroy do |destroy|
       destroy.action do |global_options,options,args|
-        say 'You are about to permanently destroy all database data.'
-        return unless agree("Continue? ")
+        unless global_options[:yes]
+          say 'You are about to permanently destroy all database data.'
+          bail! unless agree("Continue? ")
+        end
         nodes = manager.filter(args)
         if nodes.any?
           nodes = nodes[:services => 'couchdb']
