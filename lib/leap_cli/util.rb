@@ -355,16 +355,12 @@ module LeapCli
     end
 
     #
-    # compares md5 fingerprints to see if the contents of a file match the string we have in memory
+    # compares md5 fingerprints to see if the contents of a file match the
+    # string we have in memory
     #
     def file_content_equals?(filepath, contents)
       filepath = Path.named_path(filepath)
-      output = `md5sum '#{filepath}'`.strip
-      if $?.to_i == 0
-        return output.split(" ").first == Digest::MD5.hexdigest(contents).to_s
-      else
-        return false
-      end
+      Digest::MD5.file(filepath).hexdigest == Digest::MD5.hexdigest(contents)
     end
 
     ##
