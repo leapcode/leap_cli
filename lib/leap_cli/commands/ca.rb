@@ -28,22 +28,7 @@ module LeapCli; module Commands
     cert.command :update do |update|
       update.switch 'force', :desc => 'Always generate new certificates', :negatable => false
       update.action do |global_options,options,args|
-        assert_files_exist! :ca_cert, :ca_key, :msg => 'Run `leap cert ca` to create them'
-        assert_config! 'provider.ca.server_certificates.bit_size'
-        assert_config! 'provider.ca.server_certificates.digest'
-        assert_config! 'provider.ca.server_certificates.life_span'
-        assert_config! 'common.x509.use'
-
-        nodes = manager.filter!(args)
-        nodes.each_node do |node|
-          warn_if_commercial_cert_will_soon_expire(node)
-          if !node.x509.use
-            remove_file!([:node_x509_key, node.name])
-            remove_file!([:node_x509_cert, node.name])
-          elsif options[:force] || cert_needs_updating?(node)
-            generate_cert_for_node(node)
-          end
-        end
+        update_certificates(manager.filter!(args), options)
       end
     end
 
@@ -139,7 +124,7 @@ module LeapCli; module Commands
             cert = csr.to_cert
             cert.serial_number.number = cert_serial_number(domain)
             cert.not_before = yesterday
-            cert.not_after  = years_from_yesterday(1)
+            cert.not_after  = yesterday.advance(:years => 1)
             cert.parent = ca_root
             cert.sign! domain_test_signing_profile
             write_file! [:commercial_cert, domain], cert.to_pem
@@ -154,6 +139,29 @@ module LeapCli; module Commands
             log "please also replace this file with the CA cert from the commercial authority you use."
           end
         end
+      end
+    end
+  end
+
+  protected
+
+  #
+  # will generate new certificates for the specified nodes, if needed.
+  #
+  def update_certificates(nodes, options={})
+    assert_files_exist! :ca_cert, :ca_key, :msg => 'Run `leap cert ca` to create them'
+    assert_config! 'provider.ca.server_certificates.bit_size'
+    assert_config! 'provider.ca.server_certificates.digest'
+    assert_config! 'provider.ca.server_certificates.life_span'
+    assert_config! 'common.x509.use'
+
+    nodes.each_node do |node|
+      warn_if_commercial_cert_will_soon_expire(node)
+      if !node.x509.use
+        remove_file!([:node_x509_key, node.name])
+        remove_file!([:node_x509_cert, node.name])
+      elsif options[:force] || cert_needs_updating?(node)
+        generate_cert_for_node(node)
       end
     end
   end
@@ -179,7 +187,7 @@ module LeapCli; module Commands
 
     # set expiration
     root.not_before = yesterday
-    root.not_after = years_from_yesterday(provider.ca.life_span.to_i)
+    root.not_after = yesterday_advance(provider.ca.life_span)
 
     # generate private key
     root.serial_number.number = 1
@@ -203,7 +211,7 @@ module LeapCli; module Commands
       return true
     else
       cert = load_certificate_file([:node_x509_cert, node.name])
-      if cert.not_after < months_from_yesterday(2)
+      if cert.not_after < Time.now.advance(:months => 2)
         log :updating, "cert for node '#{node.name}' because it will expire soon"
         return true
       end
@@ -242,7 +250,7 @@ module LeapCli; module Commands
         if cert.not_after < Time.now.utc
           log :error, "the commercial certificate '#{path}' has EXPIRED! " +
             "You should renew it with `leap cert csr --domain #{domain}`."
-        elsif cert.not_after < months_from_yesterday(2)
+        elsif cert.not_after < Time.now.advance(:months => 2)
           log :warning, "the commercial certificate '#{path}' will expire soon. "+
             "You should renew it with `leap cert csr --domain #{domain}`."
         end
@@ -261,7 +269,7 @@ module LeapCli; module Commands
 
     # set expiration
     cert.not_before = yesterday
-    cert.not_after = years_from_yesterday(provider.ca.server_certificates.life_span.to_i)
+    cert.not_after = yesterday_advance(provider.ca.server_certificates.life_span)
 
     # generate key
     cert.key_material.generate_key(provider.ca.server_certificates.bit_size)
@@ -283,7 +291,7 @@ module LeapCli; module Commands
     cert.serial_number.number = cert_serial_number(provider.domain)
     cert.subject.common_name = [prefix, random_common_name(provider.domain)].join
     cert.not_before = yesterday
-    cert.not_after  = years_from_yesterday(1)
+    cert.not_after  = yesterday.advance(:years => 1)
     cert.key_material.generate_key(1024) # just for testing, remember!
     cert.parent = client_ca_root
     cert.sign! client_test_signing_profile
@@ -492,16 +500,15 @@ module LeapCli; module Commands
     Time.utc t.year, t.month, t.day
   end
 
-  def years_from_yesterday(num)
-    t = yesterday
-    Time.utc t.year + num, t.month, t.day
-  end
-
-  def months_from_yesterday(num)
-    t = yesterday
-    date = Date.new t.year, t.month, t.day
-    date = date >> num  # >> is months in the future operator
-    Time.utc date.year, date.month, date.day
+  def yesterday_advance(string)
+    number, unit = string.split(' ')
+    unless ['years', 'months', 'days', 'hours', 'minutes'].include? unit
+      bail("The time property '#{string}' is missing a unit (one of: years, months, days, hours, minutes).")
+    end
+    unless number.to_i.to_s == number
+      bail("The time property '#{string}' is missing a number.")
+    end
+    yesterday.advance(unit.to_sym => number.to_i)
   end
 
 end; end

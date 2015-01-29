@@ -54,6 +54,8 @@ module LeapCli
         # compile hiera files for all the nodes in every environment that is
         # being deployed and only those environments.
         compile_hiera_files(manager.filter(environments))
+        # update server certificates if needed
+        update_certificates(nodes)
 
         ssh_connect(nodes, connect_options(options)) do |ssh|
           ssh.leap.log :checking, 'node' do

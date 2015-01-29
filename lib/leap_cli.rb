@@ -26,6 +26,7 @@ require 'leap_cli/core_ext/nil'
 require 'leap_cli/core_ext/string'
 require 'leap_cli/core_ext/json'
 require 'leap_cli/core_ext/yaml'
+require 'leap_cli/core_ext/time'
 
 require 'leap_cli/log'
 require 'leap_cli/path'
