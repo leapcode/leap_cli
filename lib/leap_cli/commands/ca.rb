@@ -503,10 +503,10 @@ module LeapCli; module Commands
   def yesterday_advance(string)
     number, unit = string.split(' ')
     unless ['years', 'months', 'days', 'hours', 'minutes'].include? unit
-      bail("The time property '#{string}' is missing a unit (one of: years, months, days, hours, minutes).")
+      bail!("The time property '#{string}' is missing a unit (one of: years, months, days, hours, minutes).")
     end
     unless number.to_i.to_s == number
-      bail("The time property '#{string}' is missing a number.")
+      bail!("The time property '#{string}' is missing a number.")
     end
     yesterday.advance(unit.to_sym => number.to_i)
   end
