@@ -11,6 +11,7 @@ else
 end
 
 LEAP_CLI_BASE_DIR = File.expand_path('..', File.dirname(File.symlink?(__FILE__) ? File.readlink(__FILE__) : __FILE__))
+ORIGINAL_ARGV = ARGV.dup
 
 begin
   require 'leap_cli'
@@ -100,7 +101,6 @@ module LeapCli::Commands
   commands_from('leap_cli/commands')
 
   # run command
-  ORIGINAL_ARGV = ARGV.dup
   begin
     exit_status = run(ARGV)
     exit(LeapCli::Util.exit_status || exit_status)
