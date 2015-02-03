@@ -72,7 +72,8 @@ module LeapCli
         unless @platform_branch.nil?
           Util::log 0, :warning, "in Leapfile: @platform_branch is no longer supported."
         end
-        return true
+        @valid = true
+        return @valid
       end
     end
 
@@ -82,6 +83,10 @@ module LeapCli
 
     def unset(property)
       edit_leaprc(property)
+    end
+
+    def valid?
+      !!@valid
     end
 
     private

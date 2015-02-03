@@ -28,38 +28,44 @@ module LeapCli; module Commands
   switch 'color', :negatable => true
 
   pre do |global,command,options,args|
-    #
-    # set verbosity
-    #
-    LeapCli.set_log_level(global[:verbose].to_i)
-
-    #
-    # load Leapfile
-    #
-    unless LeapCli.leapfile.load
-      bail! { log :missing, 'Leapfile in directory tree' }
-    end
-    Path.set_platform_path(LeapCli.leapfile.platform_directory_path)
-    Path.set_provider_path(LeapCli.leapfile.provider_directory_path)
-    if !Path.provider || !File.directory?(Path.provider)
-      bail! { log :missing, "provider directory '#{Path.provider}'" }
-    end
-    if !Path.platform || !File.directory?(Path.platform)
-      bail! { log :missing, "platform directory '#{Path.platform}'" }
-    end
-
-    #
-    # set log file
-    #
-    LeapCli.log_file = global[:log] || LeapCli.leapfile.log
-    LeapCli::Util.log_raw(:log) { $0 + ' ' + ORIGINAL_ARGV.join(' ')}
-    log_version
-    LeapCli.log_in_color = global[:color]
-
+    initialize_leap_cli(true, global)
     true
   end
 
-  private
+  protected
+
+  #
+  # available options:
+  #  :verbose -- integer log verbosity level
+  #  :log     -- log file path
+  #  :color   -- true or false, to log in color or not.
+  #
+  def initialize_leap_cli(require_provider, options={})
+    # set verbosity
+    options[:verbose] ||= 1
+    LeapCli.set_log_level(options[:verbose].to_i)
+
+    # load Leapfile
+    LeapCli.leapfile.load
+    if LeapCli.leapfile.valid?
+      Path.set_platform_path(LeapCli.leapfile.platform_directory_path)
+      Path.set_provider_path(LeapCli.leapfile.provider_directory_path)
+      if !Path.provider || !File.directory?(Path.provider)
+        bail! { log :missing, "provider directory '#{Path.provider}'" }
+      end
+      if !Path.platform || !File.directory?(Path.platform)
+        bail! { log :missing, "platform directory '#{Path.platform}'" }
+      end
+    elsif require_provider
+      bail! { log :missing, 'Leapfile in directory tree' }
+    end
+
+    # set log file
+    LeapCli.log_file = options[:log] || LeapCli.leapfile.log
+    LeapCli::Util.log_raw(:log) { $0 + ' ' + ORIGINAL_ARGV.join(' ')}
+    log_version
+    LeapCli.log_in_color = options[:color]
+  end
 
   #
   # add a log entry for the leap command and leap platform versions
@@ -67,18 +73,21 @@ module LeapCli; module Commands
   def log_version
     if LeapCli.log_level >= 2
       str = "leap command v#{LeapCli::VERSION}"
-      cli_dir = File.dirname(__FILE__)
-      if Util.is_git_directory?(cli_dir)
-        str << " (%s %s)" % [Util.current_git_branch(cli_dir), Util.current_git_commit(cli_dir)]
+      if Util.is_git_directory?(LEAP_CLI_BASE_DIR)
+        str << " (%s %s)" % [Util.current_git_branch(LEAP_CLI_BASE_DIR),
+          Util.current_git_commit(LEAP_CLI_BASE_DIR)]
+      else
+        str << " (%s)" % LEAP_CLI_BASE_DIR
       end
       log 2, str
-      str = "leap platform v#{Leap::Platform.version}"
-      if Util.is_git_directory?(Path.platform)
-        str << " (%s %s)" % [Util.current_git_branch(Path.platform), Util.current_git_commit(Path.platform)]
+      if LeapCli.leapfile.valid?
+        str = "leap platform v#{Leap::Platform.version}"
+        if Util.is_git_directory?(Path.platform)
+          str << " (%s %s)" % [Util.current_git_branch(Path.platform), Util.current_git_commit(Path.platform)]
+        end
+        log 2, str
       end
-      log 2, str
     end
   end
-
 
 end; end

@@ -10,6 +10,8 @@ else
   DEBUG=false
 end
 
+LEAP_CLI_BASE_DIR = File.expand_path('..', File.dirname(File.symlink?(__FILE__) ? File.readlink(__FILE__) : __FILE__))
+
 begin
   require 'leap_cli'
 rescue LoadError
@@ -24,8 +26,7 @@ rescue LoadError
   # This allows you to run the command directly while developing the gem, and also lets you
   # run from anywhere (I like to link 'bin/leap' to /usr/local/bin/leap).
   #
-  base_dir = File.expand_path('..', File.dirname(File.symlink?(__FILE__) ? File.readlink(__FILE__) : __FILE__))
-  require File.join(base_dir, 'lib','leap_cli','load_paths')
+  require File.join(LEAP_CLI_BASE_DIR, 'lib','leap_cli','load_paths')
   require 'leap_cli'
 end
 
@@ -77,9 +78,16 @@ module LeapCli::Commands
   program_desc       LeapCli::SUMMARY
   program_long_desc  LeapCli::DESCRIPTION
 
-  # handle --version ourselves
+  # handle --version ourselves (and not GLI)
   if ARGV.grep(/--version/).any?
     puts "leap #{LeapCli::VERSION}, ruby #{RUBY_VERSION}"
+    begin
+      commands_from('leap_cli/commands')
+      initialize_leap_cli(false, {:verbose => 2})
+    rescue StandardError => exc
+      puts exc.to_s
+      raise exc if DEBUG
+    end
     exit(0)
   end
 
@@ -88,8 +96,10 @@ module LeapCli::Commands
   def error_message(msg)
   end
 
-  # load commands and run
+  # load commands
   commands_from('leap_cli/commands')
+
+  # run command
   ORIGINAL_ARGV = ARGV.dup
   begin
     exit_status = run(ARGV)
