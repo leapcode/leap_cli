@@ -111,32 +111,23 @@ module LeapCli; module Commands
   def vagrant_setup
     assert_bin! 'vagrant', 'Vagrant is required for running local virtual machines. Run "sudo apt-get install vagrant".'
 
-    version = vagrant_version
-    case version
-      when 0..1
-        gem_path = assert_run!('vagrant gem which sahara')
-        if gem_path.nil? || gem_path.empty? || gem_path =~ /^ERROR/
-          log :installing, "vagrant plugin 'sahara'"
-          assert_run! 'vagrant gem install sahara -v 0.0.13'
-          # (sahara versions above 0.0.13 require vagrant > 1.0)
-        end
-      when 2
-        unless assert_run!('vagrant plugin list | grep sahara | cat').chars.any?
-          log :installing, "vagrant plugin 'sahara'"
-          assert_run! 'vagrant plugin install sahara'
-        end
+    if vagrant_version <= Gem::Version.new('1.0.0')
+      gem_path = assert_run!('vagrant gem which sahara')
+      if gem_path.nil? || gem_path.empty? || gem_path =~ /^ERROR/
+        log :installing, "vagrant plugin 'sahara'"
+        assert_run! 'vagrant gem install sahara -v 0.0.13'
+      end
+    else
+      unless assert_run!('vagrant plugin list | grep sahara | cat').chars.any?
+        log :installing, "vagrant plugin 'sahara'"
+        assert_run! 'vagrant plugin install sahara'
+      end
     end
     create_vagrant_file
   end
 
   def vagrant_version
-    minor_version = `vagrant --version | rev | cut -d'.' -f 2`.to_i
-    version = case minor_version
-      when 1..9 then 2
-      when 0    then 1
-      else 0
-    end
-    return version
+    @vagrant_version ||= Gem::Version.new(assert_run!('vagrant --version').split(' ')[1])
   end
 
   def execute(cmd)
@@ -148,38 +139,36 @@ module LeapCli; module Commands
     lines = []
     netmask = IPAddr.new('255.255.255.255').mask(LeapCli.leapfile.vagrant_network.split('/').last).to_s
 
-    version = vagrant_version
-    case version
-      when 0..1
-        lines << %[Vagrant::Config.run do |config|]
-        manager.each_node do |node|
-          if node.vagrant?
-            lines << %[  config.vm.define :#{node.name} do |config|]
-            lines << %[    config.vm.box = "leap-wheezy"]
-            lines << %[    config.vm.box_url = "https://downloads.leap.se/platform/vagrant/virtualbox/leap-wheezy.box"]
-            lines << %[    config.vm.network :hostonly, "#{node.ip_address}", :netmask => "#{netmask}"]
-            lines << %[    config.vm.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]]
-            lines << %[    config.vm.customize ["modifyvm", :id, "--name", "#{node.name}"]]
-            lines << %[    #{leapfile.custom_vagrant_vm_line}] if leapfile.custom_vagrant_vm_line
-            lines << %[  end]
-          end
+    if vagrant_version <= Gem::Version.new('1.1.0')
+      lines << %[Vagrant::Config.run do |config|]
+      manager.each_node do |node|
+        if node.vagrant?
+          lines << %[  config.vm.define :#{node.name} do |config|]
+          lines << %[    config.vm.box = "leap-wheezy"]
+          lines << %[    config.vm.box_url = "https://downloads.leap.se/platform/vagrant/virtualbox/leap-wheezy.box"]
+          lines << %[    config.vm.network :hostonly, "#{node.ip_address}", :netmask => "#{netmask}"]
+          lines << %[    config.vm.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]]
+          lines << %[    config.vm.customize ["modifyvm", :id, "--name", "#{node.name}"]]
+          lines << %[    #{leapfile.custom_vagrant_vm_line}] if leapfile.custom_vagrant_vm_line
+          lines << %[  end]
         end
-      when 2
-        lines << %[Vagrant.configure("2") do |config|]
-        manager.each_node do |node|
-          if node.vagrant?
-            lines << %[  config.vm.define :#{node.name} do |config|]
-            lines << %[    config.vm.box = "leap-wheezy"]
-            lines << %[    config.vm.box_url = "https://downloads.leap.se/platform/vagrant/virtualbox/leap-wheezy.box"]
-            lines << %[    config.vm.network :private_network, ip: "#{node.ip_address}"]
-            lines << %[    config.vm.provider "virtualbox" do |v|]
-            lines << %[      v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]]
-            lines << %[      v.name = "#{node.name}"]
-            lines << %[    end]
-            lines << %[    #{leapfile.custom_vagrant_vm_line}] if leapfile.custom_vagrant_vm_line
-            lines << %[  end]
-          end
+      end
+    else
+      lines << %[Vagrant.configure("2") do |config|]
+      manager.each_node do |node|
+        if node.vagrant?
+          lines << %[  config.vm.define :#{node.name} do |config|]
+          lines << %[    config.vm.box = "leap-wheezy"]
+          lines << %[    config.vm.box_url = "https://downloads.leap.se/platform/vagrant/virtualbox/leap-wheezy.box"]
+          lines << %[    config.vm.network :private_network, ip: "#{node.ip_address}"]
+          lines << %[    config.vm.provider "virtualbox" do |v|]
+          lines << %[      v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]]
+          lines << %[      v.name = "#{node.name}"]
+          lines << %[    end]
+          lines << %[    #{leapfile.custom_vagrant_vm_line}] if leapfile.custom_vagrant_vm_line
+          lines << %[  end]
         end
+      end
     end
 
     lines << %[end]
