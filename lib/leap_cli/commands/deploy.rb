@@ -1,3 +1,4 @@
+require 'etc'
 
 module LeapCli
   module Commands
@@ -7,20 +8,17 @@ module LeapCli
     arg_name 'FILTER'
     command [:deploy, :d] do |c|
 
-      # --fast
       c.switch :fast, :desc => 'Makes the deploy command faster by skipping some slow steps. A "fast" deploy can be used safely if you recently completed a normal deploy.',
                       :negatable => false
 
-      # --sync
-      c.switch :sync, :desc => "Sync files, but don't actually apply recipes."
+      c.switch :sync, :desc => "Sync files, but don't actually apply recipes.", :negatable => false
 
-      # --force
       c.switch :force, :desc => 'Deploy even if there is a lockfile.', :negatable => false
 
-      # --dev
+      c.switch :downgrade, :desc => 'Allows deploy to run with an older platform version.', :negatable => false
+
       c.switch :dev, :desc => "Development mode: don't run 'git submodule update' before deploy.", :negatable => false
 
-      # --tags
       c.flag :tags, :desc => 'Specify tags to pass through to puppet (overriding the default).',
                     :arg_name => 'TAG[,TAG]'
 
@@ -71,7 +69,12 @@ module LeapCli
           end
           unless options[:sync]
             ssh.leap.log :applying, "puppet" do
-              ssh.puppet.apply(:verbosity => [LeapCli.log_level,5].min, :tags => tags(options), :force => options[:force])
+              ssh.puppet.apply(:verbosity => [LeapCli.log_level,5].min,
+                :tags => tags(options),
+                :force => options[:force],
+                :info => deploy_info,
+                :downgrade => options[:downgrade]
+              )
             end
           end
         end
@@ -297,5 +300,28 @@ module LeapCli
       return custom_files
     end
 
+    def deploy_info
+      info = []
+      info << "user: %s" % Etc.getpwuid(Process.euid).name
+      if is_git_directory?(Path.platform) && current_git_branch(Path.platform) != 'master'
+        info << "platform: %s (%s %s)" % [
+          Leap::Platform.version,
+          current_git_branch(Path.platform),
+          current_git_commit(Path.platform)[0..4]
+        ]
+      else
+        info << "platform: %s" % Leap::Platform.version
+      end
+      if is_git_directory?(LEAP_CLI_BASE_DIR)
+        info << "leap_cli: %s (%s %s)" % [
+          LeapCli::VERSION,
+          current_git_branch(LEAP_CLI_BASE_DIR),
+          current_git_commit(LEAP_CLI_BASE_DIR)[0..4]
+        ]
+      else
+        info << "leap_cli: %s" % LeapCli::VERSION
+      end
+      info.join(', ')
+    end
   end
 end
