@@ -216,7 +216,7 @@ module LeapCli; module Commands
         return true
       end
       if cert.subject.common_name != node.domain.full
-        log :updating, "cert for node '#{node.name}' because domain.full has changed"
+        log :updating, "cert for node '#{node.name}' because domain.full has changed (was #{cert.subject.common_name}, now #{node.domain.full})"
         return true
       end
       cert.openssl_body.extensions.each do |ext|
