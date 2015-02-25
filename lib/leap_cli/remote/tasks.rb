@@ -34,10 +34,11 @@ BAD_APT_GET_UPDATE = /(BADSIG|NO_PUBKEY|KEYEXPIRED|REVKEYSIG|NODATA)/
 
 task :install_prerequisites, :max_hosts => MAX_HOSTS do
   apt_get = "DEBIAN_FRONTEND=noninteractive apt-get -q -y -o DPkg::Options::=--force-confold"
+  apt_get_update = "apt-get update -o Acquire::Languages=none"
   leap.mkdirs Leap::Platform.leap_dir
   run "echo 'en_US.UTF-8 UTF-8' > /etc/locale.gen"
   leap.log :updating, "package list" do
-    run "apt-get update" do |channel, stream, data|
+    run apt_get_update do |channel, stream, data|
       # sadly exitcode is unreliable measure if apt-get update hit a failure.
       if data =~ BAD_APT_GET_UPDATE
         LeapCli::Util.bail! do
