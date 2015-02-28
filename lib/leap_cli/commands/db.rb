@@ -2,22 +2,30 @@ module LeapCli; module Commands
 
   desc 'Database commands.'
   command :db do |db|
-    db.desc 'Destroy all the databases. If present, limit to FILTER nodes.'
+    db.desc 'Destroy one or more databases. If present, limit to FILTER nodes. For example `leap db destroy --db sessions,tokens testing`.'
     db.arg_name 'FILTER', :optional => true
     db.command :destroy do |destroy|
+      destroy.flag :db, :arg_name => "DATABASES", :desc => 'Comma separated list of databases to destroy (no space). Use "--db all" to destroy all databases.', :optional => false
       destroy.action do |global_options,options,args|
-        unless global_options[:yes]
-          say 'You are about to permanently destroy all database data.'
-          bail! unless agree("Continue? ")
-        end
+        dbs = (options[:db]||"").split(',')
+        bail!('No databases specified') if dbs.empty?
         nodes = manager.filter(args)
         if nodes.any?
           nodes = nodes[:services => 'couchdb']
         end
         if nodes.any?
-          ssh_connect(nodes, connect_options(options)) do |ssh|
-            ssh.run('/etc/init.d/bigcouch stop && test ! -z "$(ls /opt/bigcouch/var/lib/ 2> /dev/null)" && rm -r /opt/bigcouch/var/lib/* && echo "db destroyed" || echo "db already destroyed"')
-            ssh.run('grep ^seq_file /etc/leap/tapicero.yaml | cut -f2 -d\" | xargs rm -v')
+          unless global_options[:yes]
+            if dbs.include?('all')
+              say 'You are about to permanently destroy all database data for nodes [%s].' % nodes.keys.join(', ')
+            else
+              say 'You are about to permanently destroy databases [%s] for nodes [%s].' % [dbs.join(', '), nodes.keys.join(', ')]
+            end
+            bail! unless agree("Continue? ")
+          end
+          if dbs.include?('all')
+            destroy_all_dbs(nodes)
+          else
+            destroy_dbs(nodes, dbs)
           end
           say 'You must run `leap deploy` in order to create the databases again.'
         else
@@ -28,5 +36,30 @@ module LeapCli; module Commands
   end
 
   private
+
+  def destroy_all_dbs(nodes)
+    ssh_connect(nodes) do |ssh|
+      ssh.run('/etc/init.d/bigcouch stop && test ! -z "$(ls /opt/bigcouch/var/lib/ 2> /dev/null)" && rm -r /opt/bigcouch/var/lib/* && echo "db destroyed" || echo "db already destroyed"')
+      ssh.run('grep ^seq_file /etc/leap/tapicero.yaml | cut -f2 -d\" | xargs rm -v')
+    end
+  end
+
+  def destroy_dbs(nodes, dbs)
+    nodes.each_node do |node|
+      ssh_connect(node) do |ssh|
+        dbs.each do |db|
+          ssh.run(DESTROY_DB_COMMAND % {:db => db})
+        end
+      end
+    end
+  end
+
+  DESTROY_DB_COMMAND = %{
+if [ 200 = `curl -ns -w "%%{http_code}" -X GET "127.0.0.1:5984/%{db}" -o /dev/null` ]; then
+  echo "Result from DELETE /%{db}:" `curl -ns -X DELETE "127.0.0.1:5984/%{db}"`;
+else
+  echo "Skipping db '%{db}': it does not exist or has already been deleted.";
+fi
+}
 
 end; end
