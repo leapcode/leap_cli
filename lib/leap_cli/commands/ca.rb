@@ -32,7 +32,7 @@ module LeapCli; module Commands
       end
     end
 
-    cert.desc 'Creates a Diffie-Hellman parameter file.' # (needed for server-side of some TLS connections)
+    cert.desc 'Creates a Diffie-Hellman parameter file, needed for forward secret OpenVPN ciphers.' # (needed for server-side of some TLS connections)
     cert.command :dh do |dh|
       dh.action do |global_options,options,args|
         long_running do
