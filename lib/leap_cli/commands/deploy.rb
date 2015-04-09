@@ -84,6 +84,22 @@ module LeapCli
       end
     end
 
+    desc 'Display recent deployment history for a set of nodes.'
+    long_desc 'The FILTER can be the name of a node, service, or tag.'
+    arg_name 'FILTER'
+    command [:history, :h] do |c|
+      c.flag :port, :desc => 'Override the default SSH port.',
+                    :arg_name => 'PORT'
+      c.flag :ip,   :desc => 'Override the default SSH IP address.',
+                    :arg_name => 'IPADDRESS'
+      c.action do |global,options,args|
+        nodes = manager.filter!(args)
+        ssh_connect(nodes, connect_options(options)) do |ssh|
+          ssh.leap.history
+        end
+      end
+    end
+
     private
 
     #
