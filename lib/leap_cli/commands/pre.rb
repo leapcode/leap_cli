@@ -9,25 +9,31 @@ module LeapCli; module Commands
   default_value '1'
   flag [:v, :verbose]
 
-  desc 'Override default log file'
+  desc 'Override default log file.'
   arg_name 'FILE'
   default_value nil
   flag :log
 
-  desc 'Display version number and exit'
+  desc 'Display version number and exit.'
   switch :version, :negatable => false
 
-  desc 'Skip prompts and assume "yes"'
+  desc 'Skip prompts and assume "yes".'
   switch :yes, :negatable => false
+
+  desc 'Like --yes, but also skip prompts that are potentially dangerous to skip.'
+  switch :force, :negatable => false
 
   desc 'Print full stack trace for exceptions and load `debugger` gem if installed.'
   switch [:d, :debug], :negatable => false
 
-  desc 'Disable colors in output'
+  desc 'Disable colors in output.'
   default_value true
   switch 'color', :negatable => true
 
   pre do |global,command,options,args|
+    if global[:force]
+      global[:yes] = true
+    end
     initialize_leap_cli(true, global)
     true
   end

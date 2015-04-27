@@ -47,7 +47,7 @@ module LeapCli
           environments = [nil]
         end
         environments.each do |env|
-          check_platform_pinning(env)
+          check_platform_pinning(env, global)
         end
         # compile hiera files for all the nodes in every environment that is
         # being deployed and only those environments.
@@ -102,6 +102,16 @@ module LeapCli
 
     private
 
+    def forcible_prompt(forced, msg, prompt)
+      say(msg)
+      if forced
+        log :warning, "continuing anyway because of --force"
+      else
+        say "hint: use --force to skip this prompt."
+        quit!("OK. Bye.") unless agree(prompt)
+      end
+    end
+
     #
     # The currently activated provider.json could have loaded some pinning
     # information for the platform. If this is the case, refuse to deploy
@@ -115,7 +125,7 @@ module LeapCli
     #   "commit": "e1d6280e0a8c565b7fb1a4ed3969ea6fea31a5e2..HEAD"
     # }
     #
-    def check_platform_pinning(environment)
+    def check_platform_pinning(environment, global_options)
       provider = manager.env(environment).provider
       return unless provider['platform']
 
@@ -133,34 +143,46 @@ module LeapCli
       # check version
       if provider.platform['version']
         if !Leap::Platform.version_in_range?(provider.platform.version)
-          say("The platform is pinned to a version range of '#{provider.platform.version}' "+
-            "by the `platform.version` property in #{provider_json}, but the platform "+
-            "(#{Path.platform}) has version #{Leap::Platform.version}.")
-          quit!("OK. Bye.") unless agree("Do you really want to deploy from the wrong version? ")
+          forcible_prompt(
+            global_options[:force],
+            "The platform is pinned to a version range of '#{provider.platform.version}' "+
+              "by the `platform.version` property in #{provider_json}, but the platform "+
+              "(#{Path.platform}) has version #{Leap::Platform.version}.",
+            "Do you really want to deploy from the wrong version? "
+          )
         end
       end
 
       # check branch
       if provider.platform['branch']
         if !is_git_directory?(Path.platform)
-          say("The platform is pinned to a particular branch by the `platform.branch` property "+
-            "in #{provider_json}, but the platform directory (#{Path.platform}) is not a git repository.")
-          quit!("OK. Bye.") unless agree("Do you really want to deploy anyway? ")
+          forcible_prompt(
+            global_options[:force],
+            "The platform is pinned to a particular branch by the `platform.branch` property "+
+              "in #{provider_json}, but the platform directory (#{Path.platform}) is not a git repository.",
+            "Do you really want to deploy anyway? "
+          )
         end
         unless provider.platform.branch == current_git_branch(Path.platform)
-          say("The platform is pinned to branch '#{provider.platform.branch}' by the `platform.branch` property "+
-            "in #{provider_json}, but the current branch is '#{current_git_branch(Path.platform)}' " +
-            "(for directory '#{Path.platform}')")
-          quit!("OK. Bye.") unless agree("Do you really want to deploy from the wrong branch? ")
+          forcible_prompt(
+            global_options[:force],
+            "The platform is pinned to branch '#{provider.platform.branch}' by the `platform.branch` property "+
+              "in #{provider_json}, but the current branch is '#{current_git_branch(Path.platform)}' " +
+              "(for directory '#{Path.platform}')",
+            "Do you really want to deploy from the wrong branch? "
+          )
         end
       end
 
       # check commit
       if provider.platform['commit']
         if !is_git_directory?(Path.platform)
-          say("The platform is pinned to a particular commit range by the `platform.commit` property "+
-            "in #{provider_json}, but the platform directory (#{Path.platform}) is not a git repository.")
-          quit!("OK. Bye.") unless agree("Do you really want to deploy anyway? ")
+          forcible_prompt(
+            global_options[:force],
+            "The platform is pinned to a particular commit range by the `platform.commit` property "+
+              "in #{provider_json}, but the platform directory (#{Path.platform}) is not a git repository.",
+            "Do you really want to deploy anyway? "
+          )
         end
         current_commit = current_git_commit(Path.platform)
         Dir.chdir(Path.platform) do
@@ -171,10 +193,13 @@ module LeapCli
           commit_range = commit_range.split("\n")
           if !commit_range.include?(current_commit) &&
               provider.platform.commit.split('..').first != current_commit
-            say("The platform is pinned via the `platform.commit` property in #{provider_json} " +
-              "to a commit in the range #{provider.platform.commit}, but the current HEAD " +
-              "(#{current_commit}) is not in that range.")
-            quit!("OK. Bye.") unless agree("Do you really want to deploy from the wrong commit? ")
+            forcible_prompt(
+              global_options[:force],
+              "The platform is pinned via the `platform.commit` property in #{provider_json} " +
+                "to a commit in the range #{provider.platform.commit}, but the current HEAD " +
+                "(#{current_commit}) is not in that range.",
+              "Do you really want to deploy from the wrong commit? "
+            )
           end
         end
       end
