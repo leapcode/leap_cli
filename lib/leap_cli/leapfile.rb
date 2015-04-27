@@ -47,6 +47,12 @@ module LeapCli
         # set up paths
         #
         @provider_directory_path = directory
+        begin
+          # load leaprc first, so that we can potentially access which environment is pinned in Leapfile
+          # but also load leaprc last, so that it can override what is set in Leapfile.
+          read_settings(leaprc_path)
+        rescue StandardError
+        end
         read_settings(directory + '/Leapfile')
         read_settings(leaprc_path)
         @platform_directory_path = File.expand_path(@platform_directory_path || '../leap_platform', @provider_directory_path)
@@ -54,6 +60,10 @@ module LeapCli
         #
         # load the platform
         #
+        platform_file = "#{@platform_directory_path}/platform.rb"
+        unless File.exists?(platform_file)
+          Util.bail! "ERROR: The file `#{platform_file}` does not exist. Please check the value of `@platform_directory_path` in `Leapfile` or `~/.leaprc`."
+        end
         require "#{@platform_directory_path}/platform.rb"
         if !Leap::Platform.compatible_with_cli?(LeapCli::VERSION)
           Util.bail! "This leap command (v#{LeapCli::VERSION}) " +
