@@ -12,8 +12,12 @@ module LeapCli
           if !LeapCli.leapfile.environment.nil? && !environment.nil? && environment != LeapCli.leapfile.environment
             bail! "You cannot specify an ENVIRONMENT argument while the environment is pinned."
           end
-          if environment && manager.environment_names.include?(environment)
-            compile_hiera_files(manager.filter([environment]))
+          if environment
+            if manager.environment_names.include?(environment)
+              compile_hiera_files(manager.filter([environment]))
+            else
+              bail! "There is no environment named `#{environment}`."
+            end
           else
             compile_hiera_files(manager.filter)
           end
