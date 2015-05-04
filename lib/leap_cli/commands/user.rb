@@ -100,9 +100,9 @@ module LeapCli
     #
     def pick_pgp_key
       begin
-        return unless `which gpg`.strip.any?
         require 'gpgme'
       rescue LoadError
+        log "Skipping OpenPGP setup because gpgme is not installed."
         return
       end
 

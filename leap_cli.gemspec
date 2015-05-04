@@ -64,7 +64,8 @@ spec = Gem::Specification.new do |s|
   # crypto gems
   #s.add_runtime_dependency('certificate_authority', '>= 0.2.0')
   # ^^ currently vendored
-  s.add_runtime_dependency('gpgme')     # not essential, but used for some minor stuff in adding sysadmins
+  # s.add_runtime_dependency('gpgme')    # << does not build on debian jessie, so now optional.
+                                         # also, there is a ruby-gpgme package anyway.
 
   # misc gems
   s.add_runtime_dependency('ya2yaml')    # pure ruby yaml, so we can better control output. see https://github.com/afunai/ya2yaml
