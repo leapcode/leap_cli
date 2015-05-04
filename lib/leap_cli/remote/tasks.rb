@@ -58,7 +58,7 @@ task :install_prerequisites, :max_hosts => MAX_HOSTS do
     run "( test -f /etc/init.d/ntp && /etc/init.d/ntp start ) || true"
   end
   leap.log :installing, "required packages" do
-    run "#{apt_get} install #{leap.required_packages}"
+    run %[#{apt_get} install $( (grep -q wheezy /etc/debian_version && echo #{leap.required_wheezy_packages}) || echo #{leap.required_packages} )]
   end
   #run "locale-gen"
   leap.mkdirs("/etc/leap", "/srv/leap")

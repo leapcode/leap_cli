@@ -6,6 +6,10 @@
 module LeapCli; module Remote; module LeapPlugin
 
   def required_packages
+    "puppet rsync lsb-release locales"
+  end
+
+  def required_wheezy_packages
     "puppet ruby-hiera-puppet rsync lsb-release locales"
   end
 
