@@ -10,6 +10,34 @@ require 'ya2yaml' # pure ruby yaml
 
 module LeapCli
   module Config
+
+    #
+    # A proxy for Manager that binds to a particular object
+    # (so that we can bind to a particular environment)
+    #
+    class ManagerBinding
+      def initialize(manager, object)
+        @manager = manager
+        @object = object
+      end
+
+      def services
+        @manager.env(@object.environment).services
+      end
+
+      def tags
+        @manager.env(@object.environment).tags
+      end
+
+      def provider
+        @manager.env(@object.environment).provider
+      end
+
+      def method_missing(*args)
+        @manager.send(*args)
+      end
+    end
+
     #
     # This class represents the configuration for a single node, service, or tag.
     # Also, all the nested hashes are also of this type.
@@ -19,8 +47,6 @@ module LeapCli
     class Object < Hash
 
       attr_reader :node
-      attr_reader :manager
-      alias :global :manager
 
       def initialize(manager=nil, node=nil)
         # keep a global pointer around to the config manager. used a lot in the eval strings and templates
@@ -29,6 +55,19 @@ module LeapCli
 
         # an object that is a node as @node equal to self, otherwise all the child objects point back to the top level node.
         @node = node || self
+      end
+
+      def manager
+        ManagerBinding.new(@manager, self)
+      end
+      alias :global :manager
+
+      def environment=(e)
+        self.store('environment', e)
+      end
+
+      def environment
+        self['environment']
       end
 
       #

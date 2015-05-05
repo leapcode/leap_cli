@@ -133,9 +133,9 @@ module LeapCli
           next unless ename
           log 3, :loading, '%s environment...' % ename
           env(ename) do |e|
-            e.services = load_all_json(Path.named_path([:service_env_config, '*', ename], @provider_dir), Config::Tag)
-            e.tags     = load_all_json(Path.named_path([:tag_env_config, '*', ename],     @provider_dir), Config::Tag)
-            e.provider = load_json(    Path.named_path([:provider_env_config, ename],     @provider_dir), Config::Provider)
+            e.services = load_all_json(Path.named_path([:service_env_config, '*', ename], @provider_dir), Config::Tag, :env => ename)
+            e.tags     = load_all_json(Path.named_path([:tag_env_config, '*', ename],     @provider_dir), Config::Tag, :env => ename)
+            e.provider = load_json(    Path.named_path([:provider_env_config, ename],     @provider_dir), Config::Provider, :env => ename)
             e.services.inherit_from! env('default').services
             e.tags.inherit_from!     env('default').tags
             e.provider.inherit_from! env('default').provider
@@ -315,6 +315,9 @@ module LeapCli
           if obj
             name = File.basename(filename).force_encoding('utf-8').sub(/^([^\.]+).*\.json$/,'\1')
             obj['name'] ||= name
+            if options[:env]
+              obj.environment = options[:env]
+            end
             results[name] = obj
           end
         end
