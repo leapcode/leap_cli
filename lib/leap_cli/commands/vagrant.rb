@@ -155,8 +155,7 @@ module LeapCli; module Commands
         manager.each_node do |node|
           if node.vagrant?
             lines << %[  config.vm.define :#{node.name} do |config|]
-            lines << %[    config.vm.box = "leap-wheezy"]
-            lines << %[    config.vm.box_url = "https://downloads.leap.se/platform/vagrant/virtualbox/leap-wheezy.box"]
+            lines << %[    config.vm.box = "LEAP/wheezy"]
             lines << %[    config.vm.network :hostonly, "#{node.ip_address}", :netmask => "#{netmask}"]
             lines << %[    config.vm.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]]
             lines << %[    config.vm.customize ["modifyvm", :id, "--name", "#{node.name}"]]
@@ -169,8 +168,7 @@ module LeapCli; module Commands
         manager.each_node do |node|
           if node.vagrant?
             lines << %[  config.vm.define :#{node.name} do |config|]
-            lines << %[    config.vm.box = "leap-wheezy"]
-            lines << %[    config.vm.box_url = "https://downloads.leap.se/platform/vagrant/virtualbox/leap-wheezy.box"]
+            lines << %[    config.vm.box = "LEAP/wheezy"]
             lines << %[    config.vm.network :private_network, ip: "#{node.ip_address}"]
             lines << %[    config.vm.provider "virtualbox" do |v|]
             lines << %[      v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]]
