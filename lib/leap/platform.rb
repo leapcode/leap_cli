@@ -66,10 +66,10 @@ module Leap
       end
 
       def major_version
-        if @version.major == 0
-          "#{@version.major}.#{@version.minor}"
+        if @version.segments.first == 0
+          @version.segments[0..1].join('.')
         else
-          @version.major
+          @version.segments.first
         end
       end
 
