@@ -14,17 +14,28 @@ module LeapCli; module Config
     end
 
     # we can't use fetch() or get(), since those already have special meanings
-    def retrieve(key, environment=nil)
-      self.fetch(environment||'default', {})[key.to_s]
+    def retrieve(key, environment)
+      self.fetch(environment, {})[key.to_s]
     end
 
-    def set(key, value, environment=nil)
-      environment ||= 'default'
+    def set(*args, &block)
+      if block_given?
+        set_with_block(*args, &block)
+      else
+        set_without_block(*args)
+      end
+    end
+
+    def set_without_block(key, value, environment)
+      set_with_block(key, environment) {value}
+    end
+
+    def set_with_block(key, environment, &block)
       key = key.to_s
       @discovered_keys[environment] ||= {}
       @discovered_keys[environment][key] = true
       self[environment] ||= {}
-      self[environment][key] ||= value
+      self[environment][key] ||= yield
     end
 
     #
