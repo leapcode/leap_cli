@@ -100,3 +100,31 @@ other places, it is easier to create the symlink. If you run ``leap`` directly, 
 the command launcher that rubygems installs, leap will run in a mode that simulates
 ``bundle exec leap`` (i.e. only gems included in Gemfile are allowed to be loaded).
 
+Changes
+====================================================
+
+1.7
+
+* requires platform 0.7
+* deployment logging (see /var/log/leap)
+* compatible with new tapicero
+* selectively destroy some dbs with `leap db destroy`
+* faster apt-get update
+* added `leap scp` command
+* bug fixes
+
+1.6.2
+
+* auto generate certs on compile
+* use internal ruby md5sum for compatibility on mac
+* may override or customize tests by putting tests in `files/tests`
+* bug fixes
+
+1.6.1
+
+* requires platform 0.6
+* better `leap test run`
+* added `leap tunnel` command
+* only print stack trace if `--debug` flag was specified
+* prompt user to upgrade host ssh key if a better one exists
+* bug fixes

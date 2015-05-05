@@ -174,7 +174,7 @@ module LeapCli
           if self[name]
             self[name].inherit_from!(object)
           else
-            self[name] = object.dup
+            self[name] = object.deep_dup
           end
         end
       end

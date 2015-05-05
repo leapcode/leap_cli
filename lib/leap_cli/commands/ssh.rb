@@ -35,6 +35,33 @@ module LeapCli; module Commands
     end
   end
 
+  desc 'Secure copy from FILE1 to FILE2. Files are specified as NODE_NAME:FILE_PATH. For local paths, omit "NODE_NAME:".'
+  arg_name 'FILE1 FILE2'
+  command :scp do |c|
+    c.switch :r, :desc => 'Copy recursively'
+    c.action do |global_options, options, args|
+      if args.size != 2
+        bail!('You must specificy both FILE1 and FILE2')
+      end
+      from, to = args
+      if (from !~ /:/ && to !~ /:/) || (from =~ /:/ && to =~ /:/)
+        bail!('One FILE must be remote and the other local.')
+      end
+      src_node_name = src_file_path = src_node = nil
+      dst_node_name = dst_file_path = dst_node = nil
+      if from =~ /:/
+        src_node_name, src_file_path = from.split(':')
+        src_node = get_node_from_args([src_node_name], :include_disabled => true)
+        dst_file_path = to
+      else
+        dst_node_name, dst_file_path = to.split(':')
+        dst_node = get_node_from_args([dst_node_name], :include_disabled => true)
+        src_file_path = from
+      end
+      exec_scp(options, src_node, src_file_path, dst_node, dst_file_path)
+    end
+  end
+
   protected
 
   #
@@ -78,22 +105,7 @@ module LeapCli; module Commands
   def exec_ssh(cmd, cli_options, args)
     node = get_node_from_args(args, :include_disabled => true)
     port = node.ssh.port
-    options = [
-      "-o 'HostName=#{node.ip_address}'",
-      # "-o 'HostKeyAlias=#{node.name}'", << oddly incompatible with ports in known_hosts file, so we must not use this or non-standard ports break.
-      "-o 'GlobalKnownHostsFile=#{path(:known_hosts)}'",
-      "-o 'UserKnownHostsFile=/dev/null'"
-    ]
-    if node.vagrant?
-      options << "-i #{vagrant_ssh_key_file}"    # use the universal vagrant insecure key
-      options << "-o IdentitiesOnly=yes"         # force the use of the insecure vagrant key
-      options << "-o 'StrictHostKeyChecking=no'" # blindly accept host key and don't save it (since userknownhostsfile is /dev/null)
-    else
-      options << "-o 'StrictHostKeyChecking=yes'"
-    end
-    if !node.supported_ssh_host_key_algorithms.empty?
-      options << "-o 'HostKeyAlgorithms=#{node.supported_ssh_host_key_algorithms}'"
-    end
+    options = ssh_config(node)
     username = 'root'
     if LeapCli.log_level >= 3
       options << "-vv"
@@ -131,6 +143,62 @@ module LeapCli; module Commands
     elsif status.exitstatus != 0
       exit(status.exitstatus)
     end
+  end
+
+  def exec_scp(cli_options, src_node, src_file_path, dst_node, dst_file_path)
+    node = src_node || dst_node
+    options = ssh_config(node)
+    port = node.ssh.port
+    username = 'root'
+    options << "-r" if cli_options[:r]
+    scp = "scp -P #{port} #{options.join(' ')}"
+    if src_node
+      command = "#{scp} #{username}@#{src_node.domain.full}:#{src_file_path} #{dst_file_path}"
+    elsif dst_node
+      command = "#{scp} #{src_file_path} #{username}@#{dst_node.domain.full}:#{dst_file_path}"
+    end
+    log 2, command
+
+    # exec the shell command in a subprocess
+    pid = fork { exec "#{command}" }
+
+    Signal.trap("SIGINT") do
+      Process.kill("KILL", pid)
+      Process.wait(pid)
+      exit(0)
+    end
+
+    # wait for shell to exit so we can grab the exit status
+    _, status = Process.waitpid2(pid)
+    exit(status.exitstatus)
+  end
+
+  #
+  # SSH command line -o options. See `man ssh_config`
+  #
+  # NOTES:
+  #
+  # The option 'HostKeyAlias=#{node.name}' is oddly incompatible with ports in
+  # known_hosts file, so we must not use this or non-standard ports break.
+  #
+  def ssh_config(node)
+    options = [
+      "-o 'HostName=#{node.ip_address}'",
+      "-o 'GlobalKnownHostsFile=#{path(:known_hosts)}'",
+      "-o 'UserKnownHostsFile=/dev/null'"
+    ]
+    if node.vagrant?
+      options << "-i #{vagrant_ssh_key_file}"    # use the universal vagrant insecure key
+      options << "-o IdentitiesOnly=yes"         # force the use of the insecure vagrant key
+      options << "-o 'StrictHostKeyChecking=no'" # blindly accept host key and don't save it
+                                                 # (since userknownhostsfile is /dev/null)
+    else
+      options << "-o 'StrictHostKeyChecking=yes'"
+    end
+    if !node.supported_ssh_host_key_algorithms.empty?
+      options << "-o 'HostKeyAlgorithms=#{node.supported_ssh_host_key_algorithms}'"
+    end
+    return options
   end
 
   def parse_tunnel_arg(arg)

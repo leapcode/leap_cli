@@ -6,6 +6,10 @@
 module LeapCli; module Remote; module LeapPlugin
 
   def required_packages
+    "puppet rsync lsb-release locales"
+  end
+
+  def required_wheezy_packages
     "puppet ruby-hiera-puppet rsync lsb-release locales"
   end
 
@@ -58,6 +62,13 @@ module LeapCli; module Remote; module LeapPlugin
 
   def mark_initialized
     run "touch #{Leap::Platform.init_path}"
+  end
+
+  #
+  # dumps the recent deploy history to the console
+  #
+  def history
+    run "(test -s /var/log/leap/deploy-summary.log && tail /var/log/leap/deploy-summary.log) || (test -s /var/log/leap/deploy-summary.log.1 && tail /var/log/leap/deploy-summary.log.1) || (echo 'no history')"
   end
 
   #

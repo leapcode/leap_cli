@@ -18,7 +18,7 @@ module LeapCli; module Remote; module PuppetPlugin
       elsif item[1] === true
         str << "--" + item[0].to_s
       else
-        str << "--" + item[0].to_s + " " + item[1].to_s
+        str << "--" + item[0].to_s + " " + item[1].inspect
       end
     }.join(' ')
   end

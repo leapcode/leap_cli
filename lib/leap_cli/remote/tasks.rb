@@ -34,10 +34,11 @@ BAD_APT_GET_UPDATE = /(BADSIG|NO_PUBKEY|KEYEXPIRED|REVKEYSIG|NODATA)/
 
 task :install_prerequisites, :max_hosts => MAX_HOSTS do
   apt_get = "DEBIAN_FRONTEND=noninteractive apt-get -q -y -o DPkg::Options::=--force-confold"
+  apt_get_update = "apt-get update -o Acquire::Languages=none"
   leap.mkdirs Leap::Platform.leap_dir
   run "echo 'en_US.UTF-8 UTF-8' > /etc/locale.gen"
   leap.log :updating, "package list" do
-    run "apt-get update" do |channel, stream, data|
+    run apt_get_update do |channel, stream, data|
       # sadly exitcode is unreliable measure if apt-get update hit a failure.
       if data =~ BAD_APT_GET_UPDATE
         LeapCli::Util.bail! do
@@ -57,7 +58,7 @@ task :install_prerequisites, :max_hosts => MAX_HOSTS do
     run "( test -f /etc/init.d/ntp && /etc/init.d/ntp start ) || true"
   end
   leap.log :installing, "required packages" do
-    run "#{apt_get} install #{leap.required_packages}"
+    run %[#{apt_get} install $( (grep -q wheezy /etc/debian_version && echo #{leap.required_wheezy_packages}) || echo #{leap.required_packages} )]
   end
   #run "locale-gen"
   leap.mkdirs("/etc/leap", "/srv/leap")

@@ -97,6 +97,23 @@ module LeapCli
       return output
     end
 
+    def assert_config!(conf_path)
+      value = nil
+      begin
+        value = manager.instance_eval(conf_path)
+      #rescue NoMethodError
+      #rescue NameError
+      ensure
+        assert! !value.nil? && value != "REQUIRED" do
+          log :missing, "required configuration value for #{conf_path}"
+        end
+      end
+    end
+
+    ##
+    ## FILES AND DIRECTORIES
+    ##
+
     def assert_files_missing!(*files)
       options = files.last.is_a?(Hash) ? files.pop : {}
       base = options[:base] || Path.provider
@@ -113,19 +130,6 @@ module LeapCli
         bail! do
           log :error, "Sorry, we can't continue because this file already exists: #{file_list.first}."
           log options[:msg] if options[:msg]
-        end
-      end
-    end
-
-    def assert_config!(conf_path)
-      value = nil
-      begin
-        value = manager.instance_eval(conf_path)
-      #rescue NoMethodError
-      #rescue NameError
-      ensure
-        assert! !value.nil? && value != "REQUIRED" do
-          log :missing, "required configuration value for #{conf_path}"
         end
       end
     end
@@ -149,6 +153,7 @@ module LeapCli
       end
     end
 
+    # takes a list of symbolic paths. returns true if all files exist or are directories.
     def file_exists?(*files)
       files.each do |file_path|
         file_path = Path.named_path(file_path)
@@ -159,9 +164,16 @@ module LeapCli
       return true
     end
 
-    ##
-    ## FILES AND DIRECTORIES
-    ##
+    # takes a list of symbolic paths. returns true if all are directories.
+    def dir_exists?(*dirs)
+      dirs.each do |dir_path|
+        dir_path = Path.named_path(dir_path)
+        if !Dir.exists?(dir_path)
+          return false
+        end
+      end
+      return true
+    end
 
     #
     # creates a directory if it doesn't already exist
@@ -343,16 +355,12 @@ module LeapCli
     end
 
     #
-    # compares md5 fingerprints to see if the contents of a file match the string we have in memory
+    # compares md5 fingerprints to see if the contents of a file match the
+    # string we have in memory
     #
     def file_content_equals?(filepath, contents)
       filepath = Path.named_path(filepath)
-      output = `md5sum '#{filepath}'`.strip
-      if $?.to_i == 0
-        return output.split(" ").first == Digest::MD5.hexdigest(contents).to_s
-      else
-        return false
-      end
+      Digest::MD5.file(filepath).hexdigest == Digest::MD5.hexdigest(contents)
     end
 
     ##

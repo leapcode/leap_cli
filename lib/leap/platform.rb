@@ -1,5 +1,3 @@
-require 'versionomy'
-
 module Leap
 
   class Platform
@@ -34,24 +32,24 @@ module Leap
 
         self.instance_eval(&block)
 
-        @version ||= Versionomy.parse("0.0")
+        @version ||= Gem::Version.new("0.0")
       end
 
       def version=(version)
-        @version = Versionomy.parse(version)
+        @version = Gem::Version.new(version)
       end
 
       def compatible_cli=(range)
         @compatible_cli = range
-        @minimum_cli_version = Versionomy.parse(range.first)
-        @maximum_cli_version = Versionomy.parse(range.last)
+        @minimum_cli_version = Gem::Version.new(range.first)
+        @maximum_cli_version = Gem::Version.new(range.last)
       end
 
       #
       # return true if the cli_version is compatible with this platform.
       #
       def compatible_with_cli?(cli_version)
-        cli_version = Versionomy.parse(cli_version)
+        cli_version = Gem::Version.new(cli_version)
         cli_version >= @minimum_cli_version && cli_version <= @maximum_cli_version
       end
 
@@ -62,16 +60,16 @@ module Leap
         if range.is_a? String
           range = range.split('..')
         end
-        minimum_platform_version = Versionomy.parse(range.first)
-        maximum_platform_version = Versionomy.parse(range.last)
+        minimum_platform_version = Gem::Version.new(range.first)
+        maximum_platform_version = Gem::Version.new(range.last)
         @version >= minimum_platform_version && @version <= maximum_platform_version
       end
 
       def major_version
-        if @version.major == 0
-          "#{@version.major}.#{@version.minor}"
+        if @version.segments.first == 0
+          @version.segments[0..1].join('.')
         else
-          @version.major
+          @version.segments.first
         end
       end
 

@@ -47,6 +47,12 @@ module LeapCli
         # set up paths
         #
         @provider_directory_path = directory
+        begin
+          # load leaprc first, so that we can potentially access which environment is pinned in Leapfile
+          # but also load leaprc last, so that it can override what is set in Leapfile.
+          read_settings(leaprc_path)
+        rescue StandardError
+        end
         read_settings(directory + '/Leapfile')
         read_settings(leaprc_path)
         @platform_directory_path = File.expand_path(@platform_directory_path || '../leap_platform', @provider_directory_path)
@@ -54,25 +60,26 @@ module LeapCli
         #
         # load the platform
         #
+        platform_file = "#{@platform_directory_path}/platform.rb"
+        unless File.exists?(platform_file)
+          Util.bail! "ERROR: The file `#{platform_file}` does not exist. Please check the value of `@platform_directory_path` in `Leapfile` or `~/.leaprc`."
+        end
         require "#{@platform_directory_path}/platform.rb"
-        if !Leap::Platform.compatible_with_cli?(LeapCli::VERSION)
+        if !Leap::Platform.compatible_with_cli?(LeapCli::VERSION) ||
+           !Leap::Platform.version_in_range?(LeapCli::COMPATIBLE_PLATFORM_VERSION)
           Util.bail! "This leap command (v#{LeapCli::VERSION}) " +
-                     "is not compatible with the platform #{@platform_directory_path} (v#{Leap::Platform.version}). " +
-                     "You need leap command #{Leap::Platform.compatible_cli.first} to #{Leap::Platform.compatible_cli.last}."
+                     "is not compatible with the platform #{@platform_directory_path} (v#{Leap::Platform.version}).\n   " +
+                     "You need either leap command #{Leap::Platform.compatible_cli.first} to #{Leap::Platform.compatible_cli.last} or " +
+                     "platform version #{LeapCli::COMPATIBLE_PLATFORM_VERSION.first} to #{LeapCli::COMPATIBLE_PLATFORM_VERSION.last}"
         end
-        if !Leap::Platform.version_in_range?(LeapCli::COMPATIBLE_PLATFORM_VERSION)
-          Util.bail! "This leap command (v#{LeapCli::VERSION}) " +
-                     "is not compatible with the platform #{@platform_directory_path} (v#{Leap::Platform.version}). " +
-                     "You need platform version #{LeapCli::COMPATIBLE_PLATFORM_VERSION.first} to #{LeapCli::COMPATIBLE_PLATFORM_VERSION.last}."
-        end
-
         unless @allow_production_deploy.nil?
           Util::log 0, :warning, "in Leapfile: @allow_production_deploy is no longer supported."
         end
         unless @platform_branch.nil?
           Util::log 0, :warning, "in Leapfile: @platform_branch is no longer supported."
         end
-        return true
+        @valid = true
+        return @valid
       end
     end
 
@@ -82,6 +89,10 @@ module LeapCli
 
     def unset(property)
       edit_leaprc(property)
+    end
+
+    def valid?
+      !!@valid
     end
 
     private

@@ -1,3 +1,4 @@
+require 'etc'
 
 module LeapCli
   module Commands
@@ -7,20 +8,17 @@ module LeapCli
     arg_name 'FILTER'
     command [:deploy, :d] do |c|
 
-      # --fast
       c.switch :fast, :desc => 'Makes the deploy command faster by skipping some slow steps. A "fast" deploy can be used safely if you recently completed a normal deploy.',
                       :negatable => false
 
-      # --sync
-      c.switch :sync, :desc => "Sync files, but don't actually apply recipes."
+      c.switch :sync, :desc => "Sync files, but don't actually apply recipes.", :negatable => false
 
-      # --force
       c.switch :force, :desc => 'Deploy even if there is a lockfile.', :negatable => false
 
-      # --dev
+      c.switch :downgrade, :desc => 'Allows deploy to run with an older platform version.', :negatable => false
+
       c.switch :dev, :desc => "Development mode: don't run 'git submodule update' before deploy.", :negatable => false
 
-      # --tags
       c.flag :tags, :desc => 'Specify tags to pass through to puppet (overriding the default).',
                     :arg_name => 'TAG[,TAG]'
 
@@ -49,11 +47,13 @@ module LeapCli
           environments = [nil]
         end
         environments.each do |env|
-          check_platform_pinning(env)
+          check_platform_pinning(env, global)
         end
         # compile hiera files for all the nodes in every environment that is
         # being deployed and only those environments.
         compile_hiera_files(manager.filter(environments))
+        # update server certificates if needed
+        update_certificates(nodes)
 
         ssh_connect(nodes, connect_options(options)) do |ssh|
           ssh.leap.log :checking, 'node' do
@@ -69,7 +69,12 @@ module LeapCli
           end
           unless options[:sync]
             ssh.leap.log :applying, "puppet" do
-              ssh.puppet.apply(:verbosity => [LeapCli.log_level,5].min, :tags => tags(options), :force => options[:force])
+              ssh.puppet.apply(:verbosity => [LeapCli.log_level,5].min,
+                :tags => tags(options),
+                :force => options[:force],
+                :info => deploy_info,
+                :downgrade => options[:downgrade]
+              )
             end
           end
         end
@@ -79,7 +84,33 @@ module LeapCli
       end
     end
 
+    desc 'Display recent deployment history for a set of nodes.'
+    long_desc 'The FILTER can be the name of a node, service, or tag.'
+    arg_name 'FILTER'
+    command [:history, :h] do |c|
+      c.flag :port, :desc => 'Override the default SSH port.',
+                    :arg_name => 'PORT'
+      c.flag :ip,   :desc => 'Override the default SSH IP address.',
+                    :arg_name => 'IPADDRESS'
+      c.action do |global,options,args|
+        nodes = manager.filter!(args)
+        ssh_connect(nodes, connect_options(options)) do |ssh|
+          ssh.leap.history
+        end
+      end
+    end
+
     private
+
+    def forcible_prompt(forced, msg, prompt)
+      say(msg)
+      if forced
+        log :warning, "continuing anyway because of --force"
+      else
+        say "hint: use --force to skip this prompt."
+        quit!("OK. Bye.") unless agree(prompt)
+      end
+    end
 
     #
     # The currently activated provider.json could have loaded some pinning
@@ -94,7 +125,7 @@ module LeapCli
     #   "commit": "e1d6280e0a8c565b7fb1a4ed3969ea6fea31a5e2..HEAD"
     # }
     #
-    def check_platform_pinning(environment)
+    def check_platform_pinning(environment, global_options)
       provider = manager.env(environment).provider
       return unless provider['platform']
 
@@ -112,34 +143,46 @@ module LeapCli
       # check version
       if provider.platform['version']
         if !Leap::Platform.version_in_range?(provider.platform.version)
-          say("The platform is pinned to a version range of '#{provider.platform.version}' "+
-            "by the `platform.version` property in #{provider_json}, but the platform "+
-            "(#{Path.platform}) has version #{Leap::Platform.version}.")
-          quit!("OK. Bye.") unless agree("Do you really want to deploy from the wrong version? ")
+          forcible_prompt(
+            global_options[:force],
+            "The platform is pinned to a version range of '#{provider.platform.version}' "+
+              "by the `platform.version` property in #{provider_json}, but the platform "+
+              "(#{Path.platform}) has version #{Leap::Platform.version}.",
+            "Do you really want to deploy from the wrong version? "
+          )
         end
       end
 
       # check branch
       if provider.platform['branch']
         if !is_git_directory?(Path.platform)
-          say("The platform is pinned to a particular branch by the `platform.branch` property "+
-            "in #{provider_json}, but the platform directory (#{Path.platform}) is not a git repository.")
-          quit!("OK. Bye.") unless agree("Do you really want to deploy anyway? ")
+          forcible_prompt(
+            global_options[:force],
+            "The platform is pinned to a particular branch by the `platform.branch` property "+
+              "in #{provider_json}, but the platform directory (#{Path.platform}) is not a git repository.",
+            "Do you really want to deploy anyway? "
+          )
         end
         unless provider.platform.branch == current_git_branch(Path.platform)
-          say("The platform is pinned to branch '#{provider.platform.branch}' by the `platform.branch` property "+
-            "in #{provider_json}, but the current branch is '#{current_git_branch(Path.platform)}' " +
-            "(for directory '#{Path.platform}')")
-          quit!("OK. Bye.") unless agree("Do you really want to deploy from the wrong branch? ")
+          forcible_prompt(
+            global_options[:force],
+            "The platform is pinned to branch '#{provider.platform.branch}' by the `platform.branch` property "+
+              "in #{provider_json}, but the current branch is '#{current_git_branch(Path.platform)}' " +
+              "(for directory '#{Path.platform}')",
+            "Do you really want to deploy from the wrong branch? "
+          )
         end
       end
 
       # check commit
       if provider.platform['commit']
         if !is_git_directory?(Path.platform)
-          say("The platform is pinned to a particular commit range by the `platform.commit` property "+
-            "in #{provider_json}, but the platform directory (#{Path.platform}) is not a git repository.")
-          quit!("OK. Bye.") unless agree("Do you really want to deploy anyway? ")
+          forcible_prompt(
+            global_options[:force],
+            "The platform is pinned to a particular commit range by the `platform.commit` property "+
+              "in #{provider_json}, but the platform directory (#{Path.platform}) is not a git repository.",
+            "Do you really want to deploy anyway? "
+          )
         end
         current_commit = current_git_commit(Path.platform)
         Dir.chdir(Path.platform) do
@@ -150,10 +193,13 @@ module LeapCli
           commit_range = commit_range.split("\n")
           if !commit_range.include?(current_commit) &&
               provider.platform.commit.split('..').first != current_commit
-            say("The platform is pinned via the `platform.commit` property in #{provider_json} " +
-              "to a commit in the range #{provider.platform.commit}, but the current HEAD " +
-              "(#{current_commit}) is not in that range.")
-            quit!("OK. Bye.") unless agree("Do you really want to deploy from the wrong commit? ")
+            forcible_prompt(
+              global_options[:force],
+              "The platform is pinned via the `platform.commit` property in #{provider_json} " +
+                "to a commit in the range #{provider.platform.commit}, but the current HEAD " +
+                "(#{current_commit}) is not in that range.",
+              "Do you really want to deploy from the wrong commit? "
+            )
           end
         end
       end
@@ -177,17 +223,11 @@ module LeapCli
     #
     def sync_support_files(ssh)
       dest_dir = Leap::Platform.files_dir
-      source_files = []
-      if Path.defined?(:custom_puppet_dir) && file_exists?(:custom_puppet_dir)
-        source_files += [:custom_puppet_dir, :custom_puppet_modules_dir, :custom_puppet_manifests_dir].collect{|path|
-          Path.relative_path(path, Path.provider) + '/' # rsync needs trailing slash
-        }
-        ensure_dir :custom_puppet_modules_dir
-      end
+      custom_files = build_custom_file_list
       ssh.rsync.update do |server|
         node = manager.node(server.host)
         files_to_sync = node.file_paths.collect {|path| Path.relative_path(path, Path.provider) }
-        files_to_sync += source_files
+        files_to_sync += custom_files
         if files_to_sync.any?
           ssh.leap.log(files_to_sync.join(', ') + ' -> ' + node.name + ':' + dest_dir)
           {
@@ -282,5 +322,47 @@ module LeapCli
       tags.join(',')
     end
 
+    #
+    # a provider might have various customization files that should be sync'ed to the server.
+    # this method builds that list of files to sync.
+    #
+    def build_custom_file_list
+      custom_files = []
+      Leap::Platform.paths.keys.grep(/^custom_/).each do |path|
+        if file_exists?(path)
+          relative_path = Path.relative_path(path, Path.provider)
+          if dir_exists?(path)
+            custom_files << relative_path + '/' # rsync needs trailing slash
+          else
+            custom_files << relative_path
+          end
+        end
+      end
+      return custom_files
+    end
+
+    def deploy_info
+      info = []
+      info << "user: %s" % Etc.getpwuid(Process.euid).name
+      if is_git_directory?(Path.platform) && current_git_branch(Path.platform) != 'master'
+        info << "platform: %s (%s %s)" % [
+          Leap::Platform.version,
+          current_git_branch(Path.platform),
+          current_git_commit(Path.platform)[0..4]
+        ]
+      else
+        info << "platform: %s" % Leap::Platform.version
+      end
+      if is_git_directory?(LEAP_CLI_BASE_DIR)
+        info << "leap_cli: %s (%s %s)" % [
+          LeapCli::VERSION,
+          current_git_branch(LEAP_CLI_BASE_DIR),
+          current_git_commit(LEAP_CLI_BASE_DIR)[0..4]
+        ]
+      else
+        info << "leap_cli: %s" % LeapCli::VERSION
+      end
+      info.join(', ')
+    end
   end
 end
