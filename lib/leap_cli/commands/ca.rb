@@ -87,7 +87,11 @@ module LeapCli; module Commands
         assert_config! 'provider.ca.server_certificates.bit_size'
         assert_config! 'provider.ca.server_certificates.digest'
         domain = options[:domain] || provider.domain
-        assert_files_missing! [:commercial_key, domain], [:commercial_csr, domain], :msg => 'If you really want to create a new key and CSR, remove these files first.'
+
+        unless global_options[:force]
+          assert_files_missing! [:commercial_key, domain], [:commercial_csr, domain],
+            :msg => 'If you really want to create a new key and CSR, remove these files first or run with --force.'
+        end
 
         server_certificates = provider.ca.server_certificates
 
