@@ -1,3 +1,6 @@
+Version 1.7.2
+  - hot fix to better pin the required version of gem gli
+
 Version 1.7.1
   - added 'leap scp' and 'leap tunnel'
   - support for deploy logging and 'leap history'
