@@ -12,7 +12,7 @@ $:.unshift(File.expand_path('../leap_cli/override',__FILE__))
 # enforce the compatible versions here:
 require 'rubygems'
 gem 'net-ssh', '~> 2.7.0'
-gem 'gli', '~> 2.12.0'
+gem 'gli', '~> 2.12', '>= 2.12.0'
 
 require 'leap/platform'
 

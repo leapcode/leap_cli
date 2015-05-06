@@ -49,7 +49,8 @@ spec = Gem::Specification.new do |s|
   #s.add_development_dependency('aruba')
 
   # console gems
-  s.add_runtime_dependency('gli','~> 2.12')
+  s.add_runtime_dependency('gli','~> 2.12', '>= 2.12.0')
+  # note: gli version is also pinned in leap_cli.rb.
   s.add_runtime_dependency('command_line_reporter', '~> 3.3')
   s.add_runtime_dependency('highline', '~> 1.6')
   s.add_runtime_dependency('paint', '~> 0.9')
