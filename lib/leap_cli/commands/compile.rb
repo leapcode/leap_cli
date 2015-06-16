@@ -14,12 +14,13 @@ module LeapCli
           end
           if environment
             if manager.environment_names.include?(environment)
-              compile_hiera_files(manager.filter([environment]))
+              compile_hiera_files(manager.filter([environment]), false)
             else
               bail! "There is no environment named `#{environment}`."
             end
           else
-            compile_hiera_files(manager.filter)
+            clean_export = LeapCli.leapfile.environment.nil?
+            compile_hiera_files(manager.filter, clean_export)
           end
         end
       end
@@ -36,15 +37,13 @@ module LeapCli
 
     protected
 
-    def compile_hiera_files(nodes=nil)
-      # these must come first
-      update_compiled_ssh_configs
-
-      # export generated files
+    #
+    # a "clean" export of secrets will also remove keys that are no longer used,
+    # but this should not be done if we are not examining all possible nodes.
+    #
+    def compile_hiera_files(nodes, clean_export)
+      update_compiled_ssh_configs # must come first
       manager.export_nodes(nodes)
-      # a "clean" export of secrets will also remove keys that are no longer used,
-      # but this should not be done if we are not examining all possible nodes.
-      clean_export = nodes.nil?
       manager.export_secrets(clean_export)
     end
 

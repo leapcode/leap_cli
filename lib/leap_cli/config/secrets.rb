@@ -15,6 +15,7 @@ module LeapCli; module Config
 
     # we can't use fetch() or get(), since those already have special meanings
     def retrieve(key, environment)
+      environment ||= 'default'
       self.fetch(environment, {})[key.to_s]
     end
 
@@ -31,6 +32,7 @@ module LeapCli; module Config
     end
 
     def set_with_block(key, environment, &block)
+      environment ||= 'default'
       key = key.to_s
       @discovered_keys[environment] ||= {}
       @discovered_keys[environment][key] = true

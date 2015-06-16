@@ -51,7 +51,7 @@ module LeapCli
         end
         # compile hiera files for all the nodes in every environment that is
         # being deployed and only those environments.
-        compile_hiera_files(manager.filter(environments))
+        compile_hiera_files(manager.filter(environments), false)
         # update server certificates if needed
         update_certificates(nodes)
 
