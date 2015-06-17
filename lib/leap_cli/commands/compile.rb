@@ -22,6 +22,9 @@ module LeapCli
             clean_export = LeapCli.leapfile.environment.nil?
             compile_hiera_files(manager.filter, clean_export)
           end
+          if file_exists?(:static_web_readme)
+            compile_provider_json(environment)
+          end
         end
       end
 
@@ -29,6 +32,13 @@ module LeapCli
       c.command :zone do |zone|
         zone.action do |global_options, options, args|
           compile_zone_file
+        end
+      end
+
+      c.desc "Compile provider.json bootstrap files for your provider."
+      c.command 'provider.json' do |provider|
+        provider.action do |global_options, options, args|
+          compile_provider_json
         end
       end
 
@@ -131,6 +141,78 @@ module LeapCli
       write_file!(:known_hosts, buffer.string)
     end
 
+    ##
+    ## provider.json
+    ##
+
+    #
+    # generates static provider.json files that can put into place
+    # (e.g. https://domain/provider.json) for the cases where the
+    # webapp domain does not match the provider's domain.
+    #
+    def compile_provider_json(environments=nil)
+      webapp_nodes = manager.nodes[:services => 'webapp']
+      write_file!(:static_web_readme, STATIC_WEB_README)
+      environments ||= manager.environment_names
+      environments.each do |env|
+        node = webapp_nodes[:environment => env].values.first
+        if node
+          env ||= 'default'
+          write_file!(
+            [:static_web_provider_json, env],
+            node['definition_files']['provider']
+          )
+          write_file!(
+            [:static_web_htaccess, env],
+            HTACCESS_FILE % {:min_version => manager.env(env).provider.client_version['min']}
+          )
+        end
+      end
+    end
+
+    HTACCESS_FILE = %[
+  <Location /provider.json>
+    Header set X-Minimum-Client-Version %{min_version}
+  </Location>
+]
+
+    STATIC_WEB_README = %[
+This directory contains statically rendered copies of the `provider.json` file
+used by the client to "bootstrap" configure itself for use with your service
+provider.
+
+There is a separate provider.json file for each environment, although you
+should only need 'production/provider.json' or, if you have no environments
+configured, 'default/provider.json'.
+
+To clarify, this is the public `provider.json` file used by the client, not the
+`provider.json` file that is used to configure the provider.
+
+The provider.json file must be available at `https://domain/provider.json`
+(unless this provider is included in the list of providers which are pre-
+seeded in client).
+
+This provider.json file can be served correctly in one of three ways:
+
+(1) If the property webapp.domain is not configured, then the web app will be
+    installed at https://domain/ and it will handle serving the provider.json file.
+
+(2) If one or more nodes have the 'static' service configured for the provider's
+    domain, then these 'static' nodes will correctly serve provider.json.
+
+(3) Otherwise, you must copy the provider.json file to your web
+    server and make it available at '/provider.json'. The example htaccess
+    file shows what header options should be sent by the web server
+    with the response.
+
+This directory is needed for method (3), but not for methods (1) or (2).
+
+This directory has been created by the command `leap compile provider.json`.
+Once created, it will be kept up to date everytime you compile. You may safely
+remove this directory if you don't use it.
+]
+
+    ##
     ##
     ## ZONE FILE
     ##
