@@ -46,12 +46,15 @@ module LeapCli; module Commands
     max_width = nodes.keys.inject(0) {|max,i| [i.size,max].max}
     nodes.each_node do |node|
       value = properties.collect{|prop|
-        if node[prop].nil?
+        prop_value = node[prop]
+        if prop_value.nil?
           "null"
-        elsif node[prop] == ""
+        elsif prop_value == ""
           "empty"
+        elsif prop_value.is_a? LeapCli::Config::Object
+          node[prop].dump_json(:compact) # TODO: add option of getting pre-evaluation values.
         else
-          node[prop]
+          prop_value.to_s
         end
       }.join(', ')
       printf("%#{max_width}s  %s\n", node.name, value)

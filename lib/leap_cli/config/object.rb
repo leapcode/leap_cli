@@ -85,9 +85,13 @@ module LeapCli
       #
       # export JSON
       #
-      def dump_json
+      def dump_json(*options)
         evaluate(@node)
-        JSON.sorted_generate(self)
+        if options.include? :compact
+          self.to_json
+        else
+          JSON.sorted_generate(self)
+        end
       end
 
       def evaluate(context=@node)
@@ -143,7 +147,7 @@ module LeapCli
         elsif key =~ /\./
           # for keys with with '.' in them, we start from the root object (@node).
           keys = key.split('.')
-          value = @node.get!(keys.first)
+          value = self.get!(keys.first)
           if value.is_a? Config::Object
             value.get!(keys[1..-1].join('.'))
           else
