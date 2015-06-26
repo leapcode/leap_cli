@@ -47,6 +47,10 @@ module LeapCli; module Commands
   #  :color   -- true or false, to log in color or not.
   #
   def initialize_leap_cli(require_provider, options={})
+    if Process::Sys.getuid == 0
+      bail! "`leap` should not be run as root."
+    end
+
     # set verbosity
     options[:verbose] ||= 1
     LeapCli.set_log_level(options[:verbose].to_i)
