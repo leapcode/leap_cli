@@ -1,3 +1,4 @@
+require 'socket'
 
 module LeapCli
   module Commands
@@ -53,6 +54,7 @@ module LeapCli
     #
     def compile_hiera_files(nodes, clean_export)
       update_compiled_ssh_configs # must come first
+      sanity_check(nodes)
       manager.export_nodes(nodes)
       manager.export_secrets(clean_export)
     end
@@ -61,6 +63,34 @@ module LeapCli
       generate_monitor_ssh_keys
       update_authorized_keys
       update_known_hosts
+    end
+
+    def sanity_check(nodes)
+      # confirm that every node has a unique ip address
+      ips = {}
+      nodes.pick_fields('ip_address').each do |name, ip_address|
+        if ips.key?(ip_address)
+          bail! {
+            log(:fatal_error, "Every node must have its own IP address.") {
+              log "Nodes `#{name}` and `#{ips[ip_address]}` are both configured with `#{ip_address}`."
+            }
+          }
+        else
+          ips[ip_address] = name
+        end
+      end
+      # confirm that the IP address of this machine is not also used for a node.
+      Socket.ip_address_list.each do |addrinfo|
+        if !addrinfo.ipv4_private? && ips.key?(addrinfo.ip_address)
+          ip = addrinfo.ip_address
+          name = ips[ip]
+          bail! {
+            log(:fatal_error, "Something is very wrong. The `leap` command must only be run on your sysadmin machine, not on a provider node.") {
+              log "This machine has the same IP address (#{ip}) as node `#{name}`."
+            }
+          }
+        end
+      end
     end
 
     ##
