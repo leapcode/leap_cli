@@ -56,10 +56,10 @@ spec = Gem::Specification.new do |s|
   s.add_runtime_dependency('paint', '~> 0.9')
 
   # network gems
-  s.add_runtime_dependency('net-ssh', '~> 2.7.0')
+  s.add_runtime_dependency('net-ssh', '~> 2.7')
   # ^^ we can upgrade once we get off broken capistrano
   # https://github.com/net-ssh/net-ssh/issues/145
-  s.add_runtime_dependency('capistrano', '~> 2.15.5')
+  s.add_runtime_dependency('capistrano', '~> 2.15')
 
   # crypto gems
   #s.add_runtime_dependency('certificate_authority', '>= 0.2.0')
@@ -77,5 +77,5 @@ spec = Gem::Specification.new do |s|
   ##
 
   # certificate_authority
-  s.add_runtime_dependency("activemodel", ">= 3.0.6")
+  s.add_runtime_dependency("activemodel", '~> 3.0', ">= 3.0.6")
 end
