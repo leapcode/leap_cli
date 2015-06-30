@@ -18,20 +18,11 @@ LEAP_CLI_BASE_DIR = File.expand_path('..', File.dirname(File.symlink?(__FILE__) 
 ORIGINAL_ARGV = ARGV.dup
 
 begin
+  # First, try to load the leap_cli code that is local to this `leap` command.
+  # If that fails, then we try to load leap_cli as a gem.
+  require File.join(LEAP_CLI_BASE_DIR, 'lib','leap_cli','load_paths')
   require 'leap_cli'
 rescue LoadError
-  #
-  # When developing a gem with a command, you normally use `bundle exec bin/command-name`
-  # to run your app. At install-time, RubyGems will make sure lib, etc. are in the load path,
-  # so that you can run the command directly.
-  #
-  # However, I don't like using 'bundle exec'. It is slow, and limits which directory you can
-  # run in. So, instead, we fall back to some path manipulation hackery.
-  #
-  # This allows you to run the command directly while developing the gem, and also lets you
-  # run from anywhere (I like to link 'bin/leap' to /usr/local/bin/leap).
-  #
-  require File.join(LEAP_CLI_BASE_DIR, 'lib','leap_cli','load_paths')
   require 'leap_cli'
 end
 
