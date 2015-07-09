@@ -43,7 +43,15 @@ module LeapCli
       # returns the Hash of the contents of facts.json
       #
       def facts
-        @facts ||= JSON.parse(Util.read_file(:facts) || "{}")
+        @facts ||= begin
+          content = Util.read_file(:facts)
+          if !content || content.empty?
+            content = "{}"
+          end
+          JSON.parse(content)
+        rescue SyntaxError, JSON::ParserError => exc
+          Util::bail! "Could not parse facts.json -- #{exc}"
+        end
       end
 
       #
