@@ -184,7 +184,8 @@ module LeapCli; module Remote; module LeapPlugin
   private
 
   def progress(str='.')
-    $stdout.print str; $stdout.flush;
+    print str
+    STDOUT.flush
   end
 
   #def mkdir(dir)

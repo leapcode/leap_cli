@@ -34,7 +34,7 @@ module LeapCli
           init_submodules
         end
 
-        nodes = manager.filter!(args)
+        nodes = manager.filter!(args, :disabled => false)
         if nodes.size > 1
           say "Deploying to these nodes: #{nodes.keys.join(', ')}"
           if !global[:yes] && !agree("Continue? ")

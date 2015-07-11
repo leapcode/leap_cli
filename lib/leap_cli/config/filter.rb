@@ -97,6 +97,9 @@ module LeapCli
         if @options[:local] === false
           node_list = node_list[:environment => '!local']
         end
+        if @options[:disabled] === false
+          node_list = node_list[:environment => '!disabled']
+        end
         node_list
       end
 

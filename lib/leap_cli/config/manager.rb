@@ -255,8 +255,8 @@ module LeapCli
       #
       # same as filter(), but exits if there is no matching nodes
       #
-      def filter!(filters)
-        node_list = filter(filters)
+      def filter!(filters, options={})
+        node_list = filter(filters, options)
         Util::assert! node_list.any?, "Could not match any nodes from '#{filters.join ' '}'"
         return node_list
       end

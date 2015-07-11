@@ -49,7 +49,7 @@ module LeapCli; module Commands
       if overwrite || content.nil? || content.empty?
         old_facts = {}
       else
-        old_facts = JSON.parse(content)
+        old_facts = manager.facts
       end
       facts = old_facts.merge(new_facts)
       facts.each do |name, value|
@@ -57,7 +57,7 @@ module LeapCli; module Commands
           if value == ""
             value = nil
           else
-            value = JSON.parse(value)
+            value = JSON.parse(value) rescue JSON::ParserError
           end
         end
         if value.is_a? Hash
@@ -69,7 +69,7 @@ module LeapCli; module Commands
         value.nil? || value.empty?
       end
       if facts.empty?
-        nil
+        "{}\n"
       else
         JSON.sorted_generate(facts) + "\n"
       end
@@ -79,7 +79,7 @@ module LeapCli; module Commands
   private
 
   def update_facts(global_options, options, args)
-    nodes = manager.filter(args, :local => false)
+    nodes = manager.filter(args, :local => false, :disabled => false)
     new_facts = {}
     ssh_connect(nodes) do |ssh|
       ssh.leap.run_with_progress(facter_cmd) do |response|
