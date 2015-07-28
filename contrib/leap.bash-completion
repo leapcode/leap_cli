@@ -10,7 +10,7 @@
 versions="/var/lib/gems/2.1.0/gems/"
 
 _leap_complete_nodes () {
-	nodes="${nodes/}"
+	nodes="nodes/"
 	suffix=".json"
 
 	local items=($(compgen -f $nodes$cur))
@@ -21,9 +21,9 @@ _leap_complete_nodes () {
 }
 
 _leap_complete_tags () {
-	tags="${tags/}"
+	tags="tags/"
 	suffix=".json"
-	local items=($(compgen plusdirs -f $tags$cur))
+	local items=($(compgen -f $tags$cur))
 	for item in ${items[@]}; do
 		item="${item%$suffix}"
 		COMPREPLY+=("${item#$tags}")
@@ -31,7 +31,7 @@ _leap_complete_tags () {
 }
 
 _leap_global_options() {
-	COMPREPLY+=($(compgen -W "--color --no-color --debug --help --log= --verbose= -v1 -v2 -v3 -v4 -v5 --version" -- ${cur}))
+	COMPREPLY+=($(compgen -W "--color --no-color --debug --force --help --log= --verbose= -v1 -v2 -v3 -v4 -v5 --version --yes" -- ${cur}))
 }
 
 _leap_complete_versions () {
@@ -49,13 +49,13 @@ _leap()
 {
 	COMPREPLY=()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
-	local commands="add-user clean deploy help inspect list mosh new ssh cert compile db facts local node test"
+	local commands="add-user clean deploy help history inspect list mosh new scp ssh tunnel cert compile db env facts local node test"
 
 	if [[ $COMP_CWORD -gt 1 ]] && [[ "$cur" != -* ]] && [[ "$cur" != _* ]]; then
 		local lastarg="${COMP_WORDS[$COMP_CWORD-1]}"
 
 		case "${COMP_WORDS[$COMP_CWORD-1]}" in
-			deploy)
+			deploy|d)
 				_leap_complete_nodes
 				_leap_complete_tags
 				;;
@@ -68,31 +68,47 @@ _leap()
 			cert)
 				COMPREPLY+=($(compgen -W "ca csr dh update" -- ${cur}))
 				;;
-			compile)
+			compile|c)
 				COMPREPLY+=($(compgen -W "all zone" -- ${cur}))
+				;;
+			env|e)
+				COMPREPLY+=($(compgen -W "ls pin unpin" -- ${cur}))
 				;;
 			facts)
 				COMPREPLY+=($(compgen -W "update" -- ${cur}))
 				;;
-			local)
+			local|l)
 				COMPREPLY+=($(compgen -W "start stop status save" -- ${cur}))
 				;;
 			start|stop|status|save)
 				_leap_complete_nodes
 				;;
-			node)
+			node|n)
 				COMPREPLY+=($(compgen -W "add init rm mv" -- ${cur}))
 				;;
 			add|rm|mv)
 				_leap_complete_nodes
 				;;
-			test)
+			test|t)
 				COMPREPLY+=($(compgen -W "init run" -- ${cur}))
 				;;
 			init|run)
 				_leap_complete_nodes
 				;;
-			*)
+			history|h)
+				_leap_complete_nodes
+				_leap_complete_tags
+				;;
+			inspect|i)
+				_leap_complete_nodes
+				_leap_complete_tags
+				;;
+			help|clean)
+				;;
+			list|ls)
+				_leap_complete_tags
+				;;
+			leap)
 				COMPREPLY+=($(compgen -W "${commands}" -- ${cur}))
 				;;
 		esac
