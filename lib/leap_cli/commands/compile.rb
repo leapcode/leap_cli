@@ -294,7 +294,7 @@ remove this directory if you don't use it.
           if node.dns['aliases']
             node.dns.aliases.each do |host_alias|
               if host_alias != node.domain.full && host_alias != provider.domain
-                put_line.call relative_hostname(host_alias), "IN CNAME  #{relative_hostname(node.domain.full)}"
+                put_line.call relative_hostname(host_alias), "IN A      #{node.ip_address}"
               end
             end
           end
