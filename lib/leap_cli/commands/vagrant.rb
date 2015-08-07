@@ -9,8 +9,15 @@ module LeapCli; module Commands
     local.desc 'Starts up the virtual machine(s)'
     local.arg_name 'FILTER', :optional => true #, :multiple => false
     local.command :start do |start|
+      start.flag(:basebox,
+        :desc => "The basebox to use. This value is passed to vagrant as the "+
+          "`config.vm.box` option. The value here should be the name of an installed box or a "+
+          "shorthand name of a box in HashiCorp's Atlas.",
+        :arg_name => 'BASEBOX',
+        :default_value => 'LEAP/wheezy'
+      )
       start.action do |global_options,options,args|
-        vagrant_command(["up", "sandbox on"], args)
+        vagrant_command(["up", "sandbox on"], args, options)
       end
     end
 
@@ -84,8 +91,8 @@ module LeapCli; module Commands
 
   protected
 
-  def vagrant_command(cmds, args)
-    vagrant_setup
+  def vagrant_command(cmds, args, options={})
+    vagrant_setup(options)
     cmds = cmds.to_a
     if args.empty?
       nodes = [""]
@@ -108,7 +115,7 @@ module LeapCli; module Commands
 
   private
 
-  def vagrant_setup
+  def vagrant_setup(options)
     assert_bin! 'vagrant', 'Vagrant is required for running local virtual machines. Run "sudo apt-get install vagrant".'
 
     if vagrant_version <= Gem::Version.new('1.0.0')
@@ -123,7 +130,7 @@ module LeapCli; module Commands
         assert_run! 'vagrant plugin install sahara'
       end
     end
-    create_vagrant_file
+    create_vagrant_file(options)
   end
 
   def vagrant_version
@@ -135,16 +142,18 @@ module LeapCli; module Commands
     exec cmd
   end
 
-  def create_vagrant_file
+  def create_vagrant_file(options)
     lines = []
     netmask = IPAddr.new('255.255.255.255').mask(LeapCli.leapfile.vagrant_network.split('/').last).to_s
+
+    basebox = options[:basebox] || 'LEAP/wheezy'
 
     if vagrant_version <= Gem::Version.new('1.1.0')
       lines << %[Vagrant::Config.run do |config|]
       manager.each_node do |node|
         if node.vagrant?
           lines << %[  config.vm.define :#{node.name} do |config|]
-          lines << %[    config.vm.box = "LEAP/wheezy"]
+          lines << %[    config.vm.box = "#{basebox}"]
           lines << %[    config.vm.network :hostonly, "#{node.ip_address}", :netmask => "#{netmask}"]
           lines << %[    config.vm.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]]
           lines << %[    config.vm.customize ["modifyvm", :id, "--name", "#{node.name}"]]
@@ -157,7 +166,7 @@ module LeapCli; module Commands
       manager.each_node do |node|
         if node.vagrant?
           lines << %[  config.vm.define :#{node.name} do |config|]
-          lines << %[    config.vm.box = "LEAP/wheezy"]
+          lines << %[    config.vm.box = "#{basebox}"]
           lines << %[    config.vm.network :private_network, ip: "#{node.ip_address}"]
           lines << %[    config.vm.provider "virtualbox" do |v|]
           lines << %[      v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]]
