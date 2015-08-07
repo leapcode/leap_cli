@@ -27,6 +27,15 @@ module LeapCli; module Config
       end
     end
 
+    # searches over all keys matching the regexp, checking to see if the value
+    # has been already used by any of them.
+    def taken?(regexp, value, environment)
+      self.keys.grep(regexp).each do |key|
+        return true if self.retrieve(key, environment) == value
+      end
+      return false
+    end
+
     def set_without_block(key, value, environment)
       set_with_block(key, environment) {value}
     end
