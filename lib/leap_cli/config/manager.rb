@@ -291,6 +291,28 @@ module LeapCli
         @nodes[node.name] = apply_inheritance!(node)
       end
 
+      ##
+      ## CONNECTIONS
+      ##
+
+      class ConnectionList < Array
+        def add(data={})
+          self << {
+            "from" => data[:from],
+            "to" => data[:to],
+            "port" => data[:port]
+          }
+        end
+      end
+
+      def connections
+        @connections ||= ConnectionList.new
+      end
+
+      ##
+      ## PARTIALS
+      ##
+
       #
       # returns all the partial data for the specified partial path.
       # partial path is always relative to provider root, but there must be multiple files

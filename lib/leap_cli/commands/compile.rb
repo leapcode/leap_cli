@@ -43,6 +43,15 @@ module LeapCli
         end
       end
 
+      c.desc "Generate a list of firewall rules. These rules are already "+
+             "implemented on each node, but you might want the list of all "+
+             "rules in case you also have a restrictive network firewall."
+      c.command :firewall do |zone|
+        zone.action do |global_options, options, args|
+          compile_firewall
+        end
+      end
+
       c.default_command :all
     end
 
@@ -335,6 +344,41 @@ $ORIGIN %{domain}.
 ;;
 
 ]
+
+    ##
+    ## FIREWALL
+    ##
+
+    def compile_firewall
+      manager.nodes.each_node(&:evaluate)
+
+      rules = [["ALLOW TO", "PORTS", "ALLOW FROM"]]
+      manager.nodes[:environment => '!local'].values.each do |node|
+        next unless node['firewall']
+        node.firewall.each do |name, rule|
+          if rule.is_a? Hash
+            rules << add_rule(rule)
+          elsif rule.is_a? Array
+            rule.each do |r|
+              rules << add_rule(r)
+            end
+          end
+        end
+      end
+
+      max_to    = rules.inject(0) {|max, r| [max, r[0].length].max}
+      max_port  = rules.inject(0) {|max, r| [max, r[1].length].max}
+      max_from  = rules.inject(0) {|max, r| [max, r[2].length].max}
+      rules.each do |rule|
+        puts "%-#{max_to}s   %-#{max_port}s   %-#{max_from}s" % rule
+      end
+    end
+
+    private
+
+    def add_rule(rule)
+      [rule["to"], [rule["port"]].compact.join(','), rule["from"]]
+    end
 
   end
 end
