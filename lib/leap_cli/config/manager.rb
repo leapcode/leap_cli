@@ -119,6 +119,7 @@ module LeapCli
           e.services = load_all_json(Path.named_path([:service_config, '*'], @provider_dir), Config::Tag, :no_dots => true)
           e.tags     = load_all_json(Path.named_path([:tag_config, '*'],     @provider_dir), Config::Tag, :no_dots => true)
           e.provider = load_json(    Path.named_path(:provider_config,       @provider_dir), Config::Provider, :assert => true)
+          e.provider.set_env('default')
           e.services.inherit_from! @base_services
           e.tags.inherit_from!     @base_tags
           e.provider.inherit_from! @base_provider
@@ -134,6 +135,7 @@ module LeapCli
           e.services.inherit_from! env('default').services
           e.tags.inherit_from!     env('default').tags
           e.provider.inherit_from! env('default').provider
+          e.provider.set_env('_all_')
         end
 
         # For each defined environment, load provider services, tags, and provider.json.
@@ -147,6 +149,7 @@ module LeapCli
             e.services.inherit_from! env('default').services
             e.tags.inherit_from!     env('default').tags
             e.provider.inherit_from! env('default').provider
+            e.provider.set_env(ename)
             validate_provider(e.provider)
           end
         end
