@@ -9,3 +9,5 @@ test/provider/files/users/
 .vagrant
 Vagrantfile
 .reviewboardrc
+.bundle/
+vendor/bundle/
