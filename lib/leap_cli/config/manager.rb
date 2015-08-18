@@ -20,15 +20,6 @@ module LeapCli
 
       def initialize
         @environments = {} # hash of `Environment` objects, keyed by name.
-
-        # load macros and other custom ruby in provider base
-        platform_ruby_files = Dir[Path.provider_base + '/lib/*.rb']
-        if platform_ruby_files.any?
-          $: << Path.provider_base + '/lib'
-          platform_ruby_files.each do |rb_file|
-            require rb_file
-          end
-        end
         Config::Object.send(:include, LeapCli::Macro)
       end
 

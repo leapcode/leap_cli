@@ -4,7 +4,7 @@ module LeapCli; module Commands
 
   desc 'Creates a new provider instance in the specified directory, creating it if necessary.'
   arg_name 'DIRECTORY'
-  skips_pre
+  #skips_pre
   command :new do |c|
     c.flag 'name', :desc => "The name of the provider." #, :default_value => 'Example'
     c.flag 'domain', :desc => "The primary domain of the provider." #, :default_value => 'example.org'
@@ -12,6 +12,10 @@ module LeapCli; module Commands
     c.flag 'contacts', :desc => "Default email address contacts." #, :default_value => 'root'
 
     c.action do |global, options, args|
+      unless args.first
+        # this should not be needed, but GLI is not making it required.
+        bail! "Argument DIRECTORY is required."
+      end
       directory = File.expand_path(args.first)
       create_provider_directory(global, directory)
       options[:domain]   ||= ask_string("The primary domain of the provider: ") {|q| q.default = 'example.org'}

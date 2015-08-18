@@ -36,6 +36,7 @@ require 'leap_cli/util/secret'
 require 'leap_cli/util/remote_command'
 require 'leap_cli/util/x509'
 require 'leap_cli/logger'
+require 'leap_cli/bootstrap'
 
 require 'leap_cli/ssh_key'
 require 'leap_cli/config/object'
@@ -54,7 +55,6 @@ require 'leap_cli/markdown_document_listener'
 #
 module LeapCli
   Util.send(:extend, LeapCli::Log)
-  Commands.send(:extend, LeapCli::Log)
   Config::Manager.send(:include, LeapCli::Log)
   extend LeapCli::Log
 end

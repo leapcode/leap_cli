@@ -15,7 +15,6 @@ else
 end
 
 LEAP_CLI_BASE_DIR = File.expand_path('..', File.dirname(File.symlink?(__FILE__) ? File.readlink(__FILE__) : __FILE__))
-ORIGINAL_ARGV = ARGV.dup
 
 begin
   # First, try to load the leap_cli code that is local to this `leap` command.
@@ -74,26 +73,19 @@ module LeapCli::Commands
   program_desc       LeapCli::SUMMARY
   program_long_desc  LeapCli::DESCRIPTION
 
+  LeapCli::Bootstrap::setup(ARGV)
+
   # handle --version ourselves (and not GLI)
   if ARGV.grep(/--version/).any?
-    puts "leap #{LeapCli::VERSION}, ruby #{RUBY_VERSION}"
-    begin
-      commands_from('leap_cli/commands')
-      initialize_leap_cli(false, {:verbose => 2})
-    rescue StandardError => exc
-      puts exc.to_s
-      raise exc if DEBUG
-    end
-    exit(0)
+    LeapCli::Bootstrap::handle_version(self)
+  else
+    LeapCli::Bootstrap::load_libraries(self)
   end
 
   # disable GLI error catching
   ENV['GLI_DEBUG'] = "true"
   def error_message(msg)
   end
-
-  # load commands
-  commands_from('leap_cli/commands')
 
   # run command
   begin

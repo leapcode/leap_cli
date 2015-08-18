@@ -83,6 +83,7 @@ module LeapCli
           when :fatal_error then ['fatal error:', :red, :bold]
           when :warning   then ['warning:', :yellow, :bold]
           when :info      then ['info', :cyan, :bold]
+          when :note      then ['NOTE:', :cyan, :bold]
           when :updated   then ['updated', :cyan, :bold]
           when :updating  then ['updating', :cyan, :bold]
           when :created   then ['created', :green, :bold]
