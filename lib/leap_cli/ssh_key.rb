@@ -161,8 +161,11 @@ module LeapCli
     end
 
     def summary
-      #"%s %s %s (%s)" % [self.type, self.bits, self.fingerprint, self.filename || self.comment || '']
-      "%s %s %s" % [self.type, self.bits, self.fingerprint]
+      if self.filename
+        "%s %s %s (%s)" % [self.type, self.bits, self.fingerprint, File.basename(self.filename)]
+      else
+        "%s %s %s" % [self.type, self.bits, self.fingerprint]
+      end
     end
 
     def to_s
