@@ -25,8 +25,7 @@ end
 task :install_insecure_vagrant_key, :max_hosts => MAX_HOSTS do
   leap.log :installing, "insecure vagrant key" do
     leap.mkdirs '/root/.ssh'
-    key_file = File.expand_path('../../../vendor/vagrant_ssh_keys/vagrant.pub', File.dirname(__FILE__))
-    upload key_file, '/root/.ssh/authorized_keys2', :mode => '600'
+    upload LeapCli::Path.vagrant_ssh_key_file, '/root/.ssh/authorized_keys2', :mode => '600'
   end
 end
 
