@@ -14,7 +14,7 @@ NOTE: leap_cli requires ruby 1.9 or later.
 
 Optionally install Vagrant in order to be able to test with local virtual machines (recommended):
 
-    sudo apt-get install vagrant virtualbox
+    sudo apt-get install vagrant virtualbox zlib1g-dev
 
 NOTE: the packaged virtualbox and vagrant that comes with Debian and Ubuntu are rather ancient. Most people have better luck by downloading these packages from the upstream:
 
