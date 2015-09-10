@@ -99,8 +99,11 @@ module LeapCli; module Path
     end
   end
 
-  def self.vagrant_ssh_key_file
+  def self.vagrant_ssh_priv_key_file
     File.join(LEAP_CLI_BASE_DIR, 'vendor', 'vagrant_ssh_keys', 'vagrant.key')
   end
 
+  def self.vagrant_ssh_pub_key_file
+    File.join(LEAP_CLI_BASE_DIR, 'vendor', 'vagrant_ssh_keys', 'vagrant.pub')
+  end
 end; end
