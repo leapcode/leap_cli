@@ -50,7 +50,9 @@ module LeapCli
       # the returned array includes nil (for the default environment)
       #
       def environment_names
-        @environment_names ||= [nil] + env.tags.collect {|name, tag| tag['environment']}.compact
+        @environment_names ||= begin
+          [nil] + (env.tags.field('environment') + nodes.field('environment')).compact.uniq
+        end
       end
 
       #
