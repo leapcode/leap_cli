@@ -113,7 +113,7 @@ module LeapCli
       { :match => /sh: .+: command not found/, :color => :magenta, :match_level => 1, :priority => -30 },
 
       # IMPORTANT
-      { :match => /^err ::/,                   :color => :red,     :match_level => 0, :priority => -10, :exit => 1},
+      { :match => /^(E|e)rr ::/,                   :color => :red,     :match_level => 0, :priority => -10, :exit => 1},
       { :match => /^ERROR:/,                   :color => :red,                        :priority => -10, :exit => 1},
       { :match => /.*/,                        :color => :blue,    :match_level => 0, :priority => -20 },
 
@@ -129,19 +129,21 @@ module LeapCli
       { :match => /WARNING: The following packages cannot be authenticated!/, :color => :red, :level => 0, :priority => -10},
 
       # PUPPET
-      { :match => /^warning: .*is deprecated.*$/,  :level => 2, :color => :yellow, :priority => -10},
-      { :match => /^warning: Scope.*$/,            :level => 2, :color => :yellow, :priority => -10},
-      { :match => /^notice:/,                      :level => 1, :color => :cyan,   :priority => -20},
-      { :match => /^notice:.*executed successfully$/, :level => 2, :color => :cyan, :priority => -15},
-      { :match => /^warning:/,                     :level => 0, :color => :yellow, :priority => -20},
-      { :match => /^Duplicate declaration:/,       :level => 0, :color => :red,    :priority => -20},
-      { :match => /Finished catalog run/,          :level => 0, :color => :green,  :priority => -10},
+      { :match => /^(W|w)arning: .*is deprecated.*$/, :level => 2, :color => :yellow, :priority => -10},
+      { :match => /^(W|w)arning: Scope.*$/,           :level => 2, :color => :yellow, :priority => -10},
+      { :match => /^(N|n)otice:/,                     :level => 1, :color => :cyan,   :priority => -20},
+      { :match => /^(N|n)otice:.*executed successfully$/, :level => 2, :color => :cyan, :priority => -15},
+      { :match => /^(W|w)arning:/,                    :level => 0, :color => :yellow, :priority => -20},
+      { :match => /^Duplicate declaration:/,          :level => 0, :color => :red,    :priority => -20},
+      { :match => /Finished catalog run/,             :level => 0, :color => :green,  :priority => -10},
       { :match => /^APPLY COMPLETE \(changes made\)/, :level => 0, :color => :green,  :priority => -10},
-      { :match => /^APPLY COMPLETE \(no changes\)/, :level => 0, :color => :green,  :priority => -10},
+      { :match => /^APPLY COMPLETE \(no changes\)/,   :level => 0, :color => :green,  :priority => -10},
 
       # PUPPET FATAL ERRORS
-      { :match => /^err:/,                         :level => 0, :color => :red, :priority => -1, :exit => 1},
+      { :match => /^(E|e)rr(or|):/,                :level => 0, :color => :red, :priority => -1, :exit => 1},
+      { :match => /^Wrapped exception:/,           :level => 0, :color => :red, :priority => -1, :exit => 1},
       { :match => /^Failed to parse template/,     :level => 0, :color => :red, :priority => -1, :exit => 1},
+      { :match => /^Execution of.*returned/,     :level => 0, :color => :red, :priority => -1, :exit => 1},
       { :match => /^Parameter matches failed:/,    :level => 0, :color => :red, :priority => -1, :exit => 1},
       { :match => /^Syntax error/,                 :level => 0, :color => :red, :priority => -1, :exit => 1},
       { :match => /^Cannot reassign variable/,     :level => 0, :color => :red, :priority => -1, :exit => 1},
@@ -155,8 +157,8 @@ module LeapCli
       { :match => /\d+ tests: \d+ passes, \d+ skips, 0 warnings, 0 failures, 0 errors/, :color => :blue, :priority => -20},
 
       # LOG SUPPRESSION
-      { :match => /^warning: You cannot collect without storeconfigs being set/, :level => 2, :priority => 10},
-      { :match => /^warning: You cannot collect exported resources without storeconfigs being set/, :level => 2, :priority => 10}
+      { :match => /^(W|w)arning: You cannot collect without storeconfigs being set/, :level => 2, :priority => 10},
+      { :match => /^(W|w)arning: You cannot collect exported resources without storeconfigs being set/, :level => 2, :priority => 10}
     ]
 
     def self.sorted_formatters
