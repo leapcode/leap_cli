@@ -16,6 +16,7 @@ module LeapCli
     attr_accessor :leap_version
     attr_accessor :log
     attr_accessor :vagrant_network
+    attr_accessor :vagrant_basebox
     attr_accessor :environment
 
     def initialize
