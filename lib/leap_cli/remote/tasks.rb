@@ -61,7 +61,7 @@ task :install_prerequisites, :max_hosts => MAX_HOSTS do
   end
   #run "locale-gen"
   leap.mkdirs("/etc/leap", "/srv/leap")
-  chmod 0755 /etc/leap
+  run "chmod 0755 /etc/leap"
   leap.mark_initialized
 end
 
