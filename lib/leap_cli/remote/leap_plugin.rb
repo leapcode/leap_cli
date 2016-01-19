@@ -66,6 +66,13 @@ module LeapCli; module Remote; module LeapPlugin
   end
 
   #
+  # dumps debugging information
+  # #
+  def debug
+    run "#{Leap::Platform.leap_dir}/bin/debug.sh"
+  end
+
+  #
   # dumps the recent deploy history to the console
   #
   def history
