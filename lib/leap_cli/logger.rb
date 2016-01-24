@@ -129,6 +129,8 @@ module LeapCli
       { :match => /WARNING: The following packages cannot be authenticated!/, :color => :red, :level => 0, :priority => -10},
 
       # PUPPET
+      { :match => /^(W|w)arning: Not collecting exported resources without storeconfigs/, :level => 2, :color => :yellow, :priority => -10},
+      { :match => /^(W|w)arning: Found multiple default providers for vcsrepo:/,          :level => 2, :color => :yellow, :priority => -10},
       { :match => /^(W|w)arning: .*is deprecated.*$/, :level => 2, :color => :yellow, :priority => -10},
       { :match => /^(W|w)arning: Scope.*$/,           :level => 2, :color => :yellow, :priority => -10},
       { :match => /^(N|n)otice:/,                     :level => 1, :color => :cyan,   :priority => -20},
