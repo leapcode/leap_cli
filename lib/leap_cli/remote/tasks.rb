@@ -49,10 +49,10 @@ task :install_prerequisites, :max_hosts => MAX_HOSTS do
     end
   end
   leap.log :updating, "server time" do
+    run "test -f /usr/sbin/ntpd || #{apt_get} install ntp"
     run "( test -f /etc/init.d/ntp && /etc/init.d/ntp stop ) || true"
-    run "test -f /usr/sbin/ntpdate || #{apt_get} install ntpdate"
-    leap.log :running, "ntpdate..." do
-      run "test -f /usr/sbin/ntpdate && ntpdate 0.debian.pool.ntp.org 1.debian.pool.ntp.org 2.debian.pool.ntp.org 3.debian.pool.ntp.org"
+    leap.log :running, "ntpd -gq ..." do
+      run "test -f /usr/sbin/ntpd && ntpd -gq"
     end
     run "( test -f /etc/init.d/ntp && /etc/init.d/ntp start ) || true"
   end
