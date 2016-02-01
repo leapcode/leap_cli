@@ -85,12 +85,23 @@ module LeapCli
       #
       # export JSON
       #
-      def dump_json(*options)
+      def dump_json(options={})
         evaluate(@node)
-        if options.include? :compact
-          self.to_json
+        if options[:format] == :compact
+          return self.to_json
         else
-          JSON.sorted_generate(self)
+          excluded = {}
+          if options[:exclude]
+            options[:exclude].each do |key|
+              excluded[key] = self[key]
+              self.delete(key)
+            end
+          end
+          json_str = JSON.sorted_generate(self)
+          if excluded.any?
+            self.merge!(excluded)
+          end
+          return json_str
         end
       end
 
@@ -286,7 +297,7 @@ module LeapCli
         keys.each do |key|
           obj = fetch_value(key, context)
           if is_required_value_not_set?(obj)
-            Util::log 0, :warning, "required key \"#{key}\" is not set in node \"#{node.name}\"."
+            Util::log 0, :warning, "required property \"#{key}\" is not set in node \"#{node.name}\"."
           elsif obj.is_a? Config::Object
             obj.evaluate_everything(context)
           end
@@ -301,7 +312,7 @@ module LeapCli
           @late_eval_list.each do |key, value|
             self[key] = context.evaluate_ruby(key, value)
             if is_required_value_not_set?(self[key])
-              Util::log 0, :warning, "required key \"#{key}\" is not set in node \"#{node.name}\"."
+              Util::log 0, :warning, "required property \"#{key}\" is not set in node \"#{node.name}\"."
             end
           end
         end
