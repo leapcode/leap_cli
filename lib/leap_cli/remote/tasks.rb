@@ -60,8 +60,8 @@ task :install_prerequisites, :max_hosts => MAX_HOSTS do
     run %[#{apt_get} install $( (egrep -q '(^wheezy|^7\.)' /etc/debian_version && echo #{leap.required_wheezy_packages}) || echo #{leap.required_packages} )]
   end
   #run "locale-gen"
-  leap.mkdirs("/etc/leap", "/srv/leap")
-  run "chmod 0755 /etc/leap"
+  leap.mkdirs Leap::Platform.hiera_dir
+  run "chmod 0755 #{Leap::Platform.hiera_dir}"
   leap.mark_initialized
 end
 

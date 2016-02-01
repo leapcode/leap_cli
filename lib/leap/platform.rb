@@ -14,6 +14,7 @@ module Leap
       attr_accessor :monitor_username
       attr_accessor :reserved_usernames
 
+      attr_accessor :hiera_dir
       attr_accessor :hiera_path
       attr_accessor :files_dir
       attr_accessor :leap_dir
@@ -24,6 +25,7 @@ module Leap
       def define(&block)
         # some defaults:
         @reserved_usernames = []
+        @hiera_dir  = '/etc/leap'
         @hiera_path = '/etc/leap/hiera.yaml'
         @leap_dir   = '/srv/leap'
         @files_dir  = '/srv/leap/files'
