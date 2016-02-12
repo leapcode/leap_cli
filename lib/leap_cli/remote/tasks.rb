@@ -29,40 +29,15 @@ task :install_insecure_vagrant_key, :max_hosts => MAX_HOSTS do
   end
 end
 
-BAD_APT_GET_UPDATE = /(BADSIG|NO_PUBKEY|KEYEXPIRED|REVKEYSIG|NODATA)/
-
 task :install_prerequisites, :max_hosts => MAX_HOSTS do
-  apt_get = "DEBIAN_FRONTEND=noninteractive apt-get -q -y -o DPkg::Options::=--force-confold"
-  apt_get_update = "apt-get update -o Acquire::Languages=none"
-  leap.mkdirs Leap::Platform.leap_dir
-  run "echo 'en_US.UTF-8 UTF-8' > /etc/locale.gen"
-  leap.log :updating, "package list" do
-    run apt_get_update do |channel, stream, data|
-      # sadly exitcode is unreliable measure if apt-get update hit a failure.
-      if data =~ BAD_APT_GET_UPDATE
-        LeapCli::Util.bail! do
-          LeapCli::Util.log :fatal_error, "in `apt-get update`: #{data}", :host => channel[:host]
-        end
-      else
-        logger.log(1, data, channel[:host])
-      end
-    end
+  bin_dir = File.join(Leap::Platform.leap_dir, 'bin')
+  node_init_path = File.join(bin_dir, 'node_init')
+
+  leap.log :running, "node_init script" do
+    leap.mkdirs bin_dir
+    upload LeapCli::Path.node_init_script, node_init_path, :mode => '500'
+    run node_init_path
   end
-  leap.log :updating, "server time" do
-    run "( test -f /etc/init.d/ntp && /etc/init.d/ntp stop ) || true"
-    run "test -f /usr/sbin/ntpdate || #{apt_get} install ntpdate"
-    leap.log :running, "ntpdate..." do
-      run "test -f /usr/sbin/ntpdate && ntpdate 0.debian.pool.ntp.org 1.debian.pool.ntp.org 2.debian.pool.ntp.org 3.debian.pool.ntp.org"
-    end
-    run "( test -f /etc/init.d/ntp && /etc/init.d/ntp start ) || true"
-  end
-  leap.log :installing, "required packages" do
-    run %[#{apt_get} install $( (egrep -q '(^wheezy|^7\.)' /etc/debian_version && echo #{leap.required_wheezy_packages}) || echo #{leap.required_packages} )]
-  end
-  #run "locale-gen"
-  leap.mkdirs Leap::Platform.hiera_dir
-  run "chmod 0755 #{Leap::Platform.hiera_dir}"
-  leap.mark_initialized
 end
 
 #

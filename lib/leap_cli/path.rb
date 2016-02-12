@@ -106,4 +106,9 @@ module LeapCli; module Path
   def self.vagrant_ssh_pub_key_file
     File.join(LEAP_CLI_BASE_DIR, 'vendor', 'vagrant_ssh_keys', 'vagrant.pub')
   end
+
+  def self.node_init_script
+    File.join(@platform, 'bin', 'node_init')
+  end
+
 end; end

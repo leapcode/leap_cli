@@ -5,14 +5,6 @@
 
 module LeapCli; module Remote; module LeapPlugin
 
-  def required_packages
-    "puppet rsync lsb-release locales"
-  end
-
-  def required_wheezy_packages
-    "puppet ruby-hiera-puppet rsync lsb-release locales"
-  end
-
   def log(*args, &block)
     LeapCli::Util::log(*args, &block)
   end
@@ -59,10 +51,6 @@ module LeapCli; module Remote; module LeapPlugin
         end
       end
     end
-  end
-
-  def mark_initialized
-    run "touch #{Leap::Platform.init_path}"
   end
 
   #
@@ -195,30 +183,5 @@ module LeapCli; module Remote; module LeapPlugin
     print str
     STDOUT.flush
   end
-
-  #def mkdir(dir)
-  #  run "mkdir -p #{dir}"
-  #end
-
-  #def chown_root(dir)
-  #  run "chown root -R #{dir} && chmod -R ag-rwx,u+rwX #{dir}"
-  #end
-
-  #def logrun(cmd)
-  #  @streamer ||= LeapCli::Remote::LogStreamer.new
-  #  run cmd do |channel, stream, data|
-  #    @streamer.collect_output(channel[:host], data)
-  #  end
-  #end
-
-#    return_code = nil
-#    run "something; echo return code: $?" do |channel, stream, data|
-#      if data =~ /return code: (\d+)/
-#        return_code = $1.to_i
-#      else
-#        Capistrano::Configuration.default_io_proc.call(channel, stream, data)
-#      end
-#    end
-#    puts "finished with return code: #{return_code}"
 
 end; end; end
