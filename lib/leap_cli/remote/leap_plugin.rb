@@ -5,6 +5,10 @@
 
 module LeapCli; module Remote; module LeapPlugin
 
+  def required_packages
+    "puppet rsync lsb-release locales"
+  end
+
   def log(*args, &block)
     LeapCli::Util::log(*args, &block)
   end
