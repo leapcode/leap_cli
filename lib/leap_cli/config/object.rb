@@ -197,6 +197,10 @@ module LeapCli
             mode = :subtract
             old_value = self.fetch '-'+key, nil
             self.delete('-'+key)
+          elsif self.has_key?('!'+key)
+            mode = :replace
+            old_value = self.fetch '!'+key, nil
+            self.delete('!'+key)
           else
             mode = :normal
             old_value = self.fetch key, nil
@@ -208,8 +212,12 @@ module LeapCli
           old_value = true  if old_value == "true"
           old_value = false if old_value == "false"
 
+          # force replace?
+          if mode == :replace && prefer_self
+            value = old_value
+
           # merge hashes
-          if old_value.is_a?(Hash) || new_value.is_a?(Hash)
+          elsif old_value.is_a?(Hash) || new_value.is_a?(Hash)
             value = Config::Object.new(@manager, @node)
             old_value.is_a?(Hash) ? value.deep_merge!(old_value) : (value[key] = old_value if !old_value.nil?)
             new_value.is_a?(Hash) ? value.deep_merge!(new_value, prefer_self) : (value[key] = new_value if !new_value.nil?)
