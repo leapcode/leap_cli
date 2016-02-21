@@ -67,8 +67,9 @@ module LeapCli; module Remote; module LeapPlugin
   #
   # dumps the recent deploy history to the console
   #
-  def history
-    run "(test -s /var/log/leap/deploy-summary.log && tail /var/log/leap/deploy-summary.log) || (test -s /var/log/leap/deploy-summary.log.1 && tail /var/log/leap/deploy-summary.log.1) || (echo 'no history')"
+  def history(lines)
+    command = "(test -s /var/log/leap/deploy-summary.log && tail -n #{lines} /var/log/leap/deploy-summary.log) || (test -s /var/log/leap/deploy-summary.log.1 && tail -n #{lines} /var/log/leap/deploy-summary.log.1) || (echo 'no history')"
+    run command
   end
 
   #
