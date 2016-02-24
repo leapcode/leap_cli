@@ -94,6 +94,9 @@ module LeapCli
         if !Path.platform || !File.directory?(Path.platform)
           bail! { log :missing, "platform directory '#{Path.platform}'" }
         end
+        if LeapCli.log_file.nil? && LeapCli.leapfile.log
+          LeapCli.log_file = LeapCli.leapfile.log
+        end
       elsif !leapfile_optional?(argv)
         puts
         puts " ="
