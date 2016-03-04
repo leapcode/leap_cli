@@ -29,6 +29,8 @@ module LeapCli
     # Gives you the program description
     def program_desc(desc)
       @io.puts "@title = 'Command Line Reference'"
+      @io.puts "@summary = 'A copy of leap --help'"
+
       #@io.puts "# #{File.basename($0)} - #{desc}"
       @io.puts
     end
@@ -98,7 +100,7 @@ module LeapCli
       @commands.push(name)
       #@io.puts "#{@nest}## Command: <tt>#{([name] + aliases).join('|')} #{@arg_name_formatter.format(arg_name,arg_options)}</tt>"
       @io.puts
-      @io.puts "#{@nest}# #{@commands.join ' '} #{@arg_name_formatter.format(arg_name,arg_options)}"
+      @io.puts "#{@nest}# #{@commands.join ' '} #{@arg_name_formatter.format(arg_name, arg_options, [])}"
       @io.puts
       @io.puts String(desc).strip
       @io.puts
