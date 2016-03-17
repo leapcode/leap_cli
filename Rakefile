@@ -90,21 +90,19 @@ task :default => :test
 ## DOCUMENTATION
 ##
 
-# require 'rdoc/task'
-
-# Rake::RDocTask.new do |rd|
-#   rd.main = "README.rdoc"
-#   rd.rdoc_files.include("README.rdoc","lib/**/*.rb","bin/**/*")
-#   rd.title = 'Your application title'
-# end
-
-desc "Dumps all command line options to doc/leap.md"
-task :doc do
-  Dir.chdir($base_dir + "/doc") do
-    if system('../bin/leap _doc --format=LeapCli::MarkdownDocumentListener')
-      puts "updated doc/leap.md"
-    else
-      puts "error"
-    end
-  end
-end
+#
+# NOTE: this does not currently work!
+#
+# to export the docs, run `leap _doc --format=LeapCli::MarkdownDocumentListener`
+# manually from within a provider directory.
+#
+#desc "Dumps all command line options to doc/leap.md"
+#task :doc do
+#  Dir.chdir($base_dir + "/doc") do
+#    if system('../bin/leap _doc --format=LeapCli::MarkdownDocumentListener')
+#      puts "updated doc/leap.md"
+#    else
+#      puts "error"
+#    end
+#  end
+#end
