@@ -6,7 +6,11 @@ module LeapCli; module Config
   class Provider < Object
     attr_reader :environment
     def set_env(e)
-      @environment = e
+      if e == 'default'
+        @environment = nil
+      else
+        @environment = e
+      end
     end
     def provider
       self
