@@ -9,8 +9,8 @@ module LeapCli; module Config
   class Tag < Object
     attr_reader :node_list
 
-    def initialize(manager=nil)
-      super(manager)
+    def initialize(environment=nil)
+      super(environment)
       @node_list = Config::ObjectList.new
     end
 

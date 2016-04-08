@@ -167,14 +167,17 @@ module LeapCli
       end
 
       #
-      # applies inherit_from! to all objects.
+      # Applies inherit_from! to all objects.
       #
-      def inherit_from!(object_list)
+      # 'env' specifies what environment should be for
+      # each object in the list.
+      #
+      def inherit_from!(object_list, env)
         object_list.each do |name, object|
           if self[name]
             self[name].inherit_from!(object)
           else
-            self[name] = object.deep_dup
+            self[name] = object.duplicate(env)
           end
         end
       end

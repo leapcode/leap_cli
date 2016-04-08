@@ -12,33 +12,6 @@ module LeapCli
   module Config
 
     #
-    # A proxy for Manager that binds to a particular object
-    # (so that we can bind to a particular environment)
-    #
-    class ManagerBinding
-      def initialize(manager, object)
-        @manager = manager
-        @object = object
-      end
-
-      def services
-        @manager.env(@object.environment).services
-      end
-
-      def tags
-        @manager.env(@object.environment).tags
-      end
-
-      def provider
-        @manager.env(@object.environment).provider
-      end
-
-      def method_missing(*args)
-        @manager.send(*args)
-      end
-    end
-
-    #
     # This class represents the configuration for a single node, service, or tag.
     # Also, all the nested hashes are also of this type.
     #
@@ -46,21 +19,27 @@ module LeapCli
     #
     class Object < Hash
 
+      attr_reader :env
       attr_reader :node
 
-      def initialize(manager=nil, node=nil)
-        # keep a global pointer around to the config manager. used a lot in the eval strings and templates
-        # (which are evaluated in the context of Config::Object)
-        @manager = manager
-
-        # an object that is a node as @node equal to self, otherwise all the child objects point back to the top level node.
+      def initialize(environment=nil, node=nil)
+        raise ArgumentError unless environment.nil? || environment.is_a?(Config::Environment)
+        @env = environment
+        # an object that is a node as @node equal to self, otherwise all the
+        # child objects point back to the top level node.
         @node = node || self
       end
 
       def manager
-        ManagerBinding.new(@manager, self)
+        @env.manager
       end
-      alias :global :manager
+
+      #
+      # TODO: deprecate node.global()
+      #
+      def global
+        @env
+      end
 
       def environment=(e)
         self.store('environment', e)
@@ -68,6 +47,11 @@ module LeapCli
 
       def environment
         self['environment']
+      end
+
+      def duplicate(env)
+        new_object = self.deep_dup
+        new_object.set_environment(env, new_object)
       end
 
       #
@@ -218,7 +202,7 @@ module LeapCli
 
           # merge hashes
           elsif old_value.is_a?(Hash) || new_value.is_a?(Hash)
-            value = Config::Object.new(@manager, @node)
+            value = Config::Object.new(@env, @node)
             old_value.is_a?(Hash) ? value.deep_merge!(old_value) : (value[key] = old_value if !old_value.nil?)
             new_value.is_a?(Hash) ? value.deep_merge!(new_value, prefer_self) : (value[key] = new_value if !new_value.nil?)
 
@@ -267,6 +251,16 @@ module LeapCli
           self[key] = value
         end
         self
+      end
+
+      def set_environment(env, node)
+        @env = env
+        @node = node
+        self.each do |key, value|
+          if value.is_a?(Config::Object)
+            value.set_environment(env, node)
+          end
+        end
       end
 
       #

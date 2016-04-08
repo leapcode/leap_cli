@@ -15,5 +15,8 @@ module LeapCli; module Config
     def provider
       self
     end
+    def validate!
+      # nothing here yet :(
+    end
   end
 end; end

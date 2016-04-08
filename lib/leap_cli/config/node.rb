@@ -9,8 +9,8 @@ module LeapCli; module Config
   class Node < Object
     attr_accessor :file_paths
 
-    def initialize(manager=nil)
-      super(manager)
+    def initialize(environment=nil)
+      super(environment)
       @node = self
       @file_paths = []
     end

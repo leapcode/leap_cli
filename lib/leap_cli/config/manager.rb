@@ -9,10 +9,6 @@ end
 module LeapCli
   module Config
 
-    class Environment
-      attr_accessor :services, :tags, :provider
-    end
-
     #
     # A class to manage all the objects in all the configuration files.
     #
@@ -26,9 +22,6 @@ module LeapCli
       ##
       ## ATTRIBUTES
       ##
-
-      attr_reader :nodes, :common, :secrets
-      attr_reader :base_services, :base_tags, :base_provider, :base_common
 
       #
       # returns the Hash of the contents of facts.json
@@ -51,7 +44,7 @@ module LeapCli
       #
       def environment_names
         @environment_names ||= begin
-          [nil] + (env.tags.field('environment') + nodes.field('environment')).compact.uniq
+          [nil] + (env.tags.field('environment') + env.nodes.field('environment')).compact.uniq
         end
       end
 
@@ -59,26 +52,25 @@ module LeapCli
       # Returns the appropriate environment variable
       #
       def env(env=nil)
-        env ||= 'default'
-        e = @environments[env] ||= Environment.new
-        yield e if block_given?
-        e
+        @environments[env || 'default']
       end
 
       #
-      # The default accessors for services, tags, and provider.
+      # The default accessors
+      #
       # For these defaults, use 'default' environment, or whatever
       # environment is pinned.
       #
-      def services
-        env(default_environment).services
-      end
-      def tags
-        env(default_environment).tags
-      end
-      def provider
-        env(default_environment).provider
-      end
+      # I think it might be an error that these are ever used
+      # and I would like to get rid of them.
+      #
+      def services; env(default_environment).services; end
+      def tags;     env(default_environment).tags;     end
+      def partials; env(default_environment).partials; end
+      def provider; env(default_environment).provider; end
+      def common;   env(default_environment).common;   end
+      def secrets;  env(default_environment).secrets;  end
+      def nodes;    env(default_environment).nodes;    end
 
       def default_environment
         LeapCli.leapfile.environment
@@ -88,6 +80,21 @@ module LeapCli
       ## IMPORT EXPORT
       ##
 
+      def add_environment(args)
+        if args[:inherit]
+          parent = @environments[args.delete(:inherit)]
+        else
+          parent = nil
+        end
+        @environments[args[:name]] = Environment.new(
+          self,
+          args.delete(:name),
+          args.delete(:dir),
+          parent,
+          args
+        )
+      end
+
       #
       # load .json configuration files
       #
@@ -95,69 +102,37 @@ module LeapCli
         @provider_dir = Path.provider
 
         # load base
-        @base_services = load_all_json(Path.named_path([:service_config, '*'], Path.provider_base), Config::Tag)
-        @base_tags     = load_all_json(Path.named_path([:tag_config, '*'],     Path.provider_base), Config::Tag)
-        @base_common   = load_json(    Path.named_path(:common_config,         Path.provider_base), Config::Object)
-        @base_provider = load_json(    Path.named_path(:provider_config,       Path.provider_base), Config::Provider)
+        add_environment(name: '_base_', dir: Path.provider_base)
 
         # load provider
-        @nodes    = load_all_json(Path.named_path([:node_config, '*'],  @provider_dir), Config::Node)
-        @common   = load_json(    Path.named_path(:common_config,       @provider_dir), Config::Object)
-        @secrets  = load_json(    Path.named_path(:secrets_config,      @provider_dir), Config::Secrets)
-        @common.inherit_from! @base_common
+        Util::assert_files_exist!(Path.named_path(:provider_config, @provider_dir))
+        add_environment(name: 'default', dir: @provider_dir,
+          inherit: '_base_', no_dots: true)
 
-        # For the default environment, load provider services, tags, and provider.json
-        log 3, :loading, 'default environment...'
-        env('default') do |e|
-          e.services = load_all_json(Path.named_path([:service_config, '*'], @provider_dir), Config::Tag, :no_dots => true)
-          e.tags     = load_all_json(Path.named_path([:tag_config, '*'],     @provider_dir), Config::Tag, :no_dots => true)
-          e.provider = load_json(    Path.named_path(:provider_config,       @provider_dir), Config::Provider, :assert => true)
-          e.provider.set_env('default')
-          e.services.inherit_from! @base_services
-          e.tags.inherit_from!     @base_tags
-          e.provider.inherit_from! @base_provider
-          validate_provider(e.provider)
-        end
+        # create a special '_all_' environment, used for tracking
+        # the union of all the environments
+        add_environment(name: '_all_', inherit: 'default')
 
-        # create a special '_all_' environment, used for tracking the union
-        # of all the environments
-        env('_all_') do |e|
-          e.services = Config::ObjectList.new
-          e.tags     = Config::ObjectList.new
-          e.provider = Config::Provider.new
-          e.services.inherit_from! env('default').services
-          e.tags.inherit_from!     env('default').tags
-          e.provider.inherit_from! env('default').provider
-          e.provider.set_env('_all_')
-        end
-
-        # For each defined environment, load provider services, tags, and provider.json.
+        # load environments
         environment_names.each do |ename|
-          next unless ename
-          log 3, :loading, '%s environment...' % ename
-          env(ename) do |e|
-            e.services = load_all_json(Path.named_path([:service_env_config, '*', ename], @provider_dir), Config::Tag, :env => ename)
-            e.tags     = load_all_json(Path.named_path([:tag_env_config, '*', ename],     @provider_dir), Config::Tag, :env => ename)
-            e.provider = load_json(    Path.named_path([:provider_env_config, ename],     @provider_dir), Config::Provider, :env => ename)
-            e.services.inherit_from! env('default').services
-            e.tags.inherit_from!     env('default').tags
-            e.provider.inherit_from! env('default').provider
-            e.provider.set_env(ename)
-            validate_provider(e.provider)
+          if ename
+            log 3, :loading, '%s environment...' % ename
+            add_environment(name: ename, dir: @provider_dir,
+              inherit: 'default', scope: ename)
           end
         end
 
         # apply inheritance
-        @nodes.each do |name, node|
+        env.nodes.each do |name, node|
           Util::assert! name =~ /^[0-9a-z-]+$/, "Illegal character(s) used in node name '#{name}'"
-          @nodes[name] = apply_inheritance(node)
+          env.nodes[name] = apply_inheritance(node)
         end
 
         # do some node-list post-processing
         cleanup_node_lists(options)
 
         # apply control files
-        @nodes.each do |name, node|
+        env.nodes.each do |name, node|
           control_files(node).each do |file|
             begin
               node.eval_file file
@@ -185,7 +160,7 @@ module LeapCli
         existing_files = nil
 
         unless node_list
-          node_list = self.nodes
+          node_list = env.nodes
           existing_hiera = Dir.glob(Path.named_path([:hiera, '*'], @provider_dir))
           existing_files = Dir.glob(Path.named_path([:node_files_dir, '*'], @provider_dir))
         end
@@ -220,8 +195,8 @@ module LeapCli
       end
 
       def export_secrets(clean_unused_secrets = false)
-        if @secrets.any?
-          Util.write_file!([:secrets_config, @provider_dir], @secrets.dump_json(clean_unused_secrets) + "\n")
+        if env.secrets.any?
+          Util.write_file!([:secrets_config, @provider_dir], env.secrets.dump_json(clean_unused_secrets) + "\n")
         end
       end
 
@@ -266,7 +241,7 @@ module LeapCli
           # so, take the part before the first period as the node name
           name = name.split('.').first
         end
-        @nodes[name]
+        env.nodes[name]
       end
 
       #
@@ -280,11 +255,11 @@ module LeapCli
       # yields each node, in sorted order
       #
       def each_node(&block)
-        nodes.each_node &block
+        env.nodes.each_node &block
       end
 
       def reload_node!(node)
-        @nodes[node.name] = apply_inheritance!(node)
+        env.nodes[node.name] = apply_inheritance!(node)
       end
 
       ##
@@ -305,32 +280,6 @@ module LeapCli
         @connections ||= ConnectionList.new
       end
 
-      ##
-      ## PARTIALS
-      ##
-
-      #
-      # returns all the partial data for the specified partial path.
-      # partial path is always relative to provider root, but there must be multiple files
-      # that match because provider root might be the base provider or the local provider.
-      #
-      def partials(partial_path)
-        @partials ||= {}
-        if @partials[partial_path].nil?
-          [Path.provider_base, Path.provider].each do |provider_dir|
-            path = File.join(provider_dir, partial_path)
-            if File.exists?(path)
-              @partials[partial_path] ||= []
-              @partials[partial_path] << load_json(path, Config::Object)
-            end
-          end
-          if @partials[partial_path].nil?
-            raise RuntimeError, 'no such partial path `%s`' % partial_path, caller
-          end
-        end
-        @partials[partial_path]
-      end
-
       #
       # Loads a json template file as a Hash (used only when creating a new node .json
       # file for the first time).
@@ -344,108 +293,23 @@ module LeapCli
         end
       end
 
+      ##
+      ## PRIVATE
+      ##
+
       private
-
-      def load_all_json(pattern, object_class, options={})
-        results = Config::ObjectList.new
-        Dir.glob(pattern).each do |filename|
-          next if options[:no_dots] && File.basename(filename) !~ /^[^\.]*\.json$/
-          obj = load_json(filename, object_class)
-          if obj
-            name = File.basename(filename).force_encoding('utf-8').sub(/^([^\.]+).*\.json$/,'\1')
-            obj['name'] ||= name
-            if options[:env]
-              obj.environment = options[:env]
-            end
-            results[name] = obj
-          end
-        end
-        results
-      end
-
-      def load_json(filename, object_class, options={})
-        if options[:assert]
-          Util::assert_files_exist!(filename)
-        end
-        if !File.exists?(filename)
-          return object_class.new(self)
-        end
-
-        log :loading, filename, 3
-
-        #
-        # Read a JSON file, strip out comments.
-        #
-        # UTF8 is the default encoding for JSON, but others are allowed:
-        # https://www.ietf.org/rfc/rfc4627.txt
-        #
-        buffer = StringIO.new
-        File.open(filename, "rb", :encoding => 'UTF-8') do |f|
-          while (line = f.gets)
-            next if line =~ /^\s*\/\//
-            buffer << line
-          end
-        end
-
-        #
-        # force UTF-8
-        #
-        if $ruby_version >= [1,9]
-          string = buffer.string.force_encoding('utf-8')
-        else
-          string = Iconv.conv("UTF-8//IGNORE", "UTF-8", buffer.string)
-        end
-
-        # parse json
-        begin
-          hash = JSON.parse(string, :object_class => Hash, :array_class => Array) || {}
-        rescue SyntaxError, JSON::ParserError => exc
-          log 0, :error, 'in file "%s":' % filename
-          log 0, exc.to_s, :indent => 1
-          return nil
-        end
-        object = object_class.new(self)
-        object.deep_merge!(hash)
-        return object
-      end
-
-      #
-      # remove all the nesting from a hash.
-      #
-      # def flatten_hash(input = {}, output = {}, options = {})
-      #   input.each do |key, value|
-      #     key = options[:prefix].nil? ? "#{key}" : "#{options[:prefix]}#{options[:delimiter]||"_"}#{key}"
-      #     if value.is_a? Hash
-      #       flatten_hash(value, output, :prefix => key, :delimiter => options[:delimiter])
-      #     else
-      #       output[key]  = value
-      #     end
-      #   end
-      #   output.replace(input)
-      #   output
-      # end
 
       #
       # makes a node inherit options from appropriate the common, service, and tag json files.
       #
       def apply_inheritance(node, throw_exceptions=false)
-        new_node = Config::Node.new(self)
-        name = node.name
-
-        # Guess the environment of the node from the tag names.
-        # (Technically, this is wrong: a tag that sets the environment might not be
-        #  named the same as the environment. This code assumes that it is).
-        node_env = self.env
-        if node['tags']
-          node['tags'].to_a.each do |tag|
-            if self.environment_names.include?(tag)
-              node_env = self.env(tag)
-            end
-          end
-        end
+        new_node = Config::Node.new(nil)
+        name     = node.name
+        node_env = guess_node_env(node)
+        new_node.set_environment(node_env, new_node)
 
         # inherit from common
-        new_node.deep_merge!(@common)
+        new_node.deep_merge!(node_env.common)
 
         # inherit from services
         if node['services']
@@ -488,13 +352,35 @@ module LeapCli
       end
 
       #
+      # Guess the environment of the node from the tag names.
+      #
+      # Technically, this is wrong: a tag that sets the environment might not be
+      # named the same as the environment. This code assumes that it is.
+      #
+      # Unfortunately, it is a chicken and egg problem. We need to know the nodes
+      # likely environment in order to apply the inheritance that will actually
+      # determine the node's properties.
+      #
+      def guess_node_env(node)
+        environment = self.env(default_environment)
+        if node['tags']
+          node['tags'].to_a.each do |tag|
+            if self.environment_names.include?(tag)
+              environment = self.env(tag)
+            end
+          end
+        end
+        return environment
+      end
+
+      #
       # does some final clean at the end of loading nodes.
       # this includes removing disabled nodes, and populating
       # the services[x].node_list and tags[x].node_list
       #
       def cleanup_node_lists(options)
         @disabled_nodes = Config::ObjectList.new
-        @nodes.each do |name, node|
+        env.nodes.each do |name, node|
           if node.enabled || options[:include_disabled]
             if node['services']
               node['services'].to_a.each do |node_service|
@@ -510,14 +396,10 @@ module LeapCli
             end
           elsif !options[:include_disabled]
             log 2, :skipping, "disabled node #{name}."
-            @nodes.delete(name)
+            env.nodes.delete(name)
             @disabled_nodes[name] = node
           end
         end
-      end
-
-      def validate_provider(provider)
-        # nothing yet.
       end
 
       #
