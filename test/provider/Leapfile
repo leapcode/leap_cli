@@ -1,1 +1,1 @@
-@platform_directory = '../leap_platform'
+@platform_directory_path = '../../../leap_platform'

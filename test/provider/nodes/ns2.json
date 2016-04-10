@@ -3,5 +3,6 @@
 //
 {
   "services": "dns",
-  "ip_address": "1.1.1.2"
+  "ip_address": "1.1.1.2",
+  "tags": "saopaulo"
 }

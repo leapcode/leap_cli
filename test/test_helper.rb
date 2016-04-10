@@ -3,16 +3,26 @@ require File.expand_path('../../lib/leap_cli/load_paths', __FILE__)
 require 'bundler/setup'
 require 'minitest/autorun'
 require 'leap_cli'
+require 'gli'
+
+DEBUG = true
+
+module LeapCli::Commands
+  extend GLI::App
+end
 
 class Minitest::Test
   attr_accessor :ruby_path
 
   # Add global extensions to the test case class here
 
+  def initialize(*args)
+    super(*args)
+    LeapCli::Bootstrap::setup([], test_provider_path)
+    LeapCli::Bootstrap::load_libraries(LeapCli::Commands)
+  end
+
   def setup
-    LeapCli.leapfile.load(test_provider_path)
-    LeapCli::Path.set_platform_path(LeapCli.leapfile.platform_directory_path)
-    LeapCli::Path.set_provider_path(LeapCli.leapfile.provider_directory_path)
   end
 
   def manager
@@ -34,10 +44,6 @@ class Minitest::Test
   def leap_bin(*args)
     `cd #{test_provider_path} && #{ruby_path} #{base_path}/bin/leap --no-color #{args.join ' '}`
   end
-
-  #def test_platform_path
-  #  "#{base_path}/test/leap_platform"
-  #end
 
   def test_provider_path
     "#{base_path}/test/provider"

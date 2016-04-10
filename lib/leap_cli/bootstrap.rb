@@ -8,9 +8,12 @@ module LeapCli
     extend LeapCli::Log
     extend self
 
-    def setup(argv)
+    #
+    # the argument leapfile_path is only used for tests
+    #
+    def setup(argv, leapfile_path=nil)
       setup_logging(argv)
-      setup_leapfile(argv)
+      setup_leapfile(argv, leapfile_path)
     end
 
     #
@@ -83,8 +86,8 @@ module LeapCli
     #
     # load the leapfile and set the Path variables.
     #
-    def setup_leapfile(argv)
-      LeapCli.leapfile.load
+    def setup_leapfile(argv, leapfile_path)
+      LeapCli.leapfile.load(leapfile_path)
       if LeapCli.leapfile.valid?
         Path.set_platform_path(LeapCli.leapfile.platform_directory_path)
         Path.set_provider_path(LeapCli.leapfile.provider_directory_path)

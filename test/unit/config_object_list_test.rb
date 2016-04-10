@@ -10,11 +10,11 @@ class ConfigObjectListTest < Minitest::Test
 
   def test_complex_node_search
     domain = provider.domain
-    nodes = manager.nodes['x509.use' => true]
+    nodes = manager.nodes['location.country_code' => 'US']
     assert nodes.size != manager.nodes.size, 'should not return all nodes'
-    assert nodes.size > 2, 'should be some nodes'
+    assert_equal 2, nodes.size, 'should be some nodes'
     expected = manager.nodes.collect {|name, node|
-      if node.x509.use
+      if node['location.country_code'] == 'US'
         node.domain.full
       end
     }.compact

@@ -11,5 +11,21 @@
   },
   "languages": ["en"],
   "default_language": "en",
-  "enrollment_policy": "open"
+  "enrollment_policy": "open",
+  "contacts": {
+    "default": "root@localhost"
+  },
+  "ca": {
+    "bit_size": 1024,
+    "client_certificates": {
+      "bit_size": 1024,
+      "life_span": "100 years"
+    },
+    "life_span": "100 years",
+    "server_certificates": {
+      "bit_size": 1024,
+      "digest": "SHA256",
+      "life_span": "100 years"
+    }
+  }
 }
