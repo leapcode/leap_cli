@@ -65,7 +65,11 @@ module LeapCli; module Config
       if clean
         self.each_key do |environment|
           if pinned_env.nil? || pinned_env == environment
-            self[environment].each_key do |key|
+            env = self[environment]
+            if env.nil?
+              raise StandardError.new("secrets.json file seems corrupted. No such environment '#{environment}'")
+            end
+            env.each_key do |key|
               unless @discovered_keys[environment] && @discovered_keys[environment][key]
                 self[environment].delete(key)
               end

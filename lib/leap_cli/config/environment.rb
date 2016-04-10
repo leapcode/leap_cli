@@ -32,6 +32,9 @@ module LeapCli; module Config
     def secrets; @@secrets; end
 
     def initialize(manager, name, search_dir, parent, options={})
+      @@nodes ||= nil
+      @@secrets ||= nil
+
       @manager = manager
       @name    = name
 
@@ -89,13 +92,11 @@ module LeapCli; module Config
       # shared: currently non-inheritable
       # load the first ones we find, and only those.
       #
-      @@nodes ||= begin
-        nodes = load_all_json(Path.named_path([:node_config, '*'], search_dir), Config::Node, options)
-        nodes.any? ? nodes : nil
+      if @@nodes.nil? || @@nodes.empty?
+        @@nodes = load_all_json(Path.named_path([:node_config, '*'], search_dir), Config::Node, options)
       end
-      @@secrets ||= begin
-        secrets = load_json(Path.named_path(:secrets_config, search_dir), Config::Secrets, options)
-        secrets.any? ? secrets : nil
+      if @@secrets.nil? || @@secrets.empty?
+        @@secrets = load_json(Path.named_path(:secrets_config, search_dir), Config::Secrets, options)
       end
     end
 
