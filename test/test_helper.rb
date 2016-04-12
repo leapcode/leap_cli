@@ -4,6 +4,7 @@ require 'bundler/setup'
 require 'minitest/autorun'
 require 'leap_cli'
 require 'gli'
+require 'fileutils'
 
 DEBUG = true
 
@@ -47,6 +48,14 @@ class Minitest::Test
 
   def test_provider_path
     "#{base_path}/test/provider"
+  end
+
+  def cleanup_files(*args)
+    Dir.chdir(test_provider_path) do
+      args.each do |file|
+        FileUtils.rm_r(file) if File.exist?(file)
+      end
+    end
   end
 
   def with_multiple_rubies(&block)

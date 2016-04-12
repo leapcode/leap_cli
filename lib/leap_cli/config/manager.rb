@@ -71,6 +71,9 @@ module LeapCli
       def common;   env(default_environment).common;   end
       def secrets;  env(default_environment).secrets;  end
       def nodes;    env(default_environment).nodes;    end
+      def template(*args)
+        self.env.template(*args)
+      end
 
       def default_environment
         LeapCli.leapfile.environment
@@ -278,19 +281,6 @@ module LeapCli
 
       def connections
         @connections ||= ConnectionList.new
-      end
-
-      #
-      # Loads a json template file as a Hash (used only when creating a new node .json
-      # file for the first time).
-      #
-      def template(template)
-        path = Path.named_path([:template_config, template], Path.provider_base)
-        if File.exists?(path)
-          return load_json(path, Config::Object)
-        else
-          return nil
-        end
       end
 
       ##

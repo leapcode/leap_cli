@@ -100,6 +100,19 @@ module LeapCli; module Config
       end
     end
 
+    #
+    # Loads a json template file as a Hash (used only when creating a new node .json
+    # file for the first time).
+    #
+    def template(template)
+      path = Path.named_path([:template_config, template], Path.provider_base)
+      if File.exists?(path)
+        return load_json(path, Config::Object)
+      else
+        return nil
+      end
+    end
+
     private
 
     def load_all_json(pattern, object_class, options={})
