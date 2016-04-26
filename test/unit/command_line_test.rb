@@ -18,10 +18,10 @@ class CommandLineTest < Minitest::Test
   end
 
   def test_add_node
-    output = leap_bin("node add banana tags:production services:openvpn ip_address:1.1.1.1")
     cleanup_files('nodes/banana.json', 'files/nodes/banana')
+    output = leap_bin("node add banana tags:production "+
+      "services:openvpn ip_address:1.1.1.1 openvpn.gateway_address:2.2.2.2")
     assert_match /created nodes\/banana\.json/, output
-    assert_match /created files\/nodes\//, output
   end
 
 end
