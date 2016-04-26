@@ -11,6 +11,7 @@ if ARGV.include?('--debug') || ARGV.include?('-d')
   rescue LoadError
   end
 else
+  $VERBOSE=nil
   DEBUG=false
 end
 
