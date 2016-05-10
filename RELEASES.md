@@ -1,3 +1,12 @@
+Version 1.8.0
+  - better node inheritence, now supports partials.
+  - `leap node init` is now governed by an init script
+    that gets rsynced to the server.
+  - now only supports debian jessie
+  - move most leap_cli code to leap_platform
+  - added `leap compile firewall`
+  - many bug fixes
+
 Version 1.7.2
   - hot fix to better pin the required version of gem gli
 
