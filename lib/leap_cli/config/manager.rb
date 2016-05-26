@@ -352,15 +352,19 @@ module LeapCli
       # determine the node's properties.
       #
       def guess_node_env(node)
-        environment = self.env(default_environment)
-        if node['tags']
-          node['tags'].to_a.each do |tag|
-            if self.environment_names.include?(tag)
-              environment = self.env(tag)
+        if node.vagrant?
+          return self.env("local")
+        else
+          environment = self.env(default_environment)
+          if node['tags']
+            node['tags'].to_a.each do |tag|
+              if self.environment_names.include?(tag)
+                environment = self.env(tag)
+              end
             end
           end
+          return environment
         end
-        return environment
       end
 
       #
