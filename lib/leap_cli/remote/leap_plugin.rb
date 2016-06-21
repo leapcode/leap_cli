@@ -148,7 +148,7 @@ module LeapCli; module Remote; module LeapPlugin
     ssh_failures = []
     exitcode_failures = []
     succeeded = []
-    task = LeapCli.log_level > 1 ? :standard_task : :skip_errors_task
+    task = LeapCli.logger.log_level > 1 ? :standard_task : :skip_errors_task
     with_task(task) do
       log :querying, 'facts' do
         progress "   "

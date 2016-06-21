@@ -37,7 +37,7 @@ end
 desc "Build #{$spec.name}-#{$spec.version}.gem into the pkg directory"
 task 'build' do
   FileUtils.mkdir_p(File.join($base_dir, 'pkg'))
-  FileUtils.rm($gem_path) if File.exists?($gem_path)
+  FileUtils.rm($gem_path) if File.exist?($gem_path)
   run "gem build -V '#{$spec_path}'"
   file_name = File.basename(built_gem_path)
   FileUtils.mv(built_gem_path, 'pkg')
@@ -46,7 +46,7 @@ end
 
 desc "Install #{$spec.name}-#{$spec.version}.gem into either system-wide or user gems"
 task 'install' do
-  if !File.exists?($gem_path)
+  if !File.exist?($gem_path)
     puts("Could not file #{$gem_path}. Try running 'rake build'")
   else
     options = '--verbose --conservative --no-rdoc --no-ri'

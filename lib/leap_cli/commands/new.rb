@@ -54,7 +54,7 @@ module LeapCli; module Commands
     unless directory && directory.any?
       help! "Directory name is required."
     end
-    unless File.exists?(directory)
+    unless File.exist?(directory)
       if global[:yes] || agree("Create directory #{directory}? ")
         ensure_dir directory
       else

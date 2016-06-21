@@ -62,7 +62,7 @@ module LeapCli
         # load the platform
         #
         platform_file = "#{@platform_directory_path}/platform.rb"
-        unless File.exists?(platform_file)
+        unless File.exist?(platform_file)
           Util.bail! "ERROR: The file `#{platform_file}` does not exist. Please check the value of `@platform_directory_path` in `Leapfile` or `~/.leaprc`."
         end
         require "#{@platform_directory_path}/platform.rb"
@@ -72,12 +72,6 @@ module LeapCli
                      "is not compatible with the platform #{@platform_directory_path} (v#{Leap::Platform.version}).\n   " +
                      "You need either leap command #{Leap::Platform.compatible_cli.first} to #{Leap::Platform.compatible_cli.last} or " +
                      "platform version #{LeapCli::COMPATIBLE_PLATFORM_VERSION.first} to #{LeapCli::COMPATIBLE_PLATFORM_VERSION.last}"
-        end
-        unless @allow_production_deploy.nil?
-          Util::log 0, :warning, "in Leapfile: @allow_production_deploy is no longer supported."
-        end
-        unless @platform_branch.nil?
-          Util::log 0, :warning, "in Leapfile: @platform_branch is no longer supported."
         end
         @valid = true
         return @valid
@@ -105,7 +99,7 @@ module LeapCli
     def edit_leaprc(property, value=nil)
       file_path = leaprc_path
       lines = []
-      if File.exists?(file_path)
+      if File.exist?(file_path)
         regexp = /self\.#{Regexp.escape(property)} = .*? if @provider_directory_path == '#{Regexp.escape(@provider_directory_path)}'/
         File.readlines(file_path).each do |line|
           unless line =~ regexp
@@ -128,7 +122,7 @@ module LeapCli
     end
 
     def read_settings(file)
-      if File.exists? file
+      if File.exist? file
         Util::log 2, :read, file
         instance_eval(File.read(file), file)
         validate(file)

@@ -3,56 +3,50 @@ require 'paint'
 ##
 ## LOGGING
 ##
-## Ugh. This class does not work well with multiple threads!
-##
 
 module LeapCli
-  extend self
+  module LogCommand
+    def log(*args)
+      logger.log(*args)
+    end
 
-  attr_accessor :log_in_color
+    def log_raw(*args)
+      logger.log(*args)
+    end
 
-  # logging options
-  def log_level
-    @log_level ||= 1
-  end
-  def set_log_level(value)
-    @log_level = value
-  end
-
-  def indent_level
-    @indent_level ||= 0
-  end
-  def indent_level=(value)
-    @indent_level = value
-  end
-
-  def log_file
-    @log_file
-  end
-  def log_file=(value)
-    @log_file = value
-    if @log_file
-      if !File.directory?(File.dirname(@log_file))
-        Util.bail!('Invalid log file "%s", directory "%s" does not exist' % [@log_file, File.dirname(@log_file)])
-      end
-      @log_output_stream = File.open(@log_file, 'a')
+    def logger
+      @logger ||= LeapCli::LeapLogger.new
     end
   end
-
-  def log_output_stream
-    @log_output_stream
-  end
-
 end
 
 
 module LeapCli
-  module Log
+  class LeapLogger
     #
     # these are log titles typically associated with files
     #
     FILE_TITLES = [:updated, :created, :removed, :missing, :nochange, :loading]
 
+    attr_reader :log_output_stream, :log_file
+    attr_accessor :indent_level, :log_level, :log_in_color
+
+    def initialize()
+      @log_level = 1
+      @indent_level = 0
+      @log_file = nil
+      @log_output_stream = nil
+    end
+
+    def log_file=(value)
+      @log_file = value
+      if @log_file
+        if !File.directory?(File.dirname(@log_file))
+          Util.bail!('Invalid log file "%s", directory "%s" does not exist' % [@log_file, File.dirname(@log_file)])
+        end
+        @log_output_stream = File.open(@log_file, 'a')
+      end
+    end
 
     #
     # master logging function.
@@ -65,13 +59,12 @@ module LeapCli
     #   [:error, :warning, :info, :updated, :created, :removed, :no_change, :missing]
     # * Hash: a hash of options. so far, only :indent is supported.
     #
-
     def log(*args)
       level   = args.grep(Integer).first || 1
       title   = args.grep(Symbol).first
       message = args.grep(String).first
       options = args.grep(Hash).first || {}
-      unless message && LeapCli.log_level >= level
+      unless message && @log_level >= level
         return
       end
 
@@ -117,7 +110,7 @@ module LeapCli
       end
 
       log_raw(:log, nil)                   { [clear_prefix, message].join }
-      if LeapCli.log_in_color
+      if @log_in_color
         log_raw(:stdout, options[:indent]) { [colored_prefix, message].join }
       else
         log_raw(:stdout, options[:indent]) { [clear_prefix, message].join }
@@ -125,9 +118,9 @@ module LeapCli
 
       # run block, if given
       if block_given?
-        LeapCli.indent_level += 1
+        @indent_level += 1
         yield
-        LeapCli.indent_level -= 1
+        @indent_level -= 1
       end
     end
 
@@ -142,20 +135,20 @@ module LeapCli
     def log_raw(mode, indent=nil, &block)
       # NOTE: print message (using 'print' produces better results than 'puts' when multiple threads are logging)
       if mode == :log
-        if LeapCli.log_output_stream
+        if @log_output_stream
           messages = [yield].compact.flatten
           if messages.any?
             timestamp = Time.now.strftime("%b %d %H:%M:%S")
             messages.each do |message|
-              LeapCli.log_output_stream.print("#{timestamp} #{message}\n")
+              @log_output_stream.print("#{timestamp} #{message}\n")
             end
-            LeapCli.log_output_stream.flush
+            @log_output_stream.flush
           end
         end
       elsif mode == :stdout
         messages = [yield].compact.flatten
         if messages.any?
-          indent ||= LeapCli.indent_level
+          indent ||= @indent_level
           indent_str = ""
           indent_str += "  " * indent.to_i
           if indent.to_i > 0

@@ -30,7 +30,7 @@ module LeapCli
         if arg1 =~ /^ssh-/
           type, data = arg1.split(' ')
           key = SshKey.new load_from_data(data, type)
-        elsif File.exists? arg1
+        elsif File.exist? arg1
           key = SshKey.new load_from_file(arg1)
           key.filename = arg1
         else
@@ -38,7 +38,7 @@ module LeapCli
         end
       end
       return key
-    rescue StandardError => exc
+    rescue StandardError
     end
 
     def self.load_from_file(filename)

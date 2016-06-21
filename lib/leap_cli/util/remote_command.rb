@@ -13,7 +13,7 @@ module LeapCli; module Util; module RemoteCommand
     node_list = parse_node_list(nodes)
 
     cap = new_capistrano
-    cap.logger = LeapCli::Logger.new(:level => [LeapCli.log_level,3].min)
+    cap.logger = LeapCli::Logger.new(:level => [LeapCli.logger.log_level,3].min)
     user = options[:user] || 'root'
     cap.set :user, user
     cap.set :ssh_options, ssh_options # ssh options common to all nodes
@@ -85,7 +85,7 @@ module LeapCli; module Util; module RemoteCommand
 
   def net_ssh_log_level
     if DEBUG
-      case LeapCli.log_level
+      case LeapCli.logger.log_level
         when 1 then 3
         when 2 then 2
         when 3 then 1
@@ -145,7 +145,7 @@ module LeapCli; module Util; module RemoteCommand
       opts[:keys] = [vagrant_ssh_key_file]
       opts[:keys_only] = true # only use the keys specified above, and ignore whatever keys the ssh-agent is aware of.
       opts[:paranoid] = false # we skip host checking for vagrant nodes, because fingerprint is different for everyone.
-      if LeapCli::log_level <= 1
+      if LeapCli.logger.log_level <= 1
         opts[:verbose] = :error # suppress all the warnings about adding host keys to known_hosts, since it is not actually doing that.
       end
     end

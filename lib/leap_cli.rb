@@ -55,7 +55,7 @@ require 'leap_cli/markdown_document_listener'
 # allow everyone easy access to log() command.
 #
 module LeapCli
-  Util.send(:extend, LeapCli::Log)
-  Config::Manager.send(:include, LeapCli::Log)
-  extend LeapCli::Log
+  Util.send(:extend, LeapCli::LogCommand)
+  Config::Manager.send(:include, LeapCli::LogCommand)
+  extend LeapCli::LogCommand
 end

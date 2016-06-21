@@ -258,7 +258,7 @@ module LeapCli
       # yields each node, in sorted order
       #
       def each_node(&block)
-        env.nodes.each_node &block
+        env.nodes.each_node(&block)
       end
 
       def reload_node!(node)
@@ -294,7 +294,6 @@ module LeapCli
       #
       def apply_inheritance(node, throw_exceptions=false)
         new_node = Config::Node.new(nil)
-        name     = node.name
         node_env = guess_node_env(node)
         new_node.set_environment(node_env, new_node)
 
@@ -409,7 +408,7 @@ module LeapCli
           [['services', :service_config], ['tags', :tag_config]].each do |attribute, path_sym|
             node[attribute].each do |attr_value|
               path = Path.named_path([path_sym, "#{attr_value}.rb"], provider_dir).sub(/\.json$/,'')
-              if File.exists?(path)
+              if File.exist?(path)
                 files << path
               end
             end

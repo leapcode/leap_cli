@@ -106,7 +106,7 @@ module LeapCli; module Config
     #
     def template(template)
       path = Path.named_path([:template_config, template], Path.provider_base)
-      if File.exists?(path)
+      if File.exist?(path)
         return load_json(path, Config::Object)
       else
         return nil
@@ -133,7 +133,7 @@ module LeapCli; module Config
     end
 
     def load_json(filename, object_class, options={})
-      if !File.exists?(filename)
+      if !File.exist?(filename)
         return object_class.new(self)
       end
 

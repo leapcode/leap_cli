@@ -5,7 +5,6 @@
 
 module LeapCli
   module Bootstrap
-    extend LeapCli::Log
     extend self
 
     #
@@ -36,7 +35,7 @@ module LeapCli
     # called from leap executable.
     #
     def load_libraries(app)
-      if LeapCli.log_level >= 2
+      if LeapCli.logger.log_level >= 2
         log_version
       end
       load_commands(app)
@@ -72,14 +71,14 @@ module LeapCli
       options = parse_logging_options(argv)
       verbose = (options[:verbose] || 1).to_i
       if verbose
-        LeapCli.set_log_level(verbose)
+        LeapCli.logger.log_level = verbose
       end
       if options[:log]
-        LeapCli.log_file = options[:log]
-        LeapCli::Util.log_raw(:log) { $0 + ' ' + argv.join(' ')}
+        LeapCli.logger.log_file = options[:log]
+        LeapCli.logger.log_raw(:log) { $0 + ' ' + argv.join(' ')}
       end
       unless options[:color].nil?
-        LeapCli.log_in_color = options[:color]
+        LeapCli.logger.log_in_color = options[:color]
       end
     end
 
@@ -97,8 +96,8 @@ module LeapCli
         if !Path.platform || !File.directory?(Path.platform)
           bail! { log :missing, "platform directory '#{Path.platform}'" }
         end
-        if LeapCli.log_file.nil? && LeapCli.leapfile.log
-          LeapCli.log_file = LeapCli.leapfile.log
+        if LeapCli.logger.log_file.nil? && LeapCli.leapfile.log
+          LeapCli.logger.log_file = LeapCli.leapfile.log
         end
       elsif !leapfile_optional?(argv)
         puts
