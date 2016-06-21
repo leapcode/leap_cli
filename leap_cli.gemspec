@@ -72,10 +72,4 @@ spec = Gem::Specification.new do |s|
   s.add_runtime_dependency('json_pure', '~> 1.8')   # pure ruby json, so we can better control output.
   s.add_runtime_dependency('base32', '~> 0.3')      # base32 encoding
 
-  ##
-  ## DEPENDENCIES for VENDORED GEMS
-  ##
-
-  # certificate_authority
-  s.add_runtime_dependency("activemodel", '~> 3.0', ">= 3.0.6")
 end
