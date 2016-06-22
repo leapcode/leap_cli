@@ -46,7 +46,7 @@ spec = Gem::Specification.new do |s|
   s.add_development_dependency('minitest', '~> 5.0')
 
   # console gems
-  s.add_runtime_dependency('gli','~> 2.14', '>= 2.14.0')
+  s.add_runtime_dependency('gli','~> 2.12', '>= 2.12.0')
   # note: gli version is also pinned in leap_cli.rb.
   s.add_runtime_dependency('command_line_reporter', '~> 3.3')
 
