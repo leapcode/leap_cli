@@ -45,14 +45,10 @@ spec = Gem::Specification.new do |s|
   # test
   s.add_development_dependency('minitest', '~> 5.0')
 
-  #s.add_development_dependency('rdoc')
-  #s.add_development_dependency('aruba')
-
   # console gems
   s.add_runtime_dependency('gli','~> 2.14', '>= 2.14.0')
   # note: gli version is also pinned in leap_cli.rb.
   s.add_runtime_dependency('command_line_reporter', '~> 3.3')
-  s.add_runtime_dependency('paint', '~> 0.9')
 
   # network gems
   s.add_runtime_dependency('net-ssh', '~> 2.7')
@@ -61,14 +57,10 @@ spec = Gem::Specification.new do |s|
   s.add_runtime_dependency('capistrano', '~> 2.15')
 
   # crypto gems
-  #s.add_runtime_dependency('certificate_authority', '>= 0.2.0')
-  # ^^ currently vendored
   # s.add_runtime_dependency('gpgme')    # << does not build on debian jessie, so now optional.
                                          # also, there is a ruby-gpgme package anyway.
 
   # misc gems
   s.add_runtime_dependency('ya2yaml', '~> 0.31')    # pure ruby yaml, so we can better control output. see https://github.com/afunai/ya2yaml
   s.add_runtime_dependency('json_pure', '~> 1.8')   # pure ruby json, so we can better control output.
-  s.add_runtime_dependency('base32', '~> 0.3')      # base32 encoding
-
 end

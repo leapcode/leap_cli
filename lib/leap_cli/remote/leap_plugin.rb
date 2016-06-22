@@ -10,7 +10,7 @@ module LeapCli; module Remote; module LeapPlugin
   end
 
   def log(*args, &block)
-    LeapCli::Util::log(*args, &block)
+    LeapCli.logger.log(*args, &block)
   end
 
   #

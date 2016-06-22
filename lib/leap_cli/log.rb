@@ -1,11 +1,11 @@
-require 'paint'
-
 ##
 ## LOGGING
 ##
 
 module LeapCli
   module LogCommand
+    @@logger = nil
+
     def log(*args)
       logger.log(*args)
     end
@@ -15,7 +15,12 @@ module LeapCli
     end
 
     def logger
-      @logger ||= LeapCli::LeapLogger.new
+      @@logger ||= LeapCli::LeapLogger.new
+    end
+
+    # deprecated
+    def log_level
+      logger.log_level
     end
   end
 end
@@ -36,6 +41,7 @@ module LeapCli
       @indent_level = 0
       @log_file = nil
       @log_output_stream = nil
+      @log_in_color = true
     end
 
     def log_file=(value)
@@ -95,10 +101,10 @@ module LeapCli
         end
         if options[:host]
           clear_prefix = "[%s] %s " % [options[:host], prefix_options[0]]
-          colored_prefix = "[%s] %s " % [Paint[options[:host], prefix_options[1], prefix_options[2]], prefix_options[0]]
+          colored_prefix = "[%s] %s " % [colorize(options[:host], prefix_options[1], prefix_options[2]), prefix_options[0]]
         else
           clear_prefix = "%s " % prefix_options[0]
-          colored_prefix = "%s " % Paint[prefix_options[0], prefix_options[1], prefix_options[2]]
+          colored_prefix = "%s " % colorize(prefix_options[0], prefix_options[1], prefix_options[2])
         end
       elsif options[:host]
         clear_prefix = colored_prefix =  "[%s] " % options[:host]
@@ -162,6 +168,46 @@ module LeapCli
         end
       end
     end
+
+    def colorize(str, color, style=nil)
+      codes = [FG_COLORS[color] || FG_COLORS[:default]]
+      if style
+        codes << EFFECTS[style] || EFFECTS[:nothing]
+      end
+      ["\033[%sm" % codes.join(';'), str, NO_COLOR].join
+    end
+
+    private
+
+    EFFECTS = {
+      :reset         => 0,  :nothing         => 0,
+      :bright        => 1,  :bold            => 1,
+      :underline     => 4,
+      :inverse       => 7,  :swap            => 7,
+    }
+    NO_COLOR = "\033[0m"
+    FG_COLORS = {
+      :black   => 30,
+      :red     => 31,
+      :green   => 32,
+      :yellow  => 33,
+      :blue    => 34,
+      :magenta => 35,
+      :cyan    => 36,
+      :white   => 37,
+      :default => 39,
+    }
+    BG_COLORS = {
+      :black   => 40,
+      :red     => 41,
+      :green   => 42,
+      :yellow  => 43,
+      :blue    => 44,
+      :magenta => 45,
+      :cyan    => 46,
+      :white   => 47,
+      :default => 49,
+    }
 
   end
 end
