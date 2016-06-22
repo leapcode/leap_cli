@@ -48,7 +48,6 @@ spec = Gem::Specification.new do |s|
   # console gems
   s.add_runtime_dependency('gli','~> 2.12', '>= 2.12.0')
   # note: gli version is also pinned in leap_cli.rb.
-  s.add_runtime_dependency('command_line_reporter', '~> 3.3')
 
   # network gems
   s.add_runtime_dependency('net-ssh', '~> 2.7')
