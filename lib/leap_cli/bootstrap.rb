@@ -6,6 +6,7 @@
 module LeapCli
   module Bootstrap
     extend self
+    extend LeapCli::LogCommand
 
     #
     # the argument leapfile_path is only used for tests
