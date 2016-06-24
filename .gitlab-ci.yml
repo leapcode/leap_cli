@@ -1,0 +1,25 @@
+before_script:
+  - ruby -v
+
+image: ruby:2.1
+
+stages:
+  - syntax
+  - build
+
+build:
+  stage: build
+  script:
+    - rake build
+  artifacts:
+    paths:
+      - pkg/leap_cli-1.9.gem
+
+# trigger leap_platform pipeline using same REF
+# as it is used for this project
+# (i.e. a push to leap_cli:develop will trigger
+#  a leap_platform:develop build)
+trigger:
+  type: deploy
+  script:
+    - "curl -X POST -F token=$PLATFORM_TRIGGER_TOKEN -F ref=$CI_BUILD_REF_NAME https://0xacab.org/api/v3/projects/129/trigger/builds"
