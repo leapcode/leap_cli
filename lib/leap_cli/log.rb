@@ -10,8 +10,8 @@ module LeapCli
       logger.log(*args, &block)
     end
 
-    def log_raw(*args)
-      logger.log(*args)
+    def log_raw(*args, &block)
+      logger.log_raw(*args, &block)
     end
 
     # global shared logger
@@ -152,7 +152,7 @@ module LeapCli
           else
             indent_str += ' = '
           end
-          indent_str += prefix
+          indent_str += prefix if prefix
           messages.each do |message|
             message = message.strip
             next if message.empty?

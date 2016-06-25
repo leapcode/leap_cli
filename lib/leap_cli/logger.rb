@@ -219,7 +219,7 @@ module LeapCli
 
       if color == :hide
         return nil
-      elsif mode == :log || (color == :none && style.nil?) || !LeapCli.log_in_color
+      elsif mode == :log || (color == :none && style.nil?) || !LeapCli.logger.log_in_color
         return [message, line_prefix, options]
       else
         term_color = COLORS[color]
