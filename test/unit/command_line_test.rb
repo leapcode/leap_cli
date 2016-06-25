@@ -13,7 +13,7 @@ class CommandLineTest < Minitest::Test
     with_multiple_rubies do
       output = leap_bin('list')
       assert_equal 0, $?, "list should exit 0"
-      assert output =~ /ns1   dns/m
+      assert output =~ /ns1  dns/m
     end
   end
 
