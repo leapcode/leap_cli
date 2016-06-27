@@ -22,4 +22,4 @@ build:
 trigger:
   type: deploy
   script:
-    - "curl -X POST -F token=$PLATFORM_TRIGGER_TOKEN -F ref=$CI_BUILD_REF_NAME https://0xacab.org/api/v3/projects/129/trigger/builds"
+    - curl -X POST -F token=$PLATFORM_TRIGGER_TOKEN -F ref=$CI_BUILD_REF_NAME https://0xacab.org/api/v3/projects/129/trigger/builds
