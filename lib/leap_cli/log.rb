@@ -21,7 +21,7 @@ module LeapCli
 
     # thread safe logger
     def new_logger
-      LeapCli::LeapLogger.new
+      logger.dup #LeapCli::LeapLogger.new
     end
 
     # deprecated
@@ -101,6 +101,9 @@ module LeapCli
         if options[:wrap]
           message = message.split("\n")
         end
+        if options[:color] && prefix.empty?
+          message = colorize(message, options[:color], options[:style])
+        end
       else
         prefix = clear_prefix
       end
@@ -115,6 +118,10 @@ module LeapCli
         yield
         @indent_level -= 1
       end
+    end
+
+    def debug(*args)
+      self.log(3, *args)
     end
 
     #

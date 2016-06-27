@@ -39,6 +39,7 @@ module LeapCli
       if LeapCli.logger.log_level >= 2
         log_version
       end
+      add_platform_lib_to_path
       load_commands(app)
       load_macros
     end
@@ -193,5 +194,15 @@ module LeapCli
       end
     end
 
+    #
+    # makes all the ruby libraries in the leap_platform/lib directory
+    # available for inclusion.
+    #
+    def add_platform_lib_to_path
+      if Path.platform
+        path = File.join(Path.platform, 'lib')
+        $LOAD_PATH.unshift(path) unless $LOAD_PATH.include?(path)
+      end
+    end
   end
 end

@@ -11,13 +11,15 @@ Installation
 Usage
 ------------------------------------
 
-    rsync   = RsyncCommand.new(:logger => logger, :ssh => {:auth_methods => 'publickey'}, :flags => '-a')
-    source  = '/source/path'
+    rsync   = RsyncCommand.new(:ssh => {:auth_methods => 'publickey'}, :flags => '-a')
     servers = ['red', 'green', 'blue']
 
-    rsync.asynchronously(servers) do |server|
-      dest = {:user => 'root', :host => server, :path => '/dest/path'}
-      rsync.exec(source, dest)
+    rsync.asynchronously(servers) do |sync, server|
+      sync.user = 'root'
+      sync.host = server
+      sync.source = '/from'
+      sync.dest = '/to'
+      sync.exec
     end
 
     if rsync.failed?
