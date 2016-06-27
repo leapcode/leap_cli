@@ -9,11 +9,11 @@ build:
   stage: build
   script:
     - rake build
-  # disable artefact upload until it's fixed
-  # see https://leap.se/code/issues/8221
-  #artifacts:
-  #  paths:
-  #    - pkg/leap_cli-1.9.gem
+  artifacts:
+    paths:
+      - pkg/leap_cli-*.gem
+    name: "leap_cli_${CI_BUILD_REF_NAME}_${CI_BUILD_REF}"
+    expire_in: 3 month
 
 # trigger leap_platform pipeline
 trigger:
