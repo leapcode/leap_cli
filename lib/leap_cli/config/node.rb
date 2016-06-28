@@ -67,7 +67,8 @@ module LeapCli; module Config
     # returns a string list of supported ssh host key algorithms for this node.
     # or an empty string if it could not be determined
     def supported_ssh_host_key_algorithms
-      @host_key_algo ||= SshKey.supported_host_key_algorithms(
+      require 'leap_cli/ssh'
+      @host_key_algo ||= LeapCli::SSH::Key.supported_host_key_algorithms(
         Util.read_file([:node_ssh_pub_key, @node.name])
       )
     end
