@@ -50,10 +50,6 @@ spec = Gem::Specification.new do |s|
   # note: gli version is also pinned in leap_cli.rb.
 
   # network gems
-  #s.add_runtime_dependency('net-ssh', '~> 2.7')
-  # ^^ we can upgrade once we get off broken capistrano
-  # https://github.com/net-ssh/net-ssh/issues/145
-  #s.add_runtime_dependency('capistrano', '~> 2.15')
   s.add_runtime_dependency('sshkit', '~> 1.11')
 
   # crypto gems
