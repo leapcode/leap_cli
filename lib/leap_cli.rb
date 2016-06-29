@@ -1,6 +1,6 @@
 module LeapCli
-  module Commands; end  # for commands in leap_cli/commands
-  module Macro; end     # for macros in leap_platform/provider_base/lib/macros
+  module Commands; end  # for commands in leap_platform/lib/leap_cli/commands
+  module Macro; end     # for macros in leap_platform/lib/leap_cli/macros
 end
 
 $ruby_version = RUBY_VERSION.split('.').collect{ |i| i.to_i }.extend(Comparable)
@@ -12,8 +12,6 @@ $:.unshift(File.expand_path('../leap_cli/override',__FILE__))
 # enforce the compatible versions here:
 require 'rubygems'
 gem 'gli', '~> 2.12', '>= 2.12.0'
-
-require 'leap/platform'
 
 require 'leap_cli/version'
 require 'leap_cli/exceptions'
@@ -31,19 +29,7 @@ require 'leap_cli/core_ext/yaml'
 require 'leap_cli/log'
 require 'leap_cli/path'
 require 'leap_cli/util'
-require 'leap_cli/util/secret'
-require 'leap_cli/util/x509'
 require 'leap_cli/bootstrap'
-
-require 'leap_cli/config/object'
-require 'leap_cli/config/node'
-require 'leap_cli/config/tag'
-require 'leap_cli/config/provider'
-require 'leap_cli/config/secrets'
-require 'leap_cli/config/object_list'
-require 'leap_cli/config/filter'
-require 'leap_cli/config/environment'
-require 'leap_cli/config/manager'
 
 require 'leap_cli/markdown_document_listener'
 
@@ -51,7 +37,5 @@ require 'leap_cli/markdown_document_listener'
 # allow everyone easy access to log() command.
 #
 module LeapCli
-  Util.send(:extend, LeapCli::LogCommand)
-  Config::Manager.send(:include, LeapCli::LogCommand)
   extend LeapCli::LogCommand
 end

@@ -40,6 +40,7 @@ module LeapCli
         log_version
       end
       add_platform_lib_to_path
+      load_platform_libraries
       load_commands(app)
       load_macros
     end
@@ -104,11 +105,10 @@ module LeapCli
       elsif !leapfile_optional?(argv)
         puts
         puts " ="
-        log :note, "There is no `Leapfile` in this directory, or any parent directory.\n"+
-                   " =       "+
+        log :NOTE, "There is no `Leapfile` in this directory, or any parent directory.\n"+
+                   " =      "+
                    "Without this file, most commands will not be available."
         puts " ="
-        puts
       end
     end
 
@@ -204,5 +204,16 @@ module LeapCli
         $LOAD_PATH.unshift(path) unless $LOAD_PATH.include?(path)
       end
     end
+
+    #
+    # loads libraries that live in the platform and should
+    # always be available.
+    #
+    def load_platform_libraries
+      if Path.platform
+        require 'leap_cli/load_libraries'
+      end
+    end
+
   end
 end

@@ -3,6 +3,8 @@
 #
 # It is akin to a Gemfile, Rakefile, or Capfile (e.g. it is a ruby file that gets eval'ed)
 #
+# Additional configuration options are defined in platform's leapfile_extensions.rb
+#
 
 module LeapCli
   def self.leapfile
@@ -10,17 +12,11 @@ module LeapCli
   end
 
   class Leapfile
-    attr_accessor :platform_directory_path
-    attr_accessor :provider_directory_path
-    attr_accessor :custom_vagrant_vm_line
-    attr_accessor :leap_version
-    attr_accessor :log
-    attr_accessor :vagrant_network
-    attr_accessor :vagrant_basebox
-    attr_accessor :environment
+    attr_reader :platform_directory_path
+    attr_reader :provider_directory_path
+    attr_reader :environment
 
     def initialize
-      @vagrant_network = '10.5.5.0/24'
     end
 
     #
@@ -61,19 +57,33 @@ module LeapCli
         #
         # load the platform
         #
-        platform_file = "#{@platform_directory_path}/platform.rb"
-        unless File.exist?(platform_file)
+        platform_class = "#{@platform_directory_path}/lib/leap/platform"
+        platform_definition = "#{@platform_directory_path}/platform.rb"
+        unless File.exist?(platform_definition)
           Util.bail! "ERROR: The file `#{platform_file}` does not exist. Please check the value of `@platform_directory_path` in `Leapfile` or `~/.leaprc`."
         end
-        require "#{@platform_directory_path}/platform.rb"
-        if !Leap::Platform.compatible_with_cli?(LeapCli::VERSION) ||
-           !Leap::Platform.version_in_range?(LeapCli::COMPATIBLE_PLATFORM_VERSION)
-          Util.bail! "This leap command (v#{LeapCli::VERSION}) " +
-                     "is not compatible with the platform #{@platform_directory_path} (v#{Leap::Platform.version}).\n   " +
-                     "You need either leap command #{Leap::Platform.compatible_cli.first} to #{Leap::Platform.compatible_cli.last} or " +
-                     "platform version #{LeapCli::COMPATIBLE_PLATFORM_VERSION.first} to #{LeapCli::COMPATIBLE_PLATFORM_VERSION.last}"
+        require platform_class
+        require platform_definition
+        begin
+          Leap::Platform.validate!(LeapCli::VERSION, LeapCli::COMPATIBLE_PLATFORM_VERSION, self)
+        rescue StandardError => exc
+          Util.bail! exc.to_s
         end
-        @valid = true
+        leapfile_extensions = "#{@platform_directory_path}/lib/leap_cli/leapfile_extensions.rb"
+        if File.exist?(leapfile_extensions)
+          require leapfile_extensions
+        end
+
+        #
+        # validate
+        #
+        instance_variables.each do |var|
+          var = var.to_s.sub('@', '')
+          if !self.respond_to?(var)
+            LeapCli.log :warning, "the variable `#{var}` is set in .leaprc or Leapfile, but it is not supported."
+          end
+        end
+        @valid = validate
         return @valid
       end
     end
@@ -123,9 +133,8 @@ module LeapCli
 
     def read_settings(file)
       if File.exist? file
-        Util::log 2, :read, file
+        LeapCli.log 2, :read, file
         instance_eval(File.read(file), file)
-        validate(file)
       end
     end
 
@@ -140,11 +149,16 @@ module LeapCli
       return search_dir
     end
 
-    PRIVATE_IP_RANGES = /(^127\.0\.0\.1)|(^10\.)|(^172\.1[6-9]\.)|(^172\.2[0-9]\.)|(^172\.3[0-1]\.)|(^192\.168\.)/
+    # to be overridden
+    def validate
+      return true
+    end
 
-    def validate(file)
-      Util::assert! vagrant_network =~ PRIVATE_IP_RANGES do
-        Util::log 0, :error, "in #{file}: vagrant_network is not a local private network"
+    def method_missing(method, *args)
+      if method =~ /=$/
+        self.instance_variable_set('@' + method.to_s.sub('=',''), args.first)
+      else
+        self.instance_variable_get('@' + method.to_s)
       end
     end
 
