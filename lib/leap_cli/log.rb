@@ -21,7 +21,7 @@ module LeapCli
 
     # thread safe logger
     def new_logger
-      LeapCli::LeapLogger.new
+      logger.dup
     end
 
     # deprecated
@@ -38,6 +38,12 @@ module LeapCli
     # these are log titles typically associated with files
     #
     FILE_TITLES = [:updated, :created, :removed, :missing, :nochange, :loading]
+
+    # TODO: use these
+    IMPORTANT = 0
+    INFO      = 1
+    DEBUG     = 2
+    TRACE     = 3
 
     attr_reader :log_output_stream, :log_file
     attr_accessor :indent_level, :log_level, :log_in_color
@@ -69,17 +75,23 @@ module LeapCli
     # * Integer: the log level (0, 1, 2)
     # * Symbol: the prefix title to colorize. may be one of
     #   [:error, :warning, :info, :updated, :created, :removed, :no_change, :missing]
-    # * Hash: a hash of options. so far, only :indent is supported.
+    # * Hash: a hash of options.
+    #     :wrap -- if true, appy intend to each line in message.
+    #     :color -- apply color to message or prefix
+    #     :style -- apply style to message or prefix
     #
     def log(*args)
       level   = args.grep(Integer).first || 1
       title   = args.grep(Symbol).first
       message = args.grep(String).first
       options = args.grep(Hash).first || {}
+      host    = options[:host]
+      if title
+        title = title.to_s
+      end
       unless message && @log_level >= level
         return
       end
-      clear_prefix, colored_prefix = calculate_prefix(title, options)
 
       #
       # transform absolute path names
@@ -89,23 +101,51 @@ module LeapCli
       end
 
       #
-      # log to the log file, always
+      # apply filters
+      # LogFilter will not be defined if no platform was loaded.
       #
-      log_raw(:log, nil, clear_prefix) { message }
+      if defined?(LeapCli::LogFilter)
+        if title
+          title, filter_flags = LogFilter.apply_title_filters(title)
+        else
+          message, filter_flags = LogFilter.apply_message_filters(message)
+          return if message.nil?
+        end
+        options = options.merge(filter_flags)
+      end
+
+      #
+      # set line prefix
+      #
+      prefix = prefix_str(host, title)
+
+      #
+      # write to the log file, always
+      #
+      log_raw(:log, nil, prefix) { message }
 
       #
       # log to stdout, maybe in color
       #
       if @log_in_color
-        prefix = colored_prefix
         if options[:wrap]
           message = message.split("\n")
         end
-      else
-        prefix = clear_prefix
+        if options[:color]
+          if host
+            host = colorize(host, options[:color], options[:style])
+          elsif title
+            title = colorize(title, options[:color], options[:style])
+          else
+            message = colorize(message, options[:color], options[:style])
+          end
+        elsif title
+          title = colorize(title, :cyan, :bold)
+        end
+        # new colorized prefix:
+        prefix = prefix_str(host, title)
       end
-      indent = options[:indent]
-      log_raw(:stdout, indent, prefix) { message }
+      log_raw(:stdout, options[:indent], prefix) { message }
 
       #
       # run block indented, if given
@@ -115,6 +155,10 @@ module LeapCli
         yield
         @indent_level -= 1
       end
+    end
+
+    def debug(*args)
+      self.log(3, *args)
     end
 
     #
@@ -134,7 +178,7 @@ module LeapCli
           if messages.any?
             timestamp = Time.now.strftime("%b %d %H:%M:%S")
             messages.each do |message|
-              message = message.strip
+              message = message.rstrip
               next if message.empty?
               @log_output_stream.print("#{timestamp} #{prefix} #{message}\n")
             end
@@ -154,7 +198,7 @@ module LeapCli
           end
           indent_str += prefix if prefix
           messages.each do |message|
-            message = message.strip
+            message = message.rstrip
             next if message.empty?
             STDOUT.print("#{indent_str}#{message}\n")
           end
@@ -171,6 +215,14 @@ module LeapCli
     end
 
     private
+
+    def prefix_str(host, title)
+      prefix = ""
+      prefix += "[" + host + "] " if host
+      prefix += title + " " if title
+      prefix += " " if !prefix.empty? && prefix !~ / $/
+      return prefix
+    end
 
     EFFECTS = {
       :reset         => 0,  :nothing         => 0,
@@ -202,49 +254,6 @@ module LeapCli
       :default => 49,
     }
 
-    def calculate_prefix(title, options)
-      clear_prefix = colored_prefix = ""
-      if title
-        prefix_options = case title
-          when :error     then ['error', :red, :bold]
-          when :fatal_error then ['fatal error:', :red, :bold]
-          when :warning   then ['warning:', :yellow, :bold]
-          when :info      then ['info', :cyan, :bold]
-          when :note      then ['NOTE:', :cyan, :bold]
-          when :updated   then ['updated', :cyan, :bold]
-          when :updating  then ['updating', :cyan, :bold]
-          when :created   then ['created', :green, :bold]
-          when :removed   then ['removed', :red, :bold]
-          when :nochange  then ['no change', :magenta]
-          when :loading   then ['loading', :magenta]
-          when :missing   then ['missing', :yellow, :bold]
-          when :skipping  then ['skipping', :yellow, :bold]
-          when :run       then ['run', :cyan, :bold]
-          when :running   then ['running', :cyan, :bold]
-          when :failed    then ['FAILED', :red, :bold]
-          when :completed then ['completed', :green, :bold]
-          when :ran       then ['ran', :green, :bold]
-          when :bail      then ['bailing out', :red, :bold]
-          when :invalid   then ['invalid', :red, :bold]
-          else [title.to_s, :cyan, :bold]
-        end
-        if options[:host]
-          clear_prefix = "[%s] %s " % [options[:host], prefix_options[0]]
-          colored_prefix = "[%s] %s " % [colorize(options[:host], prefix_options[1], prefix_options[2]), prefix_options[0]]
-        else
-          clear_prefix = "%s " % prefix_options[0]
-          colored_prefix = "%s " % colorize(prefix_options[0], prefix_options[1], prefix_options[2])
-        end
-      elsif options[:host]
-        clear_prefix = "[%s] " % options[:host]
-        if options[:color]
-          colored_prefix = "[%s] " % colorize(options[:host], options[:color])
-        else
-          colored_prefix = clear_prefix
-        end
-      end
-      return [clear_prefix, colored_prefix]
-    end
-
   end
 end
+

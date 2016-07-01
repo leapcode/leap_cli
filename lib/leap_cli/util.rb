@@ -10,6 +10,10 @@ module LeapCli
 
     @@exit_status = nil
 
+    def log(*args, &block)
+      LeapCli.log(*args, &block)
+    end
+
     ##
     ## QUITTING
     ##
@@ -44,7 +48,7 @@ module LeapCli
         log 0, *message
       end
       log 0, :bail, ""
-      raise SystemExit.new(@exit_status || 1)
+      raise SystemExit.new(exit_status || 1)
     end
 
     #
@@ -52,7 +56,7 @@ module LeapCli
     #
     def quit!(message='')
       puts(message)
-      raise SystemExit.new(@exit_status || 0)
+      raise SystemExit.new(exit_status || 0)
     end
 
     #

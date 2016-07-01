@@ -4,6 +4,44 @@ require "rsync_command/thread_pool"
 
 require 'monitor'
 
+class RsyncRunner
+  attr_accessor :logger
+  attr_accessor :source, :dest, :flags, :includes, :excludes
+  attr_accessor :user, :host
+  attr_accessor :chdir, :ssh
+  def initialize(rsync_command)
+    @logger = nil
+    @source = ""
+    @dest   = ""
+    @flags  = ""
+    @includes = []
+    @excludes = []
+    @rsync_command = rsync_command
+  end
+  def log(*args)
+    @logger.log(*args)
+  end
+  def valid?
+    !@source.empty? || !@dest.empty?
+  end
+  def to_hash
+    fields = [:flags, :includes, :excludes, :logger, :ssh, :chdir]
+    fields.inject({}){|hsh, i|
+      hsh[i] = self.send(i); hsh
+    }
+  end
+  def exec
+    return unless valid?
+    dest = {
+      :user => self.user,
+      :host => self.host,
+      :path => self.dest
+    }
+    src = self.source
+    @rsync_command.exec_rsync(src, dest, self.to_hash)
+  end
+end
+
 class RsyncCommand
   attr_accessor :failures, :logger
 
@@ -21,29 +59,9 @@ class RsyncCommand
   def asynchronously(array, &block)
     pool = ThreadPool.new
     array.each do |item|
-      pool.schedule(item, &block)
+      pool.schedule(RsyncRunner.new(self), item, &block)
     end
     pool.shutdown
-  end
-
-  #
-  # runs rsync, recording failures
-  #
-  def exec(src, dest, options={})
-    @failures.synchronize do
-      @failures.clear
-    end
-    rsync_cmd = command(src, dest, options)
-    if options[:chdir]
-      rsync_cmd = "cd '#{options[:chdir]}'; #{rsync_cmd}"
-    end
-    @logger.debug rsync_cmd if @logger
-    ok = system(rsync_cmd)
-    unless ok
-      @failures.synchronize do
-        @failures << {:source => src, :dest => dest, :options => options.dup}
-      end
-    end
   end
 
   #
@@ -51,6 +69,27 @@ class RsyncCommand
   #
   def failed?
     @failures && @failures.any?
+  end
+
+  #
+  # runs rsync, recording failures
+  #
+  def exec_rsync(src, dest, options={})
+    logger = options[:logger] || @logger
+    @failures.synchronize do
+      @failures.clear
+    end
+    rsync_cmd = command(src, dest, options)
+    if options[:chdir]
+      rsync_cmd = "cd '#{options[:chdir]}'; #{rsync_cmd}"
+    end
+    logger.debug rsync_cmd if logger
+    ok = system(rsync_cmd)
+    unless ok
+      @failures.synchronize do
+        @failures << {:source => src, :dest => dest, :options => options.dup}
+      end
+    end
   end
 
   #
@@ -69,8 +108,6 @@ class RsyncCommand
     flags << SshOptions.new(options[:ssh]).to_flags if options.has_key?(:ssh)
     "rsync #{flags.compact.join(' ')} #{src} #{dest}"
   end
-
-  private
 
   #
   # Creates an rsync location if the +address+ is a hash with keys :user, :host, and :path

@@ -4,7 +4,6 @@ module LeapCli; module Commands
 
   extend LeapCli::LogCommand
   extend LeapCli::Util
-  extend LeapCli::Util::RemoteCommand
 
   def path(name)
     Path.named_path(name)
