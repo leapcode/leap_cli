@@ -211,7 +211,13 @@ module LeapCli
       if style
         codes << EFFECTS[style] || EFFECTS[:nothing]
       end
-      ["\033[%sm" % codes.join(';'), str, NO_COLOR].join
+      if str.is_a?(String)
+        ["\033[%sm" % codes.join(';'), str, NO_COLOR].join
+      elsif str.is_a?(Array)
+        str.map { |s|
+          ["\033[%sm" % codes.join(';'), s, NO_COLOR].join
+        }
+      end
     end
 
     private
