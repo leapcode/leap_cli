@@ -37,7 +37,7 @@ module LeapCli
     #
     # these are log titles typically associated with files
     #
-    FILE_TITLES = [:updated, :created, :removed, :missing, :nochange, :loading]
+    FILE_TITLES = %w(updated created removed missing nochange loading)
 
     # TODO: use these
     IMPORTANT = 0

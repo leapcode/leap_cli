@@ -15,6 +15,7 @@ module LeapCli
     attr_reader :platform_directory_path
     attr_reader :provider_directory_path
     attr_reader :environment
+    attr_reader :valid
 
     def initialize
     end
