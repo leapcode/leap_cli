@@ -150,11 +150,6 @@ module LeapCli
       return search_dir
     end
 
-    # to be overridden
-    def validate
-      return true
-    end
-
     def method_missing(method, *args)
       if method =~ /=$/
         self.instance_variable_set('@' + method.to_s.sub('=',''), args.first)

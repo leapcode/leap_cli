@@ -14,6 +14,7 @@ else
   $VERBOSE=nil
   DEBUG=false
 end
+TEST = false
 
 LEAP_CLI_BASE_DIR = File.expand_path('..', File.dirname(File.symlink?(__FILE__) ? File.readlink(__FILE__) : __FILE__))
 
@@ -90,6 +91,8 @@ module LeapCli::Commands
     end
     if DEBUG
       raise exc
+    else
+      exit(1)
     end
   end
 end

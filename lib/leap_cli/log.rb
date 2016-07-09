@@ -89,7 +89,7 @@ module LeapCli
       if title
         title = title.to_s
       end
-      unless message && @log_level >= level
+      if @log_level < level || (title.nil? && message.nil?)
         return
       end
 

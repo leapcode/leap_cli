@@ -7,6 +7,7 @@ require 'gli'
 require 'fileutils'
 
 DEBUG = true
+TEST  = true
 
 module LeapCli::Commands
   extend GLI::App
@@ -19,7 +20,7 @@ class Minitest::Test
 
   def initialize(*args)
     super(*args)
-    LeapCli::Bootstrap::setup([], test_provider_path)
+    LeapCli::Bootstrap::setup([], provider_path)
     LeapCli::Bootstrap::load_libraries(LeapCli::Commands)
   end
 
@@ -43,33 +44,56 @@ class Minitest::Test
   end
 
   def leap_bin(*args)
-    `cd #{test_provider_path} && #{ruby_path} #{base_path}/bin/leap --no-color #{args.join ' '}`
+    cmd = "cd #{provider_path} && #{base_path}/bin/leap --no-color #{args.join ' '}"
+    `#{cmd}`
   end
 
-  def test_provider_path
+  def leap_bin!(*args)
+    output = leap_bin(*args)
+    exit_code = $?
+    assert_equal 0, exit_code,
+      "The command `leap #{args.join(' ')}` should have exited 0 " +
+      "(was #{exit_code}).\n" +
+      "Output was: #{output}"
+    output
+  end
+
+  def provider_path
     "#{base_path}/test/provider"
   end
 
+  #
+  # for tests, we assume that the leap_platform code is
+  # in a sister directory to leap_cli.
+  #
+  def platform_path
+    "#{base_path}/../leap_platform"
+  end
+
   def cleanup_files(*args)
-    Dir.chdir(test_provider_path) do
+    Dir.chdir(provider_path) do
       args.each do |file|
         FileUtils.rm_r(file) if File.exist?(file)
       end
     end
   end
 
+  #
+  # we no longer support ruby 1.8, but this might be useful in the future
+  #
   def with_multiple_rubies(&block)
-    if ENV["RUBY"]
-      ENV["RUBY"].split(',').each do |ruby|
-        self.ruby_path = `which #{ruby}`.strip
-        next unless ruby_path.chars.any?
-        yield
-      end
-    else
-      self.ruby_path = `which ruby`.strip
-      yield
-    end
-    self.ruby_path = ""
+    yield
+  #  if ENV["RUBY"]
+  #    ENV["RUBY"].split(',').each do |ruby|
+  #      self.ruby_path = `which #{ruby}`.strip
+  #      next unless ruby_path.chars.any?
+  #      yield
+  #    end
+  #  else
+  #    self.ruby_path = `which ruby`.strip
+  #    yield
+  #  end
+  #  self.ruby_path = ""
   end
 
 end

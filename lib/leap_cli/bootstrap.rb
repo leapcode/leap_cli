@@ -159,7 +159,9 @@ module LeapCli
     # Yes, hacky.
     #
     def leapfile_optional?(argv)
-      if argv.include?('--version')
+      if TEST
+        return true
+      elsif argv.include?('--version')
         return true
       else
         without_flags = argv.select {|i| i !~ /^-/}

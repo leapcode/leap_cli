@@ -3,7 +3,7 @@ require 'fileutils'
 module LeapCli; module Path
 
   def self.platform
-    @platform
+    @platform ||= nil
   end
 
   def self.provider_base
