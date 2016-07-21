@@ -427,15 +427,13 @@ module LeapCli
         return $? == 0
       end
     end
-    
+
     def is_git_subrepo?(dir)
-        Dir.chdir(dir) do
-          `ls .gitrepo 2>/dev/null`
-          return $? == 0
-        end
+      Dir.chdir(dir) do
+        `ls .gitrepo 2>/dev/null`
+        return $? == 0
       end
-
-
+    end
 
     def current_git_branch(dir)
       Dir.chdir(dir) do
