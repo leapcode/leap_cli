@@ -40,14 +40,13 @@ module LeapCli
     #
     # exit with error code and with a message that we are bailing out.
     #
-    def bail!(*message)
-      if block_given?
-        LeapCli.logger.log_level = 3
-        yield
-      elsif message
-        log 0, *message
+    def bail!(*message, &block)
+      LeapCli.logger.log_level = 3 if LeapCli.logger.log_level < 3
+      if message.any?
+        log(0, *message, &block)
+      else
+        log(0, :bailing, "out", &block)
       end
-      log 0, :bail, ""
       raise SystemExit.new(exit_status || 1)
     end
 

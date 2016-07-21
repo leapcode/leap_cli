@@ -20,7 +20,7 @@ module LeapCli; module Commands
       items.each_with_index(&block)
       say("q. quit")
       index = ask("number 1-#{items.length}> ")
-      if index.empty?
+      if index.nil? || index.empty?
         next
       elsif index =~ /q/
         bail!

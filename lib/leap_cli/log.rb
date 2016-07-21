@@ -28,6 +28,20 @@ module LeapCli
     def log_level
       logger.log_level
     end
+
+    #
+    # These probably should have been part of the logger originally,
+    # but they are made available here for convenience:
+    #
+
+    def bail!(*args, &block)
+      Util.bail!(*args, &block)
+    end
+
+    def assert!(*args, &block)
+      Util.assert!(*args, &block)
+    end
+
   end
 end
 
