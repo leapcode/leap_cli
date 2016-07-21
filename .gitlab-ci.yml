@@ -9,6 +9,7 @@ build:
   stage: build
   script:
     - rake build
+    - rake install
   artifacts:
     paths:
       - pkg/leap_cli-*.gem
