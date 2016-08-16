@@ -131,6 +131,9 @@ module LeapCli
       #
       # set line prefix
       #
+      if (host)
+        host = host.split('.').first
+      end
       prefix = prefix_str(host, title)
 
       #
