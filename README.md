@@ -8,7 +8,7 @@ Installation
 
 Install prerequisites:
 
-    sudo apt-get install git ruby ruby-dev rsync openssh-client openssl rake
+    sudo apt-get install git ruby ruby-dev rsync openssh-client openssl rake gcc make zlib1g-dev
 
 NOTE: leap_cli requires ruby 1.9 or later.
 

@@ -1,7 +1,6 @@
-image: ruby:2.1
+image: leapcode/ruby:2.1-slim
 
 stages:
-  - syntax
   - build
   - trigger
 
@@ -9,6 +8,11 @@ build:
   stage: build
   script:
     - rake build
+    #- sudo rake install
+    #- ./bin/leap
+    - gem install --user-install pkg/leap_cli-*.gem
+    - export PATH="$PATH:$(ruby -e 'puts Gem.user_dir')/bin"
+    - leap
   artifacts:
     paths:
       - pkg/leap_cli-*.gem
