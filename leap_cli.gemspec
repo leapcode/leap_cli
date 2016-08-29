@@ -51,7 +51,7 @@ spec = Gem::Specification.new do |s|
 
   # network gems
   s.add_runtime_dependency('sshkit', '~> 1.11')
-  s.add_runtime_dependency('fog-aws')
+  s.add_runtime_dependency('fog-aws', '~> 0.11')
 
   # crypto gems
   # s.add_runtime_dependency('gpgme')    # << does not build on debian jessie, so now optional.
