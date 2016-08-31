@@ -7,7 +7,8 @@ module LeapCli
     LOAD_PATHS = ['lib',
       'vendor/certificate_authority/lib',
       'vendor/rsync_command/lib',
-      'vendor/base32/lib'
+      'vendor/base32/lib',
+      'vendor/acme-client/lib'
     ]
   end
 end

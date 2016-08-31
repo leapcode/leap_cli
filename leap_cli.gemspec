@@ -57,6 +57,10 @@ spec = Gem::Specification.new do |s|
   # s.add_runtime_dependency('gpgme')    # << does not build on debian jessie, so now optional.
                                          # also, there is a ruby-gpgme package anyway.
 
+  # acme-client is vendored for now, we need pre-lease version
+  # s.add_runtime_dependency('acme-client', '~> 0.4.2')
+  s.add_runtime_dependency('faraday', '~> 0.9', '>= 0.9.1') # for acme-client
+
   # misc gems
   s.add_runtime_dependency('ya2yaml', '~> 0.31')    # pure ruby yaml, so we can better control output. see https://github.com/afunai/ya2yaml
   s.add_runtime_dependency('json_pure', '~> 1.8')   # pure ruby json, so we can better control output.
