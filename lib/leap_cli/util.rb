@@ -45,7 +45,7 @@ module LeapCli
       if message.any?
         log(0, *message, &block)
       else
-        log(0, :bailing, "out", &block)
+        log(0, :bailing, "out", :color => :red, :style => :bold, &block)
       end
       raise SystemExit.new(exit_status || 1)
     end

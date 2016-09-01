@@ -63,8 +63,19 @@ module LeapCli
         unless File.exist?(platform_definition)
           Util.bail! "ERROR: The file `#{platform_file}` does not exist. Please check the value of `@platform_directory_path` in `Leapfile` or `~/.leaprc`."
         end
-        require platform_class
-        require platform_definition
+        begin
+          require platform_class
+          require platform_definition
+        rescue LoadError
+          Util.log "The leap_platform at #{platform_directory_path} is not compatible with this version of leap_cli"
+          Util.log "You can either:" do
+            Util.log "Upgrade leap_platform to version " + LeapCli::COMPATIBLE_PLATFORM_VERSION.first
+            Util.log "Or, downgrade leap_cli to version 1.8"
+          end
+          Util.bail!
+        rescue StandardError => exc
+          Util.bail! exc.to_s
+        end
         begin
           Leap::Platform.validate!(LeapCli::VERSION, LeapCli::COMPATIBLE_PLATFORM_VERSION, self)
         rescue StandardError => exc
