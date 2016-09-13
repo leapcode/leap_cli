@@ -8,9 +8,7 @@ stages:
 build:
   stage: build
   script:
-    - rake build
-    #- sudo rake install
-    #- ./bin/leap
+    - "rake build"
     - "gem install --user-install pkg/leap_cli-*.gem"
     - export PATH="$PATH:$(ruby -e 'puts Gem.user_dir')/bin"
     - leap
@@ -20,13 +18,13 @@ build:
     name: "leap_cli_${CI_BUILD_REF_NAME}_${CI_BUILD_REF}"
     expire_in: 3 month
 
-test: 
-    stage: test
-    script:
-      - "gem install --user-install pkg/leap_cli-*.gem"
-      - export PATH="$PATH:$(ruby -e 'puts Gem.user_dir')/bin"
-      - leap
-      - rake test
+test:
+  stage: test
+  script:
+    - "gem install --user-install pkg/leap_cli-*.gem"
+    - export PATH="$PATH:$(ruby -e 'puts Gem.user_dir')/bin"
+    - leap
+    - "rake test"
 
 # trigger leap_platform pipeline
 trigger:
