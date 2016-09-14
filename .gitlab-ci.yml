@@ -21,10 +21,8 @@ build:
 test:
   stage: test
   script:
-    - "gem install --user-install pkg/leap_cli-*.gem"
-    - export PATH="$PATH:$(ruby -e 'puts Gem.user_dir')/bin"
-    - leap
-    - "rake test"
+    - bundle install --path vendor/bundle --with test
+    - rake test
 
 # trigger leap_platform pipeline
 trigger:
