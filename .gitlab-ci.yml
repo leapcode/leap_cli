@@ -22,7 +22,7 @@ test:
   stage: test
   script:
     - bundle install --path vendor/bundle --with test
-    - rake test
+    - bundle exec rake test
 
 # trigger leap_platform pipeline
 trigger:

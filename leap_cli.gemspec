@@ -44,6 +44,7 @@ spec = Gem::Specification.new do |s|
 
   # test
   s.add_development_dependency('minitest', '~> 5.0')
+  s.add_development_dependency('rake', '~> 11.0')
 
   # console gems
   s.add_runtime_dependency('gli','~> 2.12', '>= 2.12.0')
