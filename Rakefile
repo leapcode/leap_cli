@@ -1,4 +1,3 @@
-require "rubygems"
 require "pty"
 require "fileutils"
 require "rake/testtask"

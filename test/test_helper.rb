@@ -44,7 +44,7 @@ class Minitest::Test
   end
 
   def leap_bin(*args)
-    cmd = "cd #{provider_path} && #{base_path}/bin/leap --no-color #{args.join ' '}"
+    cmd = "cd #{provider_path} && PLATFORM_DIR=#{platform_path} #{base_path}/bin/leap --debug --yes --no-color #{args.join ' '}"
     `#{cmd}`
   end
 
@@ -67,7 +67,7 @@ class Minitest::Test
   # in a sister directory to leap_cli.
   #
   def platform_path
-    "#{base_path}/../leap_platform"
+    ENV['PLATFORM_DIR'] || "#{base_path}/../leap_platform"
   end
 
   def cleanup_files(*args)

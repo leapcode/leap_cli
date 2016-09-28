@@ -1,12 +1,6 @@
 Gemfile.lock
 pkg
 junk
-test/provider/hiera
-test/provider/nodes/
-test/provider/files/nodes/
-test/provider/files/ca/
-test/provider/files/ssh/
-test/provider/files/users/
 .vagrant
 Vagrantfile
 .reviewboardrc

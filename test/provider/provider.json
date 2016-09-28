@@ -2,12 +2,12 @@
 // General service provider configuration.
 //
 {
-  "domain": "bitmask.net",
+  "domain": "example.org",
   "name": {
-    "en": "Bitmask"
+    "en": "Example"
   },
   "description": {
-    "en": "A demonstration service provider using the LEAP platform"
+    "en": "CI test"
   },
   "languages": ["en"],
   "default_language": "en",

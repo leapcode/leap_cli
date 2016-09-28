@@ -21,8 +21,14 @@ build:
 test:
   stage: test
   script:
+#   - apt-get install --yes pkg-config
+#   - bundle config build.nokogiri --use-system-libraries
+    - apt-get install rake
     - bundle install --path vendor/bundle --with test
-    - bundle exec rake test
+    - git clone https://leap.se/git/leap_platform.git -b develop
+    - chmod -R a+rwX test/provider
+    - useradd -ms /bin/bash testuser
+    - su -c "PLATFORM_DIR=$(readlink -e leap_platform) bundle exec rake test" testuser
 
 # trigger leap_platform pipeline
 trigger:
