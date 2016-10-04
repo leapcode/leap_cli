@@ -79,6 +79,9 @@ module LeapCli::Commands
 
   # run command
   begin
+    if ARGV.any?
+      LeapCli.log_raw(:log, nil, "COMMAND") { 'leap ' + ARGV.join(' ') }
+    end
     exit_status = run(ARGV)
     exit(LeapCli::Util.exit_status || exit_status)
   rescue StandardError => exc
