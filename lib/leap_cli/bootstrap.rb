@@ -5,8 +5,8 @@
 
 module LeapCli
   module Bootstrap
-    extend LeapCli::Log
     extend self
+    extend LeapCli::LogCommand
 
     #
     # the argument leapfile_path is only used for tests
@@ -36,9 +36,11 @@ module LeapCli
     # called from leap executable.
     #
     def load_libraries(app)
-      if LeapCli.log_level >= 2
+      if LeapCli.logger.log_level >= 2
         log_version
       end
+      add_platform_lib_to_path
+      load_platform_libraries
       load_commands(app)
       load_macros
     end
@@ -72,14 +74,14 @@ module LeapCli
       options = parse_logging_options(argv)
       verbose = (options[:verbose] || 1).to_i
       if verbose
-        LeapCli.set_log_level(verbose)
+        LeapCli.logger.log_level = verbose
       end
       if options[:log]
-        LeapCli.log_file = options[:log]
-        LeapCli::Util.log_raw(:log) { $0 + ' ' + argv.join(' ')}
+        LeapCli.logger.log_file = options[:log]
+        LeapCli.logger.log_raw(:log) { $0 + ' ' + argv.join(' ')}
       end
       unless options[:color].nil?
-        LeapCli.log_in_color = options[:color]
+        LeapCli.logger.log_in_color = options[:color]
       end
     end
 
@@ -97,17 +99,16 @@ module LeapCli
         if !Path.platform || !File.directory?(Path.platform)
           bail! { log :missing, "platform directory '#{Path.platform}'" }
         end
-        if LeapCli.log_file.nil? && LeapCli.leapfile.log
-          LeapCli.log_file = LeapCli.leapfile.log
+        if LeapCli.logger.log_file.nil? && LeapCli.leapfile.log
+          LeapCli.logger.log_file = LeapCli.leapfile.log
         end
       elsif !leapfile_optional?(argv)
         puts
         puts " ="
-        log :note, "There is no `Leapfile` in this directory, or any parent directory.\n"+
-                   " =       "+
+        log :NOTE, "There is no `Leapfile` in this directory, or any parent directory.\n"+
+                   " =      "+
                    "Without this file, most commands will not be available."
         puts " ="
-        puts
       end
     end
 
@@ -158,7 +159,9 @@ module LeapCli
     # Yes, hacky.
     #
     def leapfile_optional?(argv)
-      if argv.include?('--version')
+      if TEST
+        return true
+      elsif argv.include?('--version')
         return true
       else
         without_flags = argv.select {|i| i !~ /^-/}
@@ -190,6 +193,27 @@ module LeapCli
             require macro_file
           end
         end
+      end
+    end
+
+    #
+    # makes all the ruby libraries in the leap_platform/lib directory
+    # available for inclusion.
+    #
+    def add_platform_lib_to_path
+      if Path.platform
+        path = File.join(Path.platform, 'lib')
+        $LOAD_PATH.unshift(path) unless $LOAD_PATH.include?(path)
+      end
+    end
+
+    #
+    # loads libraries that live in the platform and should
+    # always be available.
+    #
+    def load_platform_libraries
+      if Path.platform
+        require 'leap_cli/load_libraries'
       end
     end
 

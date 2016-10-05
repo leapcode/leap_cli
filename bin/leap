@@ -14,6 +14,7 @@ else
   $VERBOSE=nil
   DEBUG=false
 end
+TEST = false
 
 LEAP_CLI_BASE_DIR = File.expand_path('..', File.dirname(File.symlink?(__FILE__) ? File.readlink(__FILE__) : __FILE__))
 
@@ -27,8 +28,6 @@ rescue LoadError
 end
 
 require 'gli'
-require 'highline'
-require 'forwardable'
 require 'leap_cli/lib_ext/gli' # our custom extensions to gli
 
 #
@@ -40,16 +39,6 @@ require 'leap_cli/lib_ext/gli' # our custom extensions to gli
 #
 module LeapCli::Commands
   extend GLI::App
-  extend Forwardable
-
-  # delegate highline methods to make them available to sub-commands
-  @terminal = HighLine.new
-  def_delegator :@terminal, :ask,    'self.ask'
-  def_delegator :@terminal, :agree,  'self.agree'
-  def_delegator :@terminal, :choose, 'self.choose'
-  def_delegator :@terminal, :say,    'self.say'
-  def_delegator :@terminal, :color,  'self.color'
-  def_delegator :@terminal, :list,   'self.list'
 
   # make config manager available as 'manager'
   def self.manager
@@ -90,6 +79,9 @@ module LeapCli::Commands
 
   # run command
   begin
+    if ARGV.any?
+      LeapCli.log_raw(:log, nil, "COMMAND") { 'leap ' + ARGV.join(' ') }
+    end
     exit_status = run(ARGV)
     exit(LeapCli::Util.exit_status || exit_status)
   rescue StandardError => exc
@@ -102,6 +94,8 @@ module LeapCli::Commands
     end
     if DEBUG
       raise exc
+    else
+      exit(1)
     end
   end
 end

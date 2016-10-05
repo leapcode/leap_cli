@@ -3,7 +3,7 @@ require 'fileutils'
 module LeapCli; module Path
 
   def self.platform
-    @platform
+    @platform ||= nil
   end
 
   def self.provider_base
@@ -40,14 +40,14 @@ module LeapCli; module Path
     [Path.provider, Path.provider_base].each do |base|
       if arg.is_a?(Symbol) || arg.is_a?(Array)
         named_path(arg, base).tap {|path|
-          return path if File.exists?(path)
+          return path if File.exist?(path)
         }
       else
         File.join(base, arg).tap {|path|
-          return path if File.exists?(path)
+          return path if File.exist?(path)
         }
         File.join(base, 'files', arg).tap {|path|
-          return path if File.exists?(path)
+          return path if File.exist?(path)
         }
       end
     end
@@ -83,7 +83,7 @@ module LeapCli; module Path
   end
 
   def self.exists?(name, provider_dir=nil)
-    File.exists?(named_path(name, provider_dir))
+    File.exist?(named_path(name, provider_dir))
   end
 
   def self.defined?(name)

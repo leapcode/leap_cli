@@ -1,4 +1,4 @@
-require File.expand_path('../test_helper', __FILE__)
+require_relative 'test_helper'
 
 class ConfigObjectListTest < Minitest::Test
 
@@ -9,7 +9,6 @@ class ConfigObjectListTest < Minitest::Test
   end
 
   def test_complex_node_search
-    domain = provider.domain
     nodes = manager.nodes['location.country_code' => 'US']
     assert nodes.size != manager.nodes.size, 'should not return all nodes'
     assert_equal 2, nodes.size, 'should be some nodes'

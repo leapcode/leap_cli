@@ -44,38 +44,25 @@ spec = Gem::Specification.new do |s|
 
   # test
   s.add_development_dependency('minitest', '~> 5.0')
-
-  #s.add_development_dependency('rdoc')
-  #s.add_development_dependency('aruba')
+  s.add_development_dependency('rake', '~> 11.0')
 
   # console gems
   s.add_runtime_dependency('gli','~> 2.12', '>= 2.12.0')
   # note: gli version is also pinned in leap_cli.rb.
-  s.add_runtime_dependency('command_line_reporter', '~> 3.3')
-  s.add_runtime_dependency('highline', '~> 1.6')
-  s.add_runtime_dependency('paint', '~> 0.9')
 
   # network gems
-  s.add_runtime_dependency('net-ssh', '~> 2.7')
-  # ^^ we can upgrade once we get off broken capistrano
-  # https://github.com/net-ssh/net-ssh/issues/145
-  s.add_runtime_dependency('capistrano', '~> 2.15')
+  s.add_runtime_dependency('sshkit', '~> 1.11')
+  s.add_runtime_dependency('fog-aws', '~> 0.11')
 
   # crypto gems
-  #s.add_runtime_dependency('certificate_authority', '>= 0.2.0')
-  # ^^ currently vendored
   # s.add_runtime_dependency('gpgme')    # << does not build on debian jessie, so now optional.
                                          # also, there is a ruby-gpgme package anyway.
+
+  # acme-client is vendored for now, we need pre-lease version
+  # s.add_runtime_dependency('acme-client', '~> 0.4.2')
+  s.add_runtime_dependency('faraday', '~> 0.9', '>= 0.9.1') # for acme-client
 
   # misc gems
   s.add_runtime_dependency('ya2yaml', '~> 0.31')    # pure ruby yaml, so we can better control output. see https://github.com/afunai/ya2yaml
   s.add_runtime_dependency('json_pure', '~> 1.8')   # pure ruby json, so we can better control output.
-  s.add_runtime_dependency('base32', '~> 0.3')      # base32 encoding
-
-  ##
-  ## DEPENDENCIES for VENDORED GEMS
-  ##
-
-  # certificate_authority
-  s.add_runtime_dependency("activemodel", '~> 3.0', ">= 3.0.6")
 end

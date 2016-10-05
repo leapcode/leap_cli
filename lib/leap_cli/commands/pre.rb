@@ -1,8 +1,10 @@
-
 #
 # check to make sure we can find the root directory of the platform
 #
 module LeapCli; module Commands
+
+  extend self # this is a trick to make all instance methods
+              # available as class methods.
 
   desc 'Verbosity level 0..5'
   arg_name 'LEVEL'

@@ -4,7 +4,6 @@ module LeapCli; module Commands
 
   desc 'Creates a new provider instance in the specified directory, creating it if necessary.'
   arg_name 'DIRECTORY'
-  #skips_pre
   command :new do |c|
     c.flag 'name', :desc => "The name of the provider." #, :default_value => 'Example'
     c.flag 'domain', :desc => "The primary domain of the provider." #, :default_value => 'example.org'
@@ -12,19 +11,7 @@ module LeapCli; module Commands
     c.flag 'contacts', :desc => "Default email address contacts." #, :default_value => 'root'
 
     c.action do |global, options, args|
-      unless args.first
-        # this should not be needed, but GLI is not making it required.
-        bail! "Argument DIRECTORY is required."
-      end
-      directory = File.expand_path(args.first)
-      create_provider_directory(global, directory)
-      options[:domain]   ||= ask_string("The primary domain of the provider: ") {|q| q.default = 'example.org'}
-      options[:name]     ||= ask_string("The name of the provider: ") {|q| q.default = 'Example'}
-      options[:platform] ||= ask_string("File path of the leap_platform directory: ") {|q| q.default = File.expand_path('../leap_platform', directory)}
-      options[:platform] = "./" + options[:platform] unless options[:platform] =~ /^\//
-      options[:contacts] ||= ask_string("Default email address contacts: ") {|q| q.default = 'root@' + options[:domain]}
-      options[:platform] = relative_path(options[:platform])
-      create_initial_provider_files(directory, global, options)
+      new_provider_action(global, options, args)
     end
   end
 
@@ -32,13 +19,33 @@ module LeapCli; module Commands
 
   DEFAULT_REPO = 'https://leap.se/git/leap_platform.git'
 
+  def new_provider_action(global, options, args)
+    unless args.first
+      # this should not be needed, but GLI is not making it required.
+      bail! "Argument DIRECTORY is required."
+    end
+    directory = File.expand_path(args.first)
+    create_provider_directory(global, directory)
+    options[:domain]   ||= ask_string("The primary domain of the provider: ",
+                                      default: 'example.org')
+    options[:name]     ||= ask_string("The name of the provider: ",
+                                      default: 'Example')
+    options[:platform] ||= ask_string("File path of the leap_platform directory: ",
+                                      default: File.expand_path('../leap_platform', directory))
+    options[:platform] = "./" + options[:platform] unless options[:platform] =~ /^\//
+    options[:contacts] ||= ask_string("Default email address contacts: ",
+                                       default: 'root@' + options[:domain])
+    options[:platform] = relative_path(options[:platform])
+    create_initial_provider_files(directory, global, options)
+  end
+
   #
   # don't let the user specify any of the following: y, yes, n, no
   # they must actually input a real string
   #
-  def ask_string(str, &block)
+  def ask_string(str, options={})
     while true
-      value = ask(str, &block)
+      value = ask(str, options)
       if value =~ /^(y|yes|n|no)$/i
         say "`#{value}` is not a valid value. Try again"
       else
@@ -54,7 +61,7 @@ module LeapCli; module Commands
     unless directory && directory.any?
       help! "Directory name is required."
     end
-    unless File.exists?(directory)
+    unless File.exist?(directory)
       if global[:yes] || agree("Create directory #{directory}? ")
         ensure_dir directory
       else

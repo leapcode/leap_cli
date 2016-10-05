@@ -10,6 +10,10 @@ module LeapCli
 
     @@exit_status = nil
 
+    def log(*args, &block)
+      LeapCli.log(*args, &block)
+    end
+
     ##
     ## QUITTING
     ##
@@ -36,15 +40,14 @@ module LeapCli
     #
     # exit with error code and with a message that we are bailing out.
     #
-    def bail!(*message)
-      if block_given?
-        LeapCli.set_log_level(3)
-        yield
-      elsif message
-        log 0, *message
+    def bail!(*message, &block)
+      LeapCli.logger.log_level = 3 if LeapCli.logger.log_level < 3
+      if message.any?
+        log(0, *message, &block)
+      else
+        log(0, :bailing, "out", :color => :red, :style => :bold, &block)
       end
-      log 0, :bail, ""
-      raise SystemExit.new(@exit_status || 1)
+      raise SystemExit.new(exit_status || 1)
     end
 
     #
@@ -52,7 +55,7 @@ module LeapCli
     #
     def quit!(message='')
       puts(message)
-      raise SystemExit.new(@exit_status || 0)
+      raise SystemExit.new(exit_status || 0)
     end
 
     #
@@ -119,7 +122,7 @@ module LeapCli
       base = options[:base] || Path.provider
       file_list = files.collect { |file_path|
         file_path = Path.named_path(file_path, base)
-        File.exists?(file_path) ? Path.relative_path(file_path, base) : nil
+        File.exist?(file_path) ? Path.relative_path(file_path, base) : nil
       }.compact
       if file_list.length > 1
         bail! do
@@ -138,7 +141,7 @@ module LeapCli
       options = files.last.is_a?(Hash) ? files.pop : {}
       file_list = files.collect { |file_path|
         file_path = Path.named_path(file_path)
-        !File.exists?(file_path) ? Path.relative_path(file_path) : nil
+        !File.exist?(file_path) ? Path.relative_path(file_path) : nil
       }.compact
       if file_list.length > 1
         bail! do
@@ -157,7 +160,7 @@ module LeapCli
     def file_exists?(*files)
       files.each do |file_path|
         file_path = Path.named_path(file_path)
-        if !File.exists?(file_path)
+        if !File.exist?(file_path)
           return false
         end
       end
@@ -233,7 +236,7 @@ module LeapCli
     #
     def replace_file!(filepath, &block)
       filepath = Path.named_path(filepath)
-      if !File.exists?(filepath)
+      if !File.exist?(filepath)
         content = yield(nil)
         unless content.nil?
           write_file!(filepath, content)
@@ -258,7 +261,7 @@ module LeapCli
 
     def remove_file!(filepath)
       filepath = Path.named_path(filepath)
-      if File.exists?(filepath)
+      if File.exist?(filepath)
         if File.directory?(filepath)
           remove_directory!(filepath)
         else
@@ -298,7 +301,7 @@ module LeapCli
     def write_file!(filepath, contents)
       filepath = Path.named_path(filepath)
       ensure_dir File.dirname(filepath)
-      existed = File.exists?(filepath)
+      existed = File.exist?(filepath)
       if existed
         if file_content_equals?(filepath, contents)
           log :nochange, filepath, 2
@@ -320,11 +323,11 @@ module LeapCli
     def rename_file!(oldpath, newpath)
       oldpath = Path.named_path(oldpath)
       newpath = Path.named_path(newpath)
-      if File.exists? newpath
+      if File.exist? newpath
         log :skipping, "#{Path.relative_path(newpath)}, file already exists"
         return
       end
-      if !File.exists? oldpath
+      if !File.exist? oldpath
         log :skipping, "#{Path.relative_path(oldpath)}, file is missing"
         return
       end
@@ -425,11 +428,18 @@ module LeapCli
       end
     end
 
+    def is_git_subrepo?(dir)
+      Dir.chdir(dir) do
+        `ls .gitrepo 2>/dev/null`
+        return $? == 0
+      end
+    end
+
     def current_git_branch(dir)
       Dir.chdir(dir) do
         branch = `git symbolic-ref HEAD 2>/dev/null`.strip
         if branch.chars.any?
-          branch.sub /^refs\/heads\//, ''
+          branch.sub(/^refs\/heads\//, '')
         else
           nil
         end
