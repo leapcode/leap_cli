@@ -1,3 +1,11 @@
+Version 1.9.0
+  - Support for leap_platform 0.9
+  - Moved almost all the code to leap_platform.
+  - Added support for AWS via `leap vm` command.
+  - Added support for Let's Encrypt via `leap cert renew` command.
+  - Reduced the number of third party gem dependencies, which made initial
+    start of leap_cli much faster.
+
 Version 1.8.0
   - better node inheritence, now supports partials.
   - `leap node init` is now governed by an init script
