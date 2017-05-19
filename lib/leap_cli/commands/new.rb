@@ -131,7 +131,7 @@ module LeapCli; module Commands
   end
 
   def leapfile_content(options)
-    %[@platform_directory_path = "#{options[:platform]}"\n# see https://leap.se/en/docs/platform/config for more options]
+    %[@platform_directory_path = "#{options[:platform]}"\n# see https://leap.se/en/docs/platform/guide/config for more options]
   end
 
   GITIGNORE_CONTENT = <<EOS
