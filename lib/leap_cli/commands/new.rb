@@ -84,8 +84,8 @@ module LeapCli; module Commands
           assert_bin! 'git'
           ensure_dir platform_dir
           Dir.chdir(platform_dir) do
-            log :cloning, "leap_platform into #{platform_dir}"
-            pty_run "git clone --branch master #{DEFAULT_REPO} ."
+            log :cloning, "leap_platform:stable into #{platform_dir}"
+            pty_run "git clone --branch stable #{DEFAULT_REPO} ."
             pty_run 'git submodule update --init'
           end
         else
