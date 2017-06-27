@@ -86,7 +86,6 @@ module LeapCli; module Commands
           Dir.chdir(platform_dir) do
             log :cloning, "leap_platform:stable into #{platform_dir}"
             pty_run "git clone --branch stable #{DEFAULT_REPO} ."
-            pty_run 'git submodule update --init'
           end
         else
           bail!
