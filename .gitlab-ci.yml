@@ -1,5 +1,5 @@
 ---
-image: 0xacab.org:4567/leap/docker/ruby
+image: 0xacab.org:4567/leap/docker/ruby:latest
 
 stages:
   - build
