@@ -1,4 +1,5 @@
-image: leapcode/ruby:2.1-slim
+---
+image: 0xacab.org:4567/leap/docker/ruby
 
 stages:
   - build
@@ -21,8 +22,8 @@ build:
 test:
   stage: test
   script:
-#   - apt-get install --yes pkg-config
-#   - bundle config build.nokogiri --use-system-libraries
+    # - apt-get install --yes pkg-config
+    # - bundle config build.nokogiri --use-system-libraries
     - apt-get install rake
     - bundle install --path vendor/bundle --with test
     - git clone https://leap.se/git/leap_platform.git -b develop
