@@ -91,8 +91,21 @@ module LeapCli; module Commands
           bail!
         end
       end
+
+      template = {
+        yml: File.join(platform_dir, 'provider_base', 'templates', 'provider.yml'),
+        json: File.join(platform_dir, 'provider_base', 'templates', 'provider.json')
+      }
+
+      if File.exists?(template[:yml])
+        write_file! 'provider.json', provider_template(template[:yml], options)
+      elsif File.exists?(template[:json])
+        write_file! 'provider.json', provider_template(template[:json], options)
+      else
+        write_file! 'provider.json', provider_content(options)
+      end
+
       write_file! '.gitignore', GITIGNORE_CONTENT
-      write_file! 'provider.json', provider_content(options)
       write_file! 'common.json', COMMON_CONTENT
       write_file! 'Leapfile', leapfile_content(options)
       ["nodes", "services", "tags"].each do |dir|
@@ -106,6 +119,17 @@ module LeapCli; module Commands
     Pathname.new(File.expand_path(path)).relative_path_from(Pathname.new(Path.provider)).to_s
   end
 
+  #
+  # unreleased ERB has #result_with_hash. Instead, we must fake it.
+  #
+  def provider_template(template, options)
+    require 'erb'
+    require 'ostruct'
+    ERB.new(File.read(template)).result(
+      OpenStruct.new(options).instance_eval {binding}
+    )
+  end
+
   def leapfile_content(options)
     %[@platform_directory_path = "#{options[:platform]}"\n# see https://leap.se/en/docs/platform/config for more options]
   end
@@ -117,9 +141,13 @@ test/openvpn
 test/cert
 EOS
 
+  #
+  # deprecated: use template in platform instead.
+  #
   def provider_content(options)
   %[//
-// General service provider configuration.
+// This file defines global aspects of your service provider
+// See https://leap.se/provider-configuration
 //
 {
   "domain": "#{options[:domain]}",
