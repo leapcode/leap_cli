@@ -51,6 +51,7 @@ spec = Gem::Specification.new do |s|
   # note: gli version is also pinned in leap_cli.rb.
 
   # network gems
+  s.add_runtime_dependency('net-ssh', '~> 4.1')
   s.add_runtime_dependency('sshkit', '~> 1.11')
 
   # crypto gems
