@@ -26,7 +26,7 @@ test:
     # - bundle config build.nokogiri --use-system-libraries
     - apt-get install rake
     - bundle install --path vendor/bundle --with test
-    - git clone https://leap.se/git/leap_platform.git -b develop
+    - git clone https://leap.se/git/leap_platform.git
     - chmod -R a+rwX test/provider
     - useradd -ms /bin/bash testuser
     - su -c "PLATFORM_DIR=$(readlink -e leap_platform) bundle exec rake test" testuser
@@ -36,4 +36,4 @@ trigger:
   stage: trigger
   type: deploy
   script:
-    - "curl -s -X POST -F token=${PLATFORM_TRIGGER_TOKEN} -F ref=develop https://0xacab.org/api/v3/projects/129/trigger/builds"
+    - "curl -s -X POST -F token=${PLATFORM_TRIGGER_TOKEN} https://0xacab.org/api/v3/projects/129/trigger/builds"
